@@ -144,18 +144,16 @@ class Representante {
         if (!empty($dados[':senha'])) {
             $dados[':senha'] = password_hash($dados[':senha'], PASSWORD_DEFAULT);
         }
-        // A senha sempre terá um valor (pode ser vazio se não fornecida, mas o campo é NOT NULL?).
-        // No seu banco, a coluna 'senha' pode aceitar string vazia, então está ok.
 
         // Monta a instrução INSERT com todos os campos.
         $sql = "INSERT INTO representantes 
-                (cnpj, inscricao_estadual, nome_razao, nome_fantasia, cnae, crt,
-                 data_fundacao, comissao_percentual, logradouro, numero, complemento,
-                 bairro, cep, estado, municipio, telefone, celular, email, observacoes, ativo, senha)
-                VALUES 
-                (:cnpj, :inscricao_estadual, :nome_razao, :nome_fantasia, :cnae, :crt,
-                 :data_fundacao, :comissao_percentual, :logradouro, :numero, :complemento,
-                 :bairro, :cep, :estado, :municipio, :telefone, :celular, :email, :observacoes, :ativo, :senha)";
+        (cnpj, inscricao_estadual, nome_razao, nome_fantasia, nome_exibicao, cnae, crt,
+         data_fundacao, comissao_percentual, logradouro, numero, complemento,
+         bairro, cep, estado, municipio, telefone, celular, email, observacoes, ativo, senha)
+        VALUES 
+        (:cnpj, :inscricao_estadual, :nome_razao, :nome_fantasia, :nome_exibicao, :cnae, :crt,
+         :data_fundacao, :comissao_percentual, :logradouro, :numero, :complemento,
+         :bairro, :cep, :estado, :municipio, :telefone, :celular, :email, :observacoes, :ativo, :senha)";
         
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute($dados);
@@ -174,9 +172,6 @@ class Representante {
      *   - Se a chave ':senha' existir e não estiver vazia, aplica o hash e inclui a coluna 'senha' no UPDATE.
      *   - Caso contrário, remove a chave ':senha' do array e NÃO atualiza a coluna 'senha' no banco.
      *   - Isso permite que o usuário deixe a senha em branco na edição para mantê-la inalterada.
-     * 
-     * IMPORTANTE: O controller já removeu ':senha' do array se o campo estiver vazio,
-     * mas mantemos essa verificação aqui como camada extra de segurança.
      */
     public function atualizar(int $id, array $dados): bool {
         // Verifica se a senha foi fornecida e não é vazia.
@@ -186,6 +181,7 @@ class Representante {
             // SQL com a coluna 'senha' incluída.
             $sql = "UPDATE representantes SET 
                     cnpj=:cnpj, inscricao_estadual=:inscricao_estadual, nome_razao=:nome_razao, nome_fantasia=:nome_fantasia,
+                    nome_exibicao=:nome_exibicao,
                     cnae=:cnae, crt=:crt, data_fundacao=:data_fundacao,
                     comissao_percentual=:comissao_percentual, logradouro=:logradouro, numero=:numero,
                     complemento=:complemento, bairro=:bairro, cep=:cep, estado=:estado,
@@ -198,6 +194,7 @@ class Representante {
             // SQL sem a coluna 'senha'.
             $sql = "UPDATE representantes SET 
                     cnpj=:cnpj, inscricao_estadual=:inscricao_estadual, nome_razao=:nome_razao, nome_fantasia=:nome_fantasia,
+                    nome_exibicao=:nome_exibicao,
                     cnae=:cnae, crt=:crt, data_fundacao=:data_fundacao,
                     comissao_percentual=:comissao_percentual, logradouro=:logradouro, numero=:numero,
                     complemento=:complemento, bairro=:bairro, cep=:cep, estado=:estado,
@@ -244,9 +241,17 @@ class Representante {
         return $stmt->execute([':id' => $id]);
     }
 
+    /**
+     * Método: buscarPorCnpj()
+     * 
+     * Busca um representante pelo CNPJ (usado no login).
+     * 
+     * @param string $cnpj CNPJ apenas com números.
+     * @return array|null Dados do representante ou null.
+     */
     public function buscarPorCnpj(string $cnpj): ?array {
-    $stmt = $this->pdo->prepare("SELECT * FROM representantes WHERE cnpj = :cnpj");
-    $stmt->execute([':cnpj' => $cnpj]);
-    return $stmt->fetch() ?: null;
-}
+        $stmt = $this->pdo->prepare("SELECT * FROM representantes WHERE cnpj = :cnpj");
+        $stmt->execute([':cnpj' => $cnpj]);
+        return $stmt->fetch() ?: null;
+    }
 }

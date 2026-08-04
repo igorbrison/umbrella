@@ -100,6 +100,12 @@ $titulo = $modoEdicao ? 'Editar Representante' : 'Novo Representante';
                 <span class="info">(se não houver, repita a razão social)</span>
             </label>
 
+            <label>Nome de Exibição (aparecerá no painel):
+                <input type="text" name="nome_exibicao"
+                    value="<?= $modoEdicao ? htmlspecialchars($representante['nome_exibicao'] ?? '') : '' ?>">
+                <span class="info">Se vazio, será usada a Razão Social.</span>
+            </label>
+
             <!-- CNAE (Classificação Nacional de Atividades Econômicas) -->
             <label>CNAE <span class="obrigatorio">*</span>:
                 <input type="text" name="cnae" required

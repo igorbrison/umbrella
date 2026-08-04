@@ -140,9 +140,10 @@ class RepresentanteController {
             ':inscricao_estadual' => $_POST['inscricao_estadual'] ?? null,
             ':nome_razao' => $_POST['nome_razao'],
             ':nome_fantasia' => $_POST['nome_fantasia'] ?? null,
+            ':nome_exibicao' => $_POST['nome_exibicao'] ?? null,   // NOVO CAMPO
             ':cnae' => $_POST['cnae'] ?? null,
             ':crt' => $_POST['crt'] ?? null,
-            ':data_fundacao' => $_POST['data_fundacao'] ?? null,
+            ':data_fundacao' => !empty($_POST['data_fundacao']) ? $_POST['data_fundacao'] : null, // evita string vazia
             ':comissao_percentual' => $_POST['comissao_percentual'] ?? null,
             ':logradouro' => $_POST['logradouro'] ?? null,
             ':numero' => $_POST['numero'] ?? null,
