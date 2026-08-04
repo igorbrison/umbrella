@@ -48,7 +48,7 @@ class RepresentanteController {
 
     /**
      * Método: index()
-     * Rota associada: GET /representantes
+     * Rota associada: GET /admin/representantes
      * Função: Exibe a lista de todos os representantes cadastrados.
      * 
      * Características:
@@ -80,7 +80,7 @@ class RepresentanteController {
 
     /**
      * Método: criar()
-     * Rota associada: GET /representantes/criar
+     * Rota associada: GET /admin/representantes/criar
      * Função: Exibe o formulário em branco para cadastrar um novo representante.
      * 
      * Observação: Apenas carrega a view do formulário. Como não há ID,
@@ -92,7 +92,7 @@ class RepresentanteController {
 
     /**
      * Método: salvar()
-     * Rota associada: POST /representantes/salvar (ou /representantes)
+     * Rota associada: POST /admin/representantes/salvar
      * Função: Processa o envio do formulário (tanto para INSERIR quanto para ATUALIZAR).
      * 
      * Fluxo de decisão:
@@ -102,13 +102,13 @@ class RepresentanteController {
      *   4. Monta um array com todos os campos do formulário.
      *   5. Se existir um 'id' no POST, chama o Model para ATUALIZAR (UPDATE).
      *   6. Senão, chama o Model para INSERIR (INSERT).
-     *   7. Redireciona para a lista principal ao final.
+     *   7. Redireciona para a lista administrativa.
      */
     public function salvar(): void {
         // [SEGURANÇA] Impede que acessem este método via URL digitada (GET).
         // Se não for POST, redireciona para a lista.
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /representantes');
+            header('Location: /admin/representantes');
             exit;
         }
 
@@ -180,15 +180,15 @@ class RepresentanteController {
             $this->model->inserir($dados);
         }
 
-        // Após salvar com sucesso, redireciona o navegador para a lista de representantes.
+        // Após salvar com sucesso, redireciona o navegador para a lista ADMINISTRATIVA.
         // O 'exit' garante que o script pare aqui, evitando execução de código indesejado.
-        header('Location: /representantes');
+        header('Location: /admin/representantes');
         exit;
     }
 
     /**
      * Método: editar(int $id)
-     * Rota associada: GET /representantes/editar/{id}
+     * Rota associada: GET /admin/representantes/editar/{id}
      * Função: Exibe o formulário PREENCHIDO com os dados do representante para edição.
      * 
      * @param int $id ID do representante a ser editado (vindo da URL).
@@ -216,7 +216,7 @@ class RepresentanteController {
 
     /**
      * Método: status(int $id)
-     * Rota associada: GET (ou POST) /representantes/status/{id}
+     * Rota associada: GET /admin/representantes/status/{id}
      * Função: Altera o status 'ativo' do representante (Toggle: inverte 0 para 1, ou 1 para 0).
      * 
      * @param int $id ID do representante.
@@ -226,7 +226,7 @@ class RepresentanteController {
      *   2. Se encontrado, chama o Model para alterar o status.
      *      - Se ativo era 1, muda para 0 (inativa).
      *      - Se ativo era 0, muda para 1 (ativa).
-     *   3. Redireciona para a lista principal.
+     *   3. Redireciona para a lista administrativa.
      */
     public function status(int $id): void {
         // Busca o registro.
@@ -237,28 +237,28 @@ class RepresentanteController {
             $this->model->alterarStatus($id, $r['ativo'] ? 0 : 1);
         }
         
-        // Redireciona de volta para a listagem.
-        header('Location: /representantes');
+        // Redireciona de volta para a listagem administrativa.
+        header('Location: /admin/representantes');
         exit;
     }
 
     /**
      * Método: excluir(int $id)
-     * Rota associada: GET (ou POST) /representantes/excluir/{id}
+     * Rota associada: GET /admin/representantes/excluir/{id}
      * Função: Remove permanentemente o representante do banco de dados (DELETE).
      * 
      * @param int $id ID do representante a ser excluído.
      * 
      * Atenção: Normalmente, em sistemas reais, prefere-se o 'soft delete' (apenas marcar como inativo)
      * para não perder histórico. Este método executa uma exclusão física (hard delete).
-     * Após excluir, redireciona para a lista.
+     * Após excluir, redireciona para a lista administrativa.
      */
     public function excluir(int $id): void {
         // Chama o Model para deletar o registro.
         $this->model->excluir($id);
         
-        // Redireciona para a lista.
-        header('Location: /representantes');
+        // Redireciona para a lista administrativa.
+        header('Location: /admin/representantes');
         exit;
     }
 }

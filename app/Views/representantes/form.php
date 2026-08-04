@@ -56,7 +56,7 @@ $titulo = $modoEdicao ? 'Editar Representante' : 'Novo Representante';
         O método é POST e a ação é '/representantes/salvar' 
         (rota que chama RepresentanteController@salvar).
     -->
-    <form method="POST" action="/representantes/salvar" id="form-representante">
+    <form method="POST" action="/admin/representantes/salvar" id="form-representante">
         <!-- 
             Campo oculto 'id': usado para identificar se é edição.
             Se estiver vazio, o controller entenderá como INSERT (novo).
@@ -222,7 +222,7 @@ $titulo = $modoEdicao ? 'Editar Representante' : 'Novo Representante';
 
         <!-- Botões de ação -->
         <button type="submit">Salvar</button>
-        <a href="/representantes">Cancelar</a>
+        <a href="/admin/representantes">Cancelar</a>
     </form>
 
     <!-- ===================== JAVASCRIPT ===================== -->

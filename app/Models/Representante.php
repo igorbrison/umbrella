@@ -243,4 +243,10 @@ class Representante {
         $stmt = $this->pdo->prepare("DELETE FROM representantes WHERE id = :id");
         return $stmt->execute([':id' => $id]);
     }
+
+    public function buscarPorCnpj(string $cnpj): ?array {
+    $stmt = $this->pdo->prepare("SELECT * FROM representantes WHERE cnpj = :cnpj");
+    $stmt->execute([':cnpj' => $cnpj]);
+    return $stmt->fetch() ?: null;
+}
 }
