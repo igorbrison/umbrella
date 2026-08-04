@@ -5,7 +5,7 @@ require_once __DIR__ . '/ClienteModulo.php';
 
 class TokenRenovacao {
     private \PDO $pdo;
-    const CHAVE_SECRETA = 'UMBRELLA_SECRET_2024'; // mesma chave no app Flutter
+    const CHAVE_SECRETA = 'UMBRELLA_SECRET_2024';
 
     public function __construct() {
         $this->pdo = Database::getInstance();
@@ -34,5 +34,42 @@ class TokenRenovacao {
         $stmt->execute([':cid' => $clienteId, ':token' => $token]);
 
         return $token;
+    }
+
+    // Busca um token não usado
+    public function buscarPorToken(string $token): ?array {
+        $stmt = $this->pdo->prepare("SELECT * FROM tokens_renovacao WHERE token = :token");
+        $stmt->execute([':token' => $token]);
+        return $stmt->fetch() ?: null;
+    }
+
+    // Gera a chave de liberação e marca o token como usado
+    public function gerarChaveLiberacao(string $token): ?string {
+        $registro = $this->buscarPorToken($token);
+        if (!$registro) return null;
+
+        $chave = bin2hex(random_bytes(32));
+        $stmt = $this->pdo->prepare(
+            "UPDATE tokens_renovacao SET chave_liberacao = :chave, usado = 1 WHERE token = :token"
+        );
+        $stmt->execute([':chave' => $chave, ':token' => $token]);
+        return $chave;
+    }
+
+    // Valida se o token e a chave de liberação são válidos para o cliente
+    public function validarLiberacao(int $clienteId, string $token, string $chaveLiberacao): bool {
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM tokens_renovacao 
+             WHERE cliente_id = :cid 
+               AND token = :token 
+               AND chave_liberacao = :chave 
+               AND usado = 1"
+        );
+        $stmt->execute([
+            ':cid' => $clienteId, 
+            ':token' => $token, 
+            ':chave' => $chaveLiberacao
+        ]);
+        return (bool) $stmt->fetch();
     }
 }
