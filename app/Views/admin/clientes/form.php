@@ -1,5 +1,4 @@
 <?php
-// Garante que as variáveis estejam sempre inicializadas
 if (!isset($cliente) || !is_array($cliente)) {
     $cliente = [];
 }
@@ -10,7 +9,8 @@ if (!isset($idsModulosCliente)) {
     $idsModulosCliente = [];
 }
 $modoEdicao = !empty($cliente);
-$titulo = $modoEdicao ? 'Editar Cliente' : 'Novo Cliente';
+$titulo = $modoEdicao ? 'Editar Cliente (Admin)' : 'Novo Cliente';
+$erro = $erro ?? null;
 ?>
 <!DOCTYPE html>
 <html>
@@ -22,12 +22,17 @@ $titulo = $modoEdicao ? 'Editar Cliente' : 'Novo Cliente';
         .grupo { margin: 15px 0; }
         .obrigatorio { color: red; font-weight: bold; margin-left: 3px; }
         .info { font-size: 0.85em; color: #555; margin-left: 5px; }
+        .erro-msg { color: red; font-weight: bold; margin-bottom: 10px; }
         button[type="button"] { margin-left: 5px; }
     </style>
 </head>
 <body>
     <h1><?= $titulo ?></h1>
-    <form method="POST" action="/painel/clientes/salvar" id="form-cliente">
+    <?php if ($erro): ?>
+        <div class="erro-msg"><?= htmlspecialchars($erro) ?></div>
+    <?php endif; ?>
+
+    <form method="POST" action="/admin/clientes/salvar" id="form-cliente">
         <input type="hidden" name="id" value="<?= $modoEdicao ? $cliente['id'] : '' ?>">
 
         <fieldset><legend>Dados do Cliente</legend>
@@ -128,18 +133,19 @@ $titulo = $modoEdicao ? 'Editar Cliente' : 'Novo Cliente';
         </fieldset>
 
         <fieldset class="grupo">
-            <legend>Módulos Contratados</legend>
+            <legend>Módulos Contratados (Admin pode alterar)</legend>
             <?php foreach ($modulos as $m): ?>
                 <label>
                     <input type="checkbox" name="modulos[]" value="<?= $m['id'] ?>"
-                    <?= (in_array($m['identificador'], $idsModulosCliente)) ? 'checked' : '' ?>>
+                    <?= in_array($m['identificador'], $idsModulosCliente) ? 'checked' : '' ?>>
                     <?= htmlspecialchars($m['nome']) ?> (<?= htmlspecialchars($m['identificador']) ?>)
+                    - R$ <?= number_format($m['valor'] ?? 0, 2, ',', '.') ?>
                 </label><br>
             <?php endforeach; ?>
         </fieldset>
 
         <button type="submit">Salvar</button>
-        <a href="/painel/clientes">Cancelar</a>
+        <a href="/admin/licencas">Cancelar</a>
     </form>
 
     <script>
@@ -164,11 +170,9 @@ $titulo = $modoEdicao ? 'Editar Cliente' : 'Novo Cliente';
                 cpfCnpjInput.maxLength = 14;
                 cpfCnpjInput.placeholder = '000.000.000-00';
                 btnBuscarCnpj.style.display = 'none';
-                // IE/RG vira RG
                 textoIeRg.textContent = 'RG';
                 ieRgInput.placeholder = 'RG (até 12 dígitos)';
                 ieRgInput.maxLength = 12;
-                // Esconde campos específicos de PJ
                 labelNomeFantasia.style.display = 'none';
                 nomeFantasiaInput.removeAttribute('required');
                 labelDataFundacao.style.display = 'none';
@@ -177,11 +181,9 @@ $titulo = $modoEdicao ? 'Editar Cliente' : 'Novo Cliente';
                 cpfCnpjInput.maxLength = 18;
                 cpfCnpjInput.placeholder = '00.000.000/0000-00';
                 btnBuscarCnpj.style.display = 'inline-block';
-                // IE/RG vira Inscrição Estadual
                 textoIeRg.textContent = 'Inscrição Estadual';
                 ieRgInput.placeholder = 'Inscrição Estadual (até 14 dígitos)';
                 ieRgInput.maxLength = 14;
-                // Mostra campos PJ
                 labelNomeFantasia.style.display = 'block';
                 nomeFantasiaInput.setAttribute('required', 'required');
                 labelDataFundacao.style.display = 'block';
@@ -203,7 +205,6 @@ $titulo = $modoEdicao ? 'Editar Cliente' : 'Novo Cliente';
         tipoSelect.addEventListener('change', ajustarCamposPessoa);
         ajustarCamposPessoa();
 
-        // Função para converter data dd/mm/aaaa -> yyyy-mm-dd
         function converterData(dataStr) {
             if (!dataStr) return '';
             const partes = dataStr.split('/');
@@ -211,7 +212,6 @@ $titulo = $modoEdicao ? 'Editar Cliente' : 'Novo Cliente';
             return `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
         }
 
-        // Busca CNPJ
         btnBuscarCnpj.addEventListener('click', function() {
             let cnpj = cpfCnpjInput.value.replace(/\D/g, '');
             if (cnpj.length !== 14) {
@@ -248,7 +248,6 @@ $titulo = $modoEdicao ? 'Editar Cliente' : 'Novo Cliente';
                 });
         });
 
-        // Busca CEP
         btnBuscarCep.addEventListener('click', function() {
             let cep = cepInput.value.replace(/\D/g, '');
             if (cep.length !== 8) {

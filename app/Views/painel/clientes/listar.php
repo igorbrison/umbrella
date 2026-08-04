@@ -41,6 +41,7 @@ function setaPainel(string $coluna, string $colAtual, string $dirAtual): string 
             <th><a href="<?= urlOrdenacaoPainel('nome', $colAtual, $dirAtual) ?>">Nome<?= setaPainel('nome', $colAtual, $dirAtual) ?></a></th>
             <th><a href="<?= urlOrdenacaoPainel('cpf_cnpj', $colAtual, $dirAtual) ?>">CPF/CNPJ<?= setaPainel('cpf_cnpj', $colAtual, $dirAtual) ?></a></th>
             <th><a href="<?= urlOrdenacaoPainel('email', $colAtual, $dirAtual) ?>">Email<?= setaPainel('email', $colAtual, $dirAtual) ?></a></th>
+            <th>Valor Total</th>
             <th><a href="<?= urlOrdenacaoPainel('ativo', $colAtual, $dirAtual) ?>">Status<?= setaPainel('ativo', $colAtual, $dirAtual) ?></a></th>
             <th>Ações</th>
         </tr>
@@ -50,6 +51,8 @@ function setaPainel(string $coluna, string $colAtual, string $dirAtual): string 
             <td><?= htmlspecialchars($c['nome']) ?></td>
             <td><?= htmlspecialchars($c['cpf_cnpj']) ?></td>
             <td><?= htmlspecialchars($c['email']) ?></td>
+            <!-- Agora usa o valor total atualizado calculado no controller -->
+            <td>R$ <?= number_format($c['valor_total_atual'] ?? 0, 2, ',', '.') ?></td>
             <td><?= $c['ativo'] ? 'Ativo' : 'Inativo' ?></td>
             <td>
                 <a href="/painel/clientes/editar/<?= $c['id'] ?>" class="btn">Editar</a>

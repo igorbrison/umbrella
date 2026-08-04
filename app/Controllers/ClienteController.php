@@ -1,5 +1,9 @@
 <?php
 require_once __DIR__ . '/../Models/Cliente.php';
+require_once __DIR__ . '/../Models/ClienteModulo.php';
+require_once __DIR__ . '/../Models/Modulo.php';
+require_once __DIR__ . '/../Models/Licenca.php';
+require_once __DIR__ . '/../Models/Database.php'; // para lastInsertId
 use Respect\Validation\Validator as v;
 
 class ClienteController {
@@ -20,6 +24,12 @@ class ClienteController {
         $ordem = $_GET['ordem'] ?? 'id';
         $direcao = $_GET['direcao'] ?? 'asc';
         $clientes = $this->model->listarPorRepresentante($this->representanteId, $ordem, $direcao);
+
+        // Adiciona o valor total atualizado (dinâmico) a cada cliente
+        foreach ($clientes as &$c) {
+            $c['valor_total_atual'] = $this->model->getValorTotalAtual((int)$c['id']);
+        }
+
         $ordenacaoAtual = ['coluna' => $ordem, 'direcao' => $direcao];
         require __DIR__ . '/../Views/painel/clientes/listar.php';
     }
@@ -27,6 +37,9 @@ class ClienteController {
     // Formulário de criação
     public function criar(): void {
         $cliente = [];
+        $moduloModel = new Modulo();
+        $modulos = $moduloModel->listarTodos();
+        $idsModulosCliente = []; // IDs dos módulos já selecionados (vazio)
         require __DIR__ . '/../Views/painel/clientes/form.php';
     }
 
@@ -73,12 +86,32 @@ class ClienteController {
             ':ativo' => isset($_POST['ativo']) ? 1 : 0
         ];
 
+        // Calcula o valor total dos módulos selecionados (apenas na criação)
+        $modulosSelecionados = $_POST['modulos'] ?? [];
+        $moduloModel = new Modulo();
+        $valorTotal = $moduloModel->somaValores($modulosSelecionados);
+
         if (!empty($_POST['id'])) {
+            // --- EDIÇÃO: NÃO sincroniza módulos (representante não pode alterar) ---
             $id = (int)$_POST['id'];
+            unset($dados[':representante_id']);
             $this->model->atualizar($id, $this->representanteId, $dados);
+            // O valor total também não é alterado na edição, pois os módulos permanecem os mesmos.
         } else {
+            // --- NOVO CADASTRO: sincroniza módulos e insere cliente ---
+            $dados[':valor_total'] = $valorTotal;
             $this->model->inserir($dados);
+            $id = (int) Database::getInstance()->lastInsertId();
+
+            // Sincroniza os módulos selecionados para o cliente
+            $cmModel = new ClienteModulo();
+            $cmModel->sincronizar($id, $modulosSelecionados);
         }
+
+        // Gera/renova licença (expiração automática no próximo dia 5)
+        $licencaModel = new Licenca();
+        $chave = $licencaModel->gerarChave();
+        $licencaModel->criarOuAtualizar($id, $chave);
 
         header('Location: /painel/clientes');
         exit;
@@ -91,6 +124,11 @@ class ClienteController {
             echo "Cliente não encontrado.";
             exit;
         }
+        $moduloModel = new Modulo();
+        $modulos = $moduloModel->listarTodos();
+        $cmModel = new ClienteModulo();
+        $modulosCliente = $cmModel->getModulosDoCliente($id);
+        $idsModulosCliente = array_column($modulosCliente, 'identificador');
         require __DIR__ . '/../Views/painel/clientes/form.php';
     }
 

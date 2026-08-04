@@ -18,6 +18,7 @@ CREATE TABLE clientes (
     estado CHAR(2) DEFAULT NULL,
     municipio VARCHAR(80) DEFAULT NULL,
     observacoes TEXT DEFAULT NULL,
+    valor_total DECIMAL(10,2) DEFAULT 0.00,
     ativo TINYINT(1) DEFAULT 1,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (representante_id) REFERENCES representantes(id) ON DELETE CASCADE

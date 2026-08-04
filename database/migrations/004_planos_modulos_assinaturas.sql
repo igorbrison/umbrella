@@ -9,10 +9,12 @@ CREATE TABLE planos (
 );
 
 -- Módulos (funcionalidades do sistema de automação)
+-- ATUALIZADO: adicionada a coluna 'valor' para precificação individual de cada módulo.
 CREATE TABLE modulos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     identificador VARCHAR(50) NOT NULL UNIQUE,
     nome VARCHAR(80) NOT NULL,
+    valor DECIMAL(10,2) DEFAULT 0.00,
     descricao TEXT,
     ativo TINYINT(1) DEFAULT 1
 );

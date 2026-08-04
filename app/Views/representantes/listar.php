@@ -56,6 +56,9 @@ function seta(string $coluna, string $colAtual, string $dirAtual): string {
     <h1>Representantes</h1>
     <!-- Botão para cadastrar novo representante -->
     <a href="/admin/representantes/criar" class="btn">Novo Representante</a>
+    <a href="/admin/modulos" class="btn">Módulos</a>
+    <a href="/admin/licencas" class="btn">Licenças</a>
+    
 
     <!-- Tabela de representantes com ordenação clicável -->
     <table>
