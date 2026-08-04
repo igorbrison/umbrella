@@ -1,4 +1,4 @@
--- Planos disponíveis para contratação
+-- Planos (ainda não utilizados no front-end, mas tabela existe)
 CREATE TABLE planos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(80) NOT NULL,
@@ -8,18 +8,17 @@ CREATE TABLE planos (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Módulos (funcionalidades do sistema de automação)
--- ATUALIZADO: adicionada a coluna 'valor' para precificação individual de cada módulo.
+-- Módulos (com percentual do salário mínimo)
 CREATE TABLE modulos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     identificador VARCHAR(50) NOT NULL UNIQUE,
     nome VARCHAR(80) NOT NULL,
-    valor DECIMAL(10,2) DEFAULT 0.00,
+    percentual_salario_minimo DECIMAL(5,2) DEFAULT NULL,
     descricao TEXT,
     ativo TINYINT(1) DEFAULT 1
 );
 
--- Relacionamento: quais módulos cada plano oferece
+-- Relacionamento planos x módulos
 CREATE TABLE planos_modulos (
     plano_id INT NOT NULL,
     modulo_id INT NOT NULL,
@@ -28,7 +27,7 @@ CREATE TABLE planos_modulos (
     FOREIGN KEY (modulo_id) REFERENCES modulos(id) ON DELETE CASCADE
 );
 
--- Assinaturas dos representantes a um plano
+-- Assinaturas (ainda não utilizadas, mas estruturadas)
 CREATE TABLE assinaturas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     representante_id INT NOT NULL,

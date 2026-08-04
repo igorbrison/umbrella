@@ -18,11 +18,11 @@ CREATE TABLE licencas (
     FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
 );
 
--- Tokens para renovação offline (histórico)
+-- Tokens para renovação offline
 CREATE TABLE tokens_renovacao (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cliente_id INT NOT NULL,
-    token TEXT NOT NULL,                -- alterado de VARCHAR(32) para TEXT (comporta token base64 + assinatura)
+    token TEXT NOT NULL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
 );
