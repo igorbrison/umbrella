@@ -42,7 +42,8 @@ function seta(string $coluna, string $colAtual, string $dirAtual): string {
 <head>
     <meta charset="UTF-8">
     <title>Representantes</title>
-    <!-- Estilos simples para a tabela e botões -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Estilos simples para a tabela e botões
     <style>
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ccc; padding: 8px; }
@@ -50,7 +51,7 @@ function seta(string $coluna, string $colAtual, string $dirAtual): string {
         th a { text-decoration: none; color: inherit; display: block; }
         th a:hover { text-decoration: underline; }
         .btn { padding: 5px 10px; text-decoration: none; background: #eee; border:1px solid #aaa; border-radius:3px; }
-    </style>
+    </style> -->
 </head>
 <body>
     <h1>Representantes</h1>

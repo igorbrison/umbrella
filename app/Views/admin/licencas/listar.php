@@ -11,6 +11,8 @@ unset($_SESSION['token_gerado'], $_SESSION['erro_token']);
 <head>
     <meta charset="UTF-8">
     <title>Gerenciar Licenças (Admin)</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <!--
     <style>
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ccc; padding: 8px; }
@@ -20,6 +22,7 @@ unset($_SESSION['token_gerado'], $_SESSION['erro_token']);
         .alerta { color: orange; font-weight: bold; }
         .ativa { color: green; }
     </style>
+-->
 </head>
 <body>
     <h1>Licenças (Admin)</h1>

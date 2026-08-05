@@ -17,6 +17,8 @@ $titulo = $modoEdicao ? 'Editar Cliente' : 'Novo Cliente';
 <head>
     <meta charset="UTF-8">
     <title><?= $titulo ?></title>
+ <link rel="stylesheet" href="/css/style.css">
+ <!--
     <style>
         label { display: block; margin-top: 10px; }
         .grupo { margin: 15px 0; }
@@ -24,6 +26,7 @@ $titulo = $modoEdicao ? 'Editar Cliente' : 'Novo Cliente';
         .info { font-size: 0.85em; color: #555; margin-left: 5px; }
         button[type="button"] { margin-left: 5px; }
     </style>
+-->
 </head>
 <body>
     <h1><?= $titulo ?></h1>

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Login Representante</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <h1>Área do Representante</h1>

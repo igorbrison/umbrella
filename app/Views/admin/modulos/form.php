@@ -28,11 +28,14 @@ if ($modoEdicao && isset($modulo['percentual_salario_minimo']) && $modulo['perce
 <head>
     <meta charset="UTF-8">
     <title><?= $titulo ?></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <!--
     <style>
         label { display: block; margin-top: 10px; }
         .obrigatorio { color: red; font-weight: bold; margin-left: 3px; }
         .info { font-size: 0.85em; color: #555; margin-left: 5px; }
     </style>
+-->
 </head>
 <body>
     <h1><?= $titulo ?></h1>

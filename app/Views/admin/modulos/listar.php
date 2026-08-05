@@ -20,6 +20,8 @@ function setaModulos(string $coluna, string $colAtual, string $dirAtual): string
 <head>
     <meta charset="UTF-8">
     <title>Gerenciar Módulos</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <!--
     <style>
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ccc; padding: 8px; }
@@ -28,6 +30,7 @@ function setaModulos(string $coluna, string $colAtual, string $dirAtual): string
         th a:hover { text-decoration: underline; }
         .btn { padding: 5px 10px; text-decoration: none; background: #eee; border:1px solid #aaa; border-radius:3px; margin-right: 5px; }
     </style>
+-->
 </head>
 <body>
     <h1>Módulos</h1>

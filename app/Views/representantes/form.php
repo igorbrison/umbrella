@@ -39,14 +39,16 @@ $titulo = $modoEdicao ? 'Editar Representante' : 'Novo Representante';
 <head>
     <meta charset="UTF-8">
     <title><?= $titulo ?></title>
-    <style>
+
+    <link rel="stylesheet" href="/css/style.css">
+   <!-- <style>
         /* Estilos básicos para labels, grupos, campos obrigatórios e informações */
         label { display: block; margin-top: 10px; }
         .grupo { margin: 15px 0; }
         button[type="button"] { margin-left: 5px; }
         .obrigatorio { color: red; font-weight: bold; margin-left: 3px; }
         .info { font-size: 0.85em; color: #555; margin-left: 5px; }
-    </style>
+    </style> -->
 </head>
 <body>
     <h1><?= $titulo ?></h1>

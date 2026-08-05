@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
-<head><title>Esqueci minha senha</title></head>
+<head><title>Esqueci minha senha</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+
 <body>
     <h1>Recuperar senha</h1>
     <form method="POST" action="/forgot-password">
