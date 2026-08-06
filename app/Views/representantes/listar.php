@@ -12,32 +12,20 @@
 
 // Título da página (aparecerá na aba do navegador)
 $titulo = 'Representantes';
+require __DIR__ . '/../partials/dashboard_header.php';
 
-// Inclui o cabeçalho comum (HTML, CSS, favicon)
-require __DIR__ . '/../partials/header.php';
-
-// Garante que $representantes seja sempre um array, evitando avisos de análise estática
 if (!isset($representantes) || !is_array($representantes)) {
     $representantes = [];
 }
 
-// Captura a coluna e direção atuais da ordenação, enviadas pelo Controller
 $colAtual = $ordenacaoAtual['coluna'] ?? 'id';
 $dirAtual = $ordenacaoAtual['direcao'] ?? 'asc';
 
-/**
- * Função auxiliar: gera a URL de ordenação para cada cabeçalho da tabela.
- * - Se a coluna clicada já está ativa, alterna a direção (asc <-> desc).
- * - Caso contrário, inicia sempre com ascendente.
- */
 function urlOrdenacao(string $coluna, string $colAtual, string $dirAtual): string {
     $novaDirecao = ($coluna === $colAtual && $dirAtual === 'asc') ? 'desc' : 'asc';
     return "?ordem=$coluna&direcao=$novaDirecao";
 }
 
-/**
- * Função auxiliar: exibe uma seta indicativa (▲ ou ▼) ao lado da coluna atualmente ordenada.
- */
 function seta(string $coluna, string $colAtual, string $dirAtual): string {
     if ($coluna !== $colAtual) return '';
     return $dirAtual === 'asc' ? ' ▲' : ' ▼';
@@ -45,12 +33,10 @@ function seta(string $coluna, string $colAtual, string $dirAtual): string {
 ?>
 
 <h1>Representantes</h1>
-<!-- Botão para cadastrar novo representante -->
 <a href="/admin/representantes/criar" class="btn">Novo Representante</a>
 <a href="/admin/modulos" class="btn">Módulos</a>
 <a href="/admin/licencas" class="btn">Licenças</a>
 
-<!-- Tabela de representantes com ordenação clicável -->
 <table>
     <tr>
         <th><a href="<?= urlOrdenacao('id', $colAtual, $dirAtual) ?>">ID<?= seta('id', $colAtual, $dirAtual) ?></a></th>
@@ -72,16 +58,12 @@ function seta(string $coluna, string $colAtual, string $dirAtual): string {
         <td><?= $r['comissao_percentual'] !== null ? number_format($r['comissao_percentual'], 2, ',', '.') . '%' : '-' ?></td>
         <td><?= $r['ativo'] ? 'Ativo' : 'Inativo' ?></td>
         <td>
-            <!-- Link para Editar -->
             <a href="/admin/representantes/editar/<?= $r['id'] ?>" class="btn">Editar</a>
-            <!-- Link para Ativar/Desativar (toggle) -->
             <a href="/admin/representantes/status/<?= $r['id'] ?>" class="btn"><?= $r['ativo'] ? 'Desativar' : 'Ativar' ?></a>
-            <!-- Link para Excluir (com confirmação) -->
             <a href="/admin/representantes/excluir/<?= $r['id'] ?>" class="btn" onclick="return confirm('Tem certeza?')">Excluir</a>
         </td>
     </tr>
     <?php endforeach; ?>
 </table>
 
-</body>
-</html>
+<?php require __DIR__ . '/../partials/dashboard_footer.php'; ?>

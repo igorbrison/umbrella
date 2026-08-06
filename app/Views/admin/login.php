@@ -25,7 +25,7 @@ require __DIR__ . '/../partials/header.php';
         <form method="POST" action="/admin/login">
             <div class="input-group">
                 <label for="email">
-                    <input type="email" id="email" name="email" placeholder="Digite seu e-mail" required>
+                    <input type="email" id="email" name="email" placeholder="Digite seu nome de usuário" required>
                 </label>
             </div>
             <div class="input-group">

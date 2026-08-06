@@ -1,14 +1,47 @@
 <?php
+/**
+ * Arquivo: Models/Cliente.php
+ * Função: Model da entidade "Cliente".
+ * 
+ * Responsável por:
+ *   - Gerenciar todas as operações de banco de dados relacionadas aos clientes.
+ *   - Oferecer métodos de listagem, busca, inserção, atualização e exclusão.
+ *   - Calcular o valor total atual do cliente com base nos módulos contratados
+ *     e no salário mínimo vigente.
+ *   - Permitir operações administrativas (sem restrição de representante).
+ * 
+ * Conexão: Utiliza o Singleton Database para obter uma instância PDO única.
+ */
+
 require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/Configuracao.php';
 
 class Cliente {
+    
+    /**
+     * @var \PDO $pdo
+     * Instância do PDO para executar consultas SQL.
+     */
     private \PDO $pdo;
 
+    /**
+     * Construtor da classe.
+     * Obtém a instância única do banco de dados via Database::getInstance().
+     */
     public function __construct() {
         $this->pdo = Database::getInstance();
     }
 
+    /**
+     * Lista todos os clientes vinculados a um representante, com ordenação.
+     * 
+     * @param int $representanteId ID do representante.
+     * @param string $ordem Coluna para ordenação (padrão: 'id').
+     * @param string $direcao Direção da ordenação: 'asc' ou 'desc' (padrão: 'asc').
+     * @return array Lista de clientes.
+     * 
+     * SEGURANÇA: Utiliza lista branca de colunas para evitar SQL Injection.
+     */
     public function listarPorRepresentante(int $representanteId, string $ordem = 'id', string $direcao = 'asc'): array {
         $colunasPermitidas = ['id', 'nome', 'cpf_cnpj', 'email', 'ativo'];
         if (!in_array($ordem, $colunasPermitidas)) {
@@ -21,6 +54,13 @@ class Cliente {
         return $stmt->fetchAll();
     }
 
+    /**
+     * Busca um cliente pelo ID, validando o representante vinculado.
+     * 
+     * @param int $id ID do cliente.
+     * @param int $representanteId ID do representante dono do cliente.
+     * @return array|null Dados do cliente ou null se não encontrado.
+     */
     public function buscarPorId(int $id, int $representanteId): ?array {
         $stmt = $this->pdo->prepare("SELECT * FROM clientes WHERE id = :id AND representante_id = :rid");
         $stmt->execute([':id' => $id, ':rid' => $representanteId]);
@@ -29,6 +69,9 @@ class Cliente {
 
     /**
      * Busca cliente por ID sem restrição de representante (uso administrativo).
+     * 
+     * @param int $id ID do cliente.
+     * @return array|null Dados do cliente ou null se não encontrado.
      */
     public function buscarPorIdAdmin(int $id): ?array {
         $stmt = $this->pdo->prepare("SELECT * FROM clientes WHERE id = :id");
@@ -36,6 +79,12 @@ class Cliente {
         return $stmt->fetch() ?: null;
     }
 
+    /**
+     * Insere um novo cliente no banco de dados.
+     * 
+     * @param array $dados Array associativo com os dados do cliente.
+     * @return bool True se a inserção for bem-sucedida.
+     */
     public function inserir(array $dados): bool {
         $sql = "INSERT INTO clientes 
                 (representante_id, tipo_pessoa, cpf_cnpj, ie_rg, nome, nome_fantasia,
@@ -49,6 +98,14 @@ class Cliente {
         return $stmt->execute($dados);
     }
 
+    /**
+     * Atualiza os dados de um cliente (uso pelo representante).
+     * 
+     * @param int $id ID do cliente.
+     * @param int $representanteId ID do representante dono do cliente.
+     * @param array $dados Array associativo com os dados a atualizar.
+     * @return bool True se a atualização for bem-sucedida.
+     */
     public function atualizar(int $id, int $representanteId, array $dados): bool {
         $dados[':id'] = $id;
         $dados[':rid'] = $representanteId;
@@ -65,6 +122,10 @@ class Cliente {
 
     /**
      * Atualiza cliente sem restrição de representante (uso administrativo).
+     * 
+     * @param int $id ID do cliente.
+     * @param array $dados Array associativo com os dados a atualizar.
+     * @return bool True se a atualização for bem-sucedida.
      */
     public function atualizarAdmin(int $id, array $dados): bool {
         $dados[':id'] = $id;
@@ -79,6 +140,12 @@ class Cliente {
         return $stmt->execute($dados);
     }
 
+    /**
+     * Atualiza apenas o campo valor_total de um cliente.
+     * 
+     * @param int $id ID do cliente.
+     * @param float $valor Novo valor total.
+     */
     public function atualizarValorTotal(int $id, float $valor): void {
         $stmt = $this->pdo->prepare("UPDATE clientes SET valor_total = :val WHERE id = :id");
         $stmt->execute([':val' => $valor, ':id' => $id]);
@@ -87,6 +154,9 @@ class Cliente {
     /**
      * Calcula o valor total atual do cliente, baseado nos módulos contratados
      * e no salário mínimo em vigor.
+     * 
+     * @param int $clienteId ID do cliente.
+     * @return float Valor total calculado.
      */
     public function getValorTotalAtual(int $clienteId): float {
         $sql = "SELECT SUM(m.percentual_salario_minimo) as soma_percentual
@@ -104,6 +174,16 @@ class Cliente {
         return round($salarioMinimo * $somaPercentual / 100, 2);
     }
 
+    /**
+     * Exclui um cliente (hard delete).
+     * 
+     * @param int $id ID do cliente.
+     * @param int $representanteId ID do representante dono do cliente.
+     * @return bool True se a exclusão for bem-sucedida.
+     * 
+     * ATENÇÃO: Esta operação é irreversível. Em sistemas críticos, considere
+     * usar 'soft delete' (apenas marcar como inativo) em vez de exclusão física.
+     */
     public function excluir(int $id, int $representanteId): bool {
         $stmt = $this->pdo->prepare("DELETE FROM clientes WHERE id = :id AND representante_id = :rid");
         return $stmt->execute([':id' => $id, ':rid' => $representanteId]);

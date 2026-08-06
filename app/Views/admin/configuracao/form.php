@@ -19,7 +19,7 @@ if (!isset($salarioMinimo)) {
 $titulo = 'Configuração - Salário Mínimo';
 
 // Inclui o cabeçalho comum (HTML, CSS, favicon)
-require __DIR__ . '/../partials/header.php';
+require __DIR__ . '/../partials/dashboard_header.php';
 ?>
 
 <h1>Salário Mínimo Atual</h1>
@@ -32,5 +32,4 @@ require __DIR__ . '/../partials/header.php';
     <button type="submit">Atualizar</button>
 </form>
 
-</body>
-</html>
+<?php require __DIR__ . '/../partials/dashboard_footer.php'; ?>

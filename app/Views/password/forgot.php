@@ -17,24 +17,43 @@ $titulo = 'Recuperar Senha';
 require __DIR__ . '/../partials/header.php';
 ?>
 
-<h1>Recuperar senha</h1>
+<div class="login-wrapper">
+    <img src="/img/logo-sem-fundo.png" alt="Logo Umbrella" class="logo">
+    <div class="login-card">
+        <h1>Recuperar senha</h1>
+        <p class="subtitle">Informe seu e-mail para receber o link de redefinição</p>
 
-<!-- FORMULÁRIO DE RECUPERAÇÃO -->
-<!-- Envia os dados via POST para a rota /forgot-password -->
-<form method="POST" action="/forgot-password">
-    <label>Email:
-        <input type="email" name="email" required>
-    </label>
-    
-    <label>Tipo de usuário:
-        <select name="tipo">
-            <option value="representante">Representante</option>
-            <option value="admin">Administrador</option>
-        </select>
-    </label>
+        <form method="POST" action="/forgot-password">
+            <div class="input-group">
+                <label for="email">
+                    <input type="email" id="email" name="email" placeholder="Digite seu e-mail" required>
+                </label>
+            </div>
 
-    <button type="submit">Enviar link de recuperação</button>
-</form>
+            <div class="input-group">
+                <label for="tipo">Tipo de usuário</label>
+                <select name="tipo" id="tipo" class="form-select" required>
+                    <option value="representante">Representante</option>
+                    <option value="admin">Administrador</option>
+                </select>
+            </div>
 
+            <button type="submit" class="btn-entrar">Enviar link de recuperação</button>
+        </form>
+
+        <div class="links-uteis">
+            <a href="/login" class="esqueci-senha">Voltar para o login</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 2026 UMBRELLA - Todos os direitos reservados</p>
+    </div>
+</div>
+
+<?php
+// Não inclui footer.php porque o header.php já abre e fecha as tags HTML
+// O fechamento é feito aqui mesmo
+?>
 </body>
 </html>

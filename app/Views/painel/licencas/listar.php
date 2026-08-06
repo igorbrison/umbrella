@@ -24,7 +24,7 @@ if (!isset($licencas) || !is_array($licencas)) {
 $titulo = 'Licenças dos Meus Clientes';
 
 // Inclui o cabeçalho comum (HTML, CSS, favicon)
-require __DIR__ . '/../../partials/header.php';
+require __DIR__ . '/../../partials/dashboard_header.php';
 ?>
 
 <h1>Licenças dos Meus Clientes</h1>
@@ -69,5 +69,4 @@ require __DIR__ . '/../../partials/header.php';
     <?php endforeach; ?>
 </table>
 
-</body>
-</html>
+<?php require __DIR__ . '/../../partials/dashboard_footer.php'; ?>

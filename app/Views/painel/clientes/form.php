@@ -36,7 +36,7 @@ $modoEdicao = !empty($cliente);
 $titulo = $modoEdicao ? 'Editar Cliente' : 'Novo Cliente';
 
 // Inclui o cabeçalho comum (HTML, CSS, favicon)
-require __DIR__ . '/../../partials/header.php';
+require __DIR__ . '/../../partials/dashboard_header.php';
 ?>
 
 <h1><?= $titulo ?></h1>
@@ -321,5 +321,5 @@ require __DIR__ . '/../../partials/header.php';
             });
     });
 </script>
-</body>
-</html>
+
+<?php require __DIR__ . '/../../partials/dashboard_footer.php'; ?>

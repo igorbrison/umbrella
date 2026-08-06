@@ -1,4 +1,25 @@
 <?php
+/**
+ * Arquivo: Controllers/ClienteController.php
+ * Função: Controlador de gestão de clientes (painel do representante).
+ * 
+ * Responsável por:
+ *   - Listar os clientes vinculados ao representante logado.
+ *   - Exibir formulários de criação e edição de clientes.
+ *   - Processar o cadastro de novos clientes (com módulos e valor total).
+ *   - Processar a edição de clientes existentes (sem alterar módulos).
+ *   - Excluir clientes do representante.
+ *   - Gerar/renovar a licença automaticamente ao cadastrar um cliente.
+ * 
+ * Regras de negócio:
+ *   - O representante só vê e gerencia seus próprios clientes.
+ *   - A criação de cliente permite selecionar módulos.
+ *   - A edição NÃO permite alterar os módulos (restrito ao admin).
+ *   - O valor total é calculado com base nos módulos e salário mínimo.
+ * 
+ * Acesso: Rotas protegidas pelo middleware inline no grupo /painel.
+ */
+
 require_once __DIR__ . '/../Models/Cliente.php';
 require_once __DIR__ . '/../Models/ClienteModulo.php';
 require_once __DIR__ . '/../Models/Modulo.php';
@@ -7,9 +28,24 @@ require_once __DIR__ . '/../Models/Database.php'; // para lastInsertId
 use Respect\Validation\Validator as v;
 
 class ClienteController {
+    
+    /**
+     * @var Cliente $model
+     * Instância do Model Cliente para operações de banco de dados.
+     */
     private Cliente $model;
+    
+    /**
+     * @var int $representanteId
+     * ID do representante logado (obtido da sessão).
+     */
     private int $representanteId;
 
+    /**
+     * Construtor da classe.
+     * Verifica a autenticação do representante e inicializa o Model.
+     * Redireciona para /login se não houver sessão ativa.
+     */
     public function __construct() {
         if (!isset($_SESSION['representante_id'])) {
             header('Location: /login');
@@ -19,10 +55,21 @@ class ClienteController {
         $this->representanteId = $_SESSION['representante_id'];
     }
 
-    // Listagem dos clientes do representante logado
+    // ============================================================
+    // 1. LISTAR CLIENTES
+    // ============================================================
+    /**
+     * Lista todos os clientes do representante logado.
+     * Inclui o valor total atualizado (calculado dinamicamente com base
+     * no salário mínimo vigente e nos módulos contratados).
+     * 
+     * Suporta ordenação por coluna clicável (id, nome, cpf_cnpj, email, ativo).
+     */
     public function index(): void {
         $ordem = $_GET['ordem'] ?? 'id';
         $direcao = $_GET['direcao'] ?? 'asc';
+        
+        // Busca os clientes do representante
         $clientes = $this->model->listarPorRepresentante($this->representanteId, $ordem, $direcao);
 
         // Adiciona o valor total atualizado (dinâmico) a cada cliente
@@ -34,7 +81,13 @@ class ClienteController {
         require __DIR__ . '/../Views/painel/clientes/listar.php';
     }
 
-    // Formulário de criação
+    // ============================================================
+    // 2. EXIBIR FORMULÁRIO DE CRIAÇÃO
+    // ============================================================
+    /**
+     * Exibe o formulário em branco para cadastrar um novo cliente.
+     * Carrega a lista de todos os módulos disponíveis para seleção.
+     */
     public function criar(): void {
         $cliente = [];
         $moduloModel = new Modulo();
@@ -43,7 +96,22 @@ class ClienteController {
         require __DIR__ . '/../Views/painel/clientes/form.php';
     }
 
-    // Processa o formulário (criação ou edição)
+    // ============================================================
+    // 3. PROCESSAR FORMULÁRIO (CRIAÇÃO OU EDIÇÃO)
+    // ============================================================
+    /**
+     * Processa o envio do formulário de cliente.
+     * 
+     * Fluxo:
+     *   - Valida o CPF ou CNPJ usando a biblioteca Respect\Validation.
+     *   - Se for EDIÇÃO (id presente):
+     *       • Atualiza os dados básicos do cliente.
+     *       • NÃO sincroniza módulos (representante não pode alterar).
+     *   - Se for CRIAÇÃO (sem id):
+     *       • Insere o novo cliente com o valor total calculado.
+     *       • Sincroniza os módulos selecionados.
+     *   - Gera/renova a licença automaticamente (expiração no próximo dia 5).
+     */
     public function salvar(): void {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /painel/clientes');
@@ -53,6 +121,7 @@ class ClienteController {
         $tipo = $_POST['tipo_pessoa'];
         $cpfCnpj = preg_replace('/\D/', '', $_POST['cpf_cnpj']);
 
+        // Validação do CPF ou CNPJ
         try {
             if ($tipo === 'F') {
                 v::cpf()->check($cpfCnpj);
@@ -64,6 +133,7 @@ class ClienteController {
             exit;
         }
 
+        // Monta o array de dados do cliente
         $dados = [
             ':representante_id' => $this->representanteId,
             ':tipo_pessoa' => $tipo,
@@ -117,7 +187,16 @@ class ClienteController {
         exit;
     }
 
-    // Formulário de edição
+    // ============================================================
+    // 4. EXIBIR FORMULÁRIO DE EDIÇÃO
+    // ============================================================
+    /**
+     * Carrega o formulário de edição com os dados atuais do cliente.
+     * Exibe os módulos já contratados de forma somente leitura
+     * (o representante não pode alterá-los).
+     * 
+     * @param int $id ID do cliente a ser editado.
+     */
     public function editar(int $id): void {
         $cliente = $this->model->buscarPorId($id, $this->representanteId);
         if (!$cliente) {
@@ -132,7 +211,17 @@ class ClienteController {
         require __DIR__ . '/../Views/painel/clientes/form.php';
     }
 
-    // Excluir cliente
+    // ============================================================
+    // 5. EXCLUIR CLIENTE
+    // ============================================================
+    /**
+     * Exclui permanentemente um cliente do representante (hard delete).
+     * 
+     * @param int $id ID do cliente a ser excluído.
+     * 
+     * ATENÇÃO: Esta operação é irreversível. Em sistemas críticos, considere
+     * usar 'soft delete' (apenas marcar como inativo) em vez de exclusão física.
+     */
     public function excluir(int $id): void {
         $this->model->excluir($id, $this->representanteId);
         header('Location: /painel/clientes');

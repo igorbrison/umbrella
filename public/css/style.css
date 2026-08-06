@@ -1,13 +1,13 @@
-/* Reset básico */
+/* ==================== TELAS DE LOGIN (centralizadas) ==================== */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-body {
+body:not(.dashboard) {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f0f4f8;  /* fundo suave */
+    background: #f0f4f8;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -15,13 +15,8 @@ body {
     margin: 0;
     padding: 20px;
 }
-.logo {
-    width: 75%;
-    height: 75%;
-    margin: 15px;
-}
-/* Wrapper central */
-.login-wrapper, logo {
+
+.login-wrapper {
     width: 100%;
     max-width: 420px;
     display: flex;
@@ -29,33 +24,29 @@ body {
     align-items: center;
 }
 
-/* Cartão de login */
 .login-card {
     background: #ffffff;
     padding: 40px 32px 32px;
     border-radius: 16px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     width: 100%;
-    transition: 0.3s;
-}
-.login-card h1, p {
-    text-align: center;
 }
 
-h1 {
+.login-card h1 {
     font-size: 28px;
     font-weight: 600;
     color: #1a1a1a;
     margin-bottom: 4px;
+    text-align: center;
 }
 
-.subtitle {
+.login-card .subtitle {
     font-size: 15px;
     color: #666;
     margin-bottom: 28px;
+    text-align: center;
 }
 
-/* Campos do formulário */
 .input-group {
     margin-bottom: 20px;
     text-align: left;
@@ -86,7 +77,6 @@ h1 {
     background: #fff;
 }
 
-/* Botão */
 .btn-entrar {
     width: 100%;
     padding: 14px;
@@ -105,14 +95,8 @@ h1 {
     background: #1d4ed8;
 }
 
-.btn-entrar:active {
-    transform: scale(0.97);
-}
-
-/* Link "Esqueci minha senha" */
 .links-uteis {
     margin-top: 16px;
-    text-align: right;
     text-align: center;
 }
 
@@ -123,48 +107,6 @@ h1 {
     font-weight: 500;
 }
 
-.esqueci-senha:hover {
-    text-decoration: underline;
-}
-
-/* Links adicionais (Login Representante, Representantes, CMM Web, Peça ao Gemini) */
-.nav-links {
-    margin-top: 28px;
-    padding-top: 20px;
-    border-top: 1px solid #e9edf2;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px 18px;
-}
-
-.nav-links a {
-    font-size: 14px;
-    color: #4b5563;
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.2s;
-}
-
-.nav-links a:hover {
-    color: #2563eb;
-}
-
-/* Destaque para "Peça ao Gemini" (pode ser um badge) */
-.nav-links a.gemini {
-    background: #f3f4f6;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    color: #1f2937;
-}
-
-.nav-links a.gemini:hover {
-    background: #e5e7eb;
-    color: #111827;
-}
-
-/* Rodapé */
 .footer {
     margin-top: 24px;
     font-size: 13px;
@@ -176,40 +118,270 @@ h1 {
     margin: 0;
 }
 
-/* Responsivo */
-@media (max-width: 480px) {
-    .login-card {
-        padding: 28px 18px;
+.logo {
+    width: 75%;
+    height: 75%;
+    margin: 15px;
+}
+
+/* Estilo para redefinição de senha */
+.form-select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    font-size: 15px;
+    background: #fafbfc;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: auto;
+    cursor: pointer;
+}
+
+.form-select:focus {
+    border-color: #2563eb;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    background: #fff;
+}
+
+/* ==================== LAYOUT DO DASHBOARD ==================== */
+
+/* Remove o estilo centralizado do body para páginas internas */
+body.dashboard {
+    background: #f0f4f8;
+    display: block;
+    padding: 0;
+    min-height: 100vh;
+}
+
+/* Barra superior */
+.topbar {
+    background: #1a2a3a;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+    height: 64px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.topbar-logo {
+    height: 40px;
+    width: auto;
+}
+
+.topbar-title {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.topbar-user {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.topbar-logout {
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    background: rgba(255,255,255,0.1);
+    padding: 6px 14px;
+    border-radius: 20px;
+    transition: background 0.2s;
+}
+
+.topbar-logout:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Wrapper do dashboard (sidebar + conteúdo) */
+.dashboard-wrapper {
+    display: flex;
+    margin-top: 64px; /* altura da topbar */
+    min-height: calc(100vh - 64px);
+}
+
+/* Menu lateral */
+.sidebar {
+    width: 240px;
+    background: #ffffff;
+    border-right: 1px solid #e0e5ec;
+    padding: 20px 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+    height: calc(100vh - 64px);
+    position: sticky;
+    top: 64px;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu li {
+    padding: 0;
+}
+
+.sidebar-menu li a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    color: #2c3e50;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-menu li a:hover {
+    background: #f0f4f8;
+    color: #1a2a3a;
+    border-left-color: #2563eb;
+}
+
+.sidebar-menu li a i {
+    width: 20px;
+    text-align: center;
+    color: #5a6c7e;
+}
+
+.sidebar-menu li a:hover i {
+    color: #2563eb;
+}
+
+.sidebar-menu .menu-divider {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #9aa6b5;
+    padding: 16px 24px 6px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    pointer-events: none;
+}
+
+/* Área de conteúdo principal */
+.main-content {
+    flex: 1;
+    padding: 30px 32px;
+    background: #f0f4f8;
+    overflow-y: auto;
+}
+
+/* Ajuste para tabelas e formulários dentro do conteúdo */
+.main-content table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.main-content table th {
+    background: #f8fafc;
+    text-align: left;
+    padding: 12px 16px;
+    font-weight: 600;
+    color: #1a2a3a;
+    border-bottom: 2px solid #e0e5ec;
+}
+
+.main-content table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.main-content table tr:hover {
+    background: #fafbfc;
+}
+
+.main-content .btn {
+    display: inline-block;
+    padding: 6px 14px;
+    background: #eef2f7;
+    color: #1a2a3a;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.15s;
+    margin: 2px 4px 2px 0;
+}
+
+.main-content .btn:hover {
+    background: #d5dce6;
+}
+
+.main-content h1 {
+    margin-top: 0;
+    font-size: 26px;
+    color: #1a2a3a;
+    border-bottom: 2px solid #e0e5ec;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+}
+
+.main-content fieldset {
+    background: #fff;
+    border: 1px solid #e0e5ec;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+}
+
+.main-content legend {
+    font-weight: 600;
+    padding: 0 8px;
+    color: #1a2a3a;
+}
+
+/* Responsivo: esconder menu em telas pequenas (mobile) */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 60px;
+        padding: 12px 0;
     }
-    .nav-links {
-        gap: 8px 12px;
+    .sidebar-menu li a {
+        padding: 12px 16px;
+        justify-content: center;
+        font-size: 0;
     }
-    .nav-links a {
-        font-size: 13px;
+    .sidebar-menu li a i {
+        font-size: 20px;
+        width: auto;
     }
-}
-
-.mensagem.sucesso {
-    background: #dff0d8;
-    border: 1px solid #3c763d;
-    padding: 10px;
-    margin: 10px 0;
-}
-.mensagem.erro {
-    background: #f2dede;
-    border: 1px solid #a94442;
-    padding: 10px;
-    margin: 10px 0;
-}
-
-.expirada {
-    color: red; font-weight: bold;
-}
-
-.alerta {
-    color: orange; font-weight: bold;
-}
-
-.ativa {
-    color: green;
+    .sidebar-menu .menu-divider {
+        display: none;
+    }
+    .main-content {
+        padding: 16px;
+    }
+    .topbar-title {
+        display: none;
+    }
 }

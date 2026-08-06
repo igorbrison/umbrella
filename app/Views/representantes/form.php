@@ -36,7 +36,7 @@ $titulo = $modoEdicao ? 'Editar Representante' : 'Novo Representante';
 
 // 2. INCLUI O CABEÇALHO PADRÃO (HTML, CSS, favicon)
 // --------------------------------------------------------------
-require __DIR__ . '/../partials/header.php';
+require __DIR__ . '/../partials/dashboard_header.php';
 ?>
 
 <h1><?= $titulo ?></h1>
@@ -344,5 +344,4 @@ require __DIR__ . '/../partials/header.php';
         return true;
     });
 </script>
-</body>
-</html>
+<?php require __DIR__ . '/../partials/dashboard_footer.php'; ?>

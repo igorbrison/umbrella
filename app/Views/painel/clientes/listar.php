@@ -44,7 +44,7 @@ function setaPainel(string $coluna, string $colAtual, string $dirAtual): string 
 $titulo = 'Meus Clientes';
 
 // Inclui o cabeçalho comum (HTML, CSS, favicon)
-require __DIR__ . '/../../partials/header.php';
+require __DIR__ . '/../../partials/dashboard_header.php';
 ?>
 
 <h1>Bem-vindo, <?= htmlspecialchars($_SESSION['representante_nome'] ?? 'Representante') ?></h1>
@@ -81,5 +81,4 @@ require __DIR__ . '/../../partials/header.php';
     <?php endforeach; ?>
 </table>
 
-</body>
-</html>
+<?php require __DIR__ . '/../../partials/dashboard_footer.php'; ?>

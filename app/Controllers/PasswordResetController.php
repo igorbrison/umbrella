@@ -1,23 +1,78 @@
 <?php
+/**
+ * Arquivo: Controllers/PasswordResetController.php
+ * Função: Controlador de recuperação e redefinição de senha.
+ * 
+ * Responsável por:
+ *   - Exibir o formulário "Esqueci minha senha" (informar email e tipo de usuário).
+ *   - Gerar um token único de redefinição e armazená-lo no banco de dados.
+ *   - Enviar o link de redefinição por email (em desenvolvimento, exibe o link na tela).
+ *   - Exibir o formulário de redefinição de senha (após validação do token).
+ *   - Processar a nova senha e atualizá-la no banco de dados (admin ou representante).
+ * 
+ * Fluxo completo:
+ *   1. Usuário acessa /forgot-password e informa email + tipo.
+ *   2. Sistema gera token, salva em password_resets e envia link.
+ *   3. Usuário clica no link (/reset-password?token=...&tipo=...).
+ *   4. Sistema valida o token e exibe formulário de nova senha.
+ *   5. Usuário define nova senha e sistema atualiza no banco.
+ * 
+ * Acesso: Rotas públicas (não exigem autenticação).
+ */
+
 require_once __DIR__ . '/../Models/Database.php';
 
 class PasswordResetController {
+    
+    /**
+     * @var \PDO $pdo
+     * Instância do PDO para executar consultas SQL.
+     */
     private \PDO $pdo;
 
+    /**
+     * Construtor da classe.
+     * Obtém a instância única do banco de dados via Database::getInstance().
+     */
     public function __construct() {
         $this->pdo = Database::getInstance();
     }
 
-    // Exibe formulário "Esqueci minha senha"
+    // ============================================================
+    // 1. EXIBIR FORMULÁRIO "ESQUECI MINHA SENHA"
+    // ============================================================
+    /**
+     * Exibe a view com o formulário onde o usuário informa seu email
+     * e seleciona o tipo de usuário (admin ou representante).
+     * Rota associada: GET /forgot-password
+     */
     public function showForgotForm(): void {
         require __DIR__ . '/../Views/password/forgot.php';
     }
 
-    // Processa o envio do link de recuperação
+    // ============================================================
+    // 2. PROCESSAR ENVIO DO LINK DE RECUPERAÇÃO
+    // ============================================================
+    /**
+     * Processa o formulário "Esqueci minha senha".
+     * 
+     * Fluxo:
+     *   - Valida se o email foi informado.
+     *   - Verifica se o email existe na tabela correspondente (admin ou representante).
+     *   - Gera um token único (64 caracteres hexadecimais) com validade de 1 hora.
+     *   - Remove tokens antigos do mesmo email/tipo.
+     *   - Insere o novo token na tabela password_resets.
+     *   - Envia o link de redefinição por email (ou exibe na tela em desenvolvimento).
+     * 
+     * SEGURANÇA: Não revela se o email existe ou não (mensagem genérica).
+     * 
+     * Rota associada: POST /forgot-password
+     */
     public function sendResetLink(): void {
         $email = $_POST['email'] ?? '';
         $tipo = $_POST['tipo'] ?? 'representante'; // 'admin' ou 'representante'
 
+        // Valida se o email foi informado
         if (empty($email)) {
             echo "Email é obrigatório. <a href='/forgot-password'>Voltar</a>";
             exit;
@@ -30,48 +85,61 @@ class PasswordResetController {
         $usuario = $stmt->fetch();
 
         if (!$usuario) {
-            // Não revela que o email não existe (segurança)
+            // Mensagem genérica: não revela se o email existe (segurança)
             echo "Se o email estiver cadastrado, um link de recuperação foi enviado.";
             exit;
         }
 
-        // Gera token único
+        // Gera token único e define expiração (1 hora)
         $token = bin2hex(random_bytes(32));
         $expira = date('Y-m-d H:i:s', strtotime('+1 hour'));
 
-        // Remove tokens antigos do mesmo email/tipo
+        // Remove tokens antigos do mesmo email/tipo (evita acúmulo)
         $stmt = $this->pdo->prepare("DELETE FROM password_resets WHERE email = :email AND tipo = :tipo");
         $stmt->execute([':email' => $email, ':tipo' => $tipo]);
 
-        // Insere novo token
+        // Insere o novo token no banco
         $stmt = $this->pdo->prepare("INSERT INTO password_resets (email, token, tipo, expira_em) VALUES (:email, :token, :tipo, :expira)");
         $stmt->execute([':email' => $email, ':token' => $token, ':tipo' => $tipo, ':expira' => $expira]);
 
-        // Envia email (simples com mail())
+        // Prepara o email de redefinição
         $assunto = "Redefinição de senha";
         $link = "http://umbrella.test/reset-password?token=$token&tipo=$tipo";
         $mensagem = "Clique no link para redefinir sua senha: $link";
         $headers = "From: no-reply@umbrella.test\r\n";
 
-        // Em desenvolvimento, pode não funcionar. Exibimos o link na tela para teste.
+        // Tenta enviar o email (em desenvolvimento, exibe o link na tela como fallback)
         if (mail($email, $assunto, $mensagem, $headers)) {
             echo "Email enviado com sucesso! Verifique sua caixa de entrada.";
         } else {
-            // Fallback para desenvolvimento: exibe o link
+            // Fallback para desenvolvimento: exibe o link diretamente
             echo "Não foi possível enviar o email. Modo desenvolvimento: <a href='$link'>Clique aqui para redefinir</a>";
         }
     }
 
-    // Exibe o formulário de redefinição (após clicar no link)
+    // ============================================================
+    // 3. EXIBIR FORMULÁRIO DE REDEFINIÇÃO DE SENHA
+    // ============================================================
+    /**
+     * Exibe o formulário de redefinição de senha.
+     * Valida se o token recebido via GET é válido e não expirou.
+     * 
+     * @uses $_GET['token'] Token de redefinição
+     * @uses $_GET['tipo']  Tipo de usuário (admin ou representante)
+     * 
+     * Rota associada: GET /reset-password
+     */
     public function showResetForm(): void {
         $token = $_GET['token'] ?? '';
         $tipo = $_GET['tipo'] ?? '';
+        
+        // Valida se token e tipo foram informados
         if (empty($token) || empty($tipo)) {
             echo "Token inválido.";
             exit;
         }
 
-        // Verifica token válido
+        // Verifica se o token existe e não expirou
         $stmt = $this->pdo->prepare("SELECT * FROM password_resets WHERE token = :token AND tipo = :tipo AND expira_em > NOW()");
         $stmt->execute([':token' => $token, ':tipo' => $tipo]);
         $reset = $stmt->fetch();
@@ -81,22 +149,44 @@ class PasswordResetController {
             exit;
         }
 
+        // Carrega a view de redefinição (formulário de nova senha)
         require __DIR__ . '/../Views/password/reset.php';
     }
 
-    // Processa a nova senha
+    // ============================================================
+    // 4. PROCESSAR REDEFINIÇÃO DE SENHA
+    // ============================================================
+    /**
+     * Processa o formulário de redefinição de senha.
+     * 
+     * Fluxo:
+     *   - Valida se as senhas conferem.
+     *   - Verifica se o token ainda é válido.
+     *   - Gera o hash da nova senha usando bcrypt (password_hash).
+     *   - Atualiza a senha na tabela correspondente (admin ou representante).
+     *   - Remove o token usado do banco para evitar reuso.
+     *   - Exibe mensagem de sucesso com link para login.
+     * 
+     * @uses $_POST['token']           Token de redefinição
+     * @uses $_POST['tipo']            Tipo de usuário (admin ou representante)
+     * @uses $_POST['senha']           Nova senha
+     * @uses $_POST['confirmar_senha'] Confirmação da nova senha
+     * 
+     * Rota associada: POST /reset-password
+     */
     public function resetPassword(): void {
         $token = $_POST['token'] ?? '';
         $tipo = $_POST['tipo'] ?? '';
         $senha = $_POST['senha'] ?? '';
         $confirmar = $_POST['confirmar_senha'] ?? '';
 
+        // Valida se as senhas conferem
         if ($senha !== $confirmar) {
             echo "Senhas não conferem.";
             exit;
         }
 
-        // Busca token válido
+        // Busca o token válido
         $stmt = $this->pdo->prepare("SELECT * FROM password_resets WHERE token = :token AND tipo = :tipo AND expira_em > NOW()");
         $stmt->execute([':token' => $token, ':tipo' => $tipo]);
         $reset = $stmt->fetch();
@@ -106,15 +196,18 @@ class PasswordResetController {
             exit;
         }
 
+        // Obtém o email associado ao token
         $email = $reset['email'];
         $tabela = $tipo === 'admin' ? 'administradores' : 'representantes';
+        
+        // Gera o hash seguro da nova senha
         $hash = password_hash($senha, PASSWORD_DEFAULT);
 
-        // Atualiza a senha
+        // Atualiza a senha na tabela correta
         $stmt = $this->pdo->prepare("UPDATE $tabela SET senha = :senha WHERE email = :email");
         $stmt->execute([':senha' => $hash, ':email' => $email]);
 
-        // Remove token usado
+        // Remove o token usado (evita reuso)
         $stmt = $this->pdo->prepare("DELETE FROM password_resets WHERE token = :token");
         $stmt->execute([':token' => $token]);
 
