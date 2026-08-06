@@ -1,103 +1,215 @@
-/* Reset básico e fonte padrão */
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 20px;
-    background-color: #f5f7fa;
-    color: #333;
-}
-
-h1 {
-    color: #2c3e50;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 10px;
-}
-
-/* Estilização de tabelas */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin: 20px 0;
-}
-
-th {
-    background: #3498db;
-    color: white;
-    padding: 12px;
-    text-align: left;
-}
-
-th a {
-    color: white;
-    text-decoration: none;
-}
-
-td {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-}
-
-tr:hover {
-    background-color: #f1f1f1;
-}
-
-/* Botões */
-.btn {
-    display: inline-block;
-    padding: 8px 16px;
-    background: #3498db;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    margin: 2px;
-    transition: background 0.3s;
-}
-
-.btn:hover {
-    background: #2980b9;
-}
-
-.btn.danger {
-    background: #e74c3c;
-}
-
-.btn.danger:hover {
-    background: #c0392b;
-}
-
-/* Formulários */
-label {
-    display: block;
-    margin: 10px 0 5px;
-    font-weight: bold;
-}
-
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-input[type="date"],
-select,
-textarea {
-    width: 100%;
-    max-width: 400px;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
 }
 
-.obrigatorio {
-    color: #e74c3c;
-    font-weight: bold;
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f4f8;  /* fundo suave */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+}
+.logo {
+    width: 75%;
+    height: 75%;
+    margin: 15px;
+}
+/* Wrapper central */
+.login-wrapper, logo {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* Alertas */
-.erro-msg {
-    background: #f8d7da;
-    color: #721c24;
+/* Cartão de login */
+.login-card {
+    background: #ffffff;
+    padding: 40px 32px 32px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    transition: 0.3s;
+}
+.login-card h1, p {
+    text-align: center;
+}
+
+h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+
+.subtitle {
+    font-size: 15px;
+    color: #666;
+    margin-bottom: 28px;
+}
+
+/* Campos do formulário */
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafbfc;
+}
+
+.input-group input:focus {
+    border-color: #2563eb;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    background: #fff;
+}
+
+/* Botão */
+.btn-entrar {
+    width: 100%;
+    padding: 14px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 4px;
+}
+
+.btn-entrar:hover {
+    background: #1d4ed8;
+}
+
+.btn-entrar:active {
+    transform: scale(0.97);
+}
+
+/* Link "Esqueci minha senha" */
+.links-uteis {
+    margin-top: 16px;
+    text-align: right;
+    text-align: center;
+}
+
+.esqueci-senha {
+    font-size: 14px;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.esqueci-senha:hover {
+    text-decoration: underline;
+}
+
+/* Links adicionais (Login Representante, Representantes, CMM Web, Peça ao Gemini) */
+.nav-links {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid #e9edf2;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px 18px;
+}
+
+.nav-links a {
+    font-size: 14px;
+    color: #4b5563;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.nav-links a:hover {
+    color: #2563eb;
+}
+
+/* Destaque para "Peça ao Gemini" (pode ser um badge) */
+.nav-links a.gemini {
+    background: #f3f4f6;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #1f2937;
+}
+
+.nav-links a.gemini:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+/* Rodapé */
+.footer {
+    margin-top: 24px;
+    font-size: 13px;
+    color: #9ca3af;
+    text-align: center;
+}
+
+.footer p {
+    margin: 0;
+}
+
+/* Responsivo */
+@media (max-width: 480px) {
+    .login-card {
+        padding: 28px 18px;
+    }
+    .nav-links {
+        gap: 8px 12px;
+    }
+    .nav-links a {
+        font-size: 13px;
+    }
+}
+
+.mensagem.sucesso {
+    background: #dff0d8;
+    border: 1px solid #3c763d;
     padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 15px;
+    margin: 10px 0;
+}
+.mensagem.erro {
+    background: #f2dede;
+    border: 1px solid #a94442;
+    padding: 10px;
+    margin: 10px 0;
+}
+
+.expirada {
+    color: red; font-weight: bold;
+}
+
+.alerta {
+    color: orange; font-weight: bold;
+}
+
+.ativa {
+    color: green;
 }

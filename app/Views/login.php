@@ -1,17 +1,36 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Login Representante</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-    <h1>Área do Representante</h1>
-    <form method="POST" action="/login">
-        <label>CNPJ: <input type="text" name="cnpj" required></label><br>
-        <label>Senha: <input type="password" name="senha" required></label><br>
-        <button type="submit">Entrar</button>
-    </form>
-    <p><a href="/forgot-password">Esqueci minha senha</a></p>
+<?php
+require __DIR__ . '/partials/header.php';
+?>
+
+<div class="login-wrapper">
+    <img src="/img/logo-sem-fundo.png" alt="Logo Umbrella" class="logo">
+    <div class="login-card">
+        <h1>Bem-vindo</h1>
+        <p class="subtitle">Acesse sua conta de representante</p>
+
+        <form method="POST" action="/login">
+            <div class="input-group">
+                <label for="cnpj">
+                    <input type="text" id="cnpj" name="cnpj" placeholder="Digite seu nome de usuário" required>
+                </label>
+            </div>
+            <div class="input-group">
+                <label for="senha">
+                    <input type="password" id="senha" name="senha" placeholder="Digite sua senha" required>
+                </label>
+            </div>
+            <button type="submit" class="btn-entrar">Entrar</button>
+        </form>
+
+        <div class="links-uteis">
+            <a href="/forgot-password" class="esqueci-senha">Esqueci minha senha</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 2026 UMBRELLA - Todos os direitos reservados</p>
+    </div>
+</div>
+
 </body>
 </html>
