@@ -51,10 +51,9 @@ class AdminAuthController {
         
         // Verifica se o admin existe e a senha está correta (hash bcrypt)
         if ($admin && password_verify($senha, $admin['senha'])) {
-            // Armazena dados na sessão
             $_SESSION['admin_id'] = $admin['id'];
             $_SESSION['admin_nome'] = $admin['nome'];
-            // Redireciona para a lista de representantes
+            $_SESSION['admin_email'] = $admin['email'];   // ← adicione esta linha
             header('Location: /admin/representantes');
             exit;
         } else {

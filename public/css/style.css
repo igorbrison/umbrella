@@ -385,3 +385,151 @@ body.dashboard {
         display: none;
     }
 }
+
+/* ==================== DROPDOWN DO USUÁRIO ==================== */
+.topbar-dropdown {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: background 0.2s;
+}
+
+.topbar-user:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 42px;
+    background: #fff;
+    min-width: 280px;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    padding: 8px 0;
+    z-index: 999;
+    border: 1px solid #e0e5ec;
+}
+
+.dropdown-menu.active {
+    display: block;
+}
+
+.dropdown-header {
+    padding: 12px 20px;
+    font-size: 14px;
+    color: #1a2a3a;
+}
+
+.dropdown-header strong {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 2px;
+}
+
+.dropdown-header small {
+    color: #6c7a8a;
+    font-size: 13px;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #e9edf2;
+    margin: 6px 0;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    color: #1a2a3a;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background 0.15s;
+}
+
+.dropdown-item:hover {
+    background: #f0f4f8;
+    color: #2563eb;
+}
+
+.dropdown-item i {
+    width: 20px;
+    color: #5a6c7e;
+}
+
+.dropdown-item:hover i {
+    color: #2563eb;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+/* ==================== MODAL ALTERAR SENHA ==================== */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 32px 28px;
+    border-radius: 16px;
+    max-width: 480px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+}
+
+.modal-close {
+    position: absolute;
+    top: 12px;
+    right: 18px;
+    font-size: 28px;
+    font-weight: 300;
+    color: #9aa6b5;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #1a2a3a;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 4px;
+    font-size: 24px;
+    color: #1a2a3a;
+}
+
+.modal-content p {
+    color: #6c7a8a;
+    margin-bottom: 24px;
+    font-size: 14px;
+}
+
+.modal-content .input-group {
+    margin-bottom: 18px;
+}
+
+.modal-content .btn-entrar {
+    width: 100%;
+    margin-top: 8px;
+}

@@ -230,11 +230,6 @@ $router->mount('/painel', function() use ($router) {
         (new ClienteController())->editar((int)$id);
     });
 
-    $router->get('/clientes/excluir/(\d+)', function($id) {
-        require_once __DIR__ . '/../app/Controllers/ClienteController.php';
-        (new ClienteController())->excluir((int)$id);
-    });
-
     // --- Licenças (apenas visualização) ---
     $router->get('/licencas', function() {
         require_once __DIR__ . '/../app/Controllers/LicencaController.php';
@@ -243,7 +238,15 @@ $router->mount('/painel', function() use ($router) {
 });
 
 // ============================================================
-// 6. RECUPERAÇÃO DE SENHA
+// 6. ROTA DO DASHBOARD (REDIRECIONA CONFORME PERFIL)
+// ============================================================
+$router->get('/dashboard', function() {
+    require_once __DIR__ . '/../app/Controllers/DashboardController.php';
+    (new DashboardController())->index();
+});
+
+// ============================================================
+// 7. RECUPERAÇÃO DE SENHA
 // ============================================================
 $router->get('/forgot-password', function() {
     require_once __DIR__ . '/../app/Controllers/PasswordResetController.php';
@@ -266,7 +269,7 @@ $router->post('/reset-password', function() {
 });
 
 // ============================================================
-// 7. API DE LICENCIAMENTO
+// 8. API DE LICENCIAMENTO
 // ============================================================
 $router->post('/api/licenca/validar', function() {
     require_once __DIR__ . '/../app/Controllers/ApiController.php';
@@ -284,7 +287,7 @@ $router->post('/api/licenca/validar-renovacao', function() {
 });
 
 // ============================================================
-// 8. FUTURA INTEGRAÇÃO COM FLUTTER
+// 9. FUTURA INTEGRAÇÃO COM FLUTTER
 // ============================================================
 $router->get('/api/modulos', function() {
     // A ser implementado

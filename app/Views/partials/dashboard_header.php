@@ -7,7 +7,9 @@
  *   - Verificar a autenticação do usuário (admin ou representante).
  *   - Definir o nome de exibição, URL de logout e perfil ativo.
  *   - Gerar a estrutura HTML inicial do painel:
- *       • Barra superior (topbar) com logo, nome do usuário e botão sair.
+ *       • Barra superior (topbar) com logo, nome do usuário (clicável) e botão sair.
+ *       • Dropdown com dados do perfil e opção de alterar senha.
+ *       • Modal para alteração de senha (com campos e validação).
  *       • Menu lateral (sidebar) com links específicos para cada perfil.
  *       • Abertura da área de conteúdo principal (main-content).
  * 
@@ -24,22 +26,54 @@
  * Espera que a sessão esteja iniciada e contenha:
  *   - $_SESSION['admin_nome'] ou $_SESSION['representante_nome'] (para exibição).
  *   - $_SESSION['admin_id'] ou $_SESSION['representante_id'] (para perfil).
+ *   - $_SESSION['admin_email'] ou $_SESSION['representante_email'] (para busca).
  */
 
 // ============================================================
-// 1. DETERMINA O PERFIL DO USUÁRIO LOGADO
+// 1. CARREGA OS MODELS PARA BUSCAR DADOS DO USUÁRIO
+// ============================================================
+require_once __DIR__ . '/../../Models/Representante.php';
+require_once __DIR__ . '/../../Models/Admin.php';
+
+// ============================================================
+// 2. DETERMINA O PERFIL DO USUÁRIO LOGADO E CARREGA SEUS DADOS
 // ============================================================
 $perfil = null;
+$dadosUsuario = [];
+$ultimaAlteracaoSenha = 'Nunca';
+
 if (isset($_SESSION['admin_id'])) {
     // Administrador autenticado
     $perfil = 'admin';
     $nomeUsuario = $_SESSION['admin_nome'] ?? 'Administrador';
     $logoutUrl = '/admin/logout';
+    $emailUsuario = $_SESSION['admin_email'] ?? '';
+
+    // Busca dados completos do admin pelo email (model Admin possui buscarPorEmail)
+    if (!empty($emailUsuario)) {
+        $adminModel = new Admin();
+        $adminData = $adminModel->buscarPorEmail($emailUsuario);
+        if ($adminData) {
+            $dadosUsuario = $adminData;
+            $ultimaAlteracaoSenha = $adminData['atualizado_em'] ?? ''; // campo correto
+        }
+    }
 } elseif (isset($_SESSION['representante_id'])) {
     // Representante autenticado
     $perfil = 'representante';
     $nomeUsuario = $_SESSION['representante_nome'] ?? 'Representante';
     $logoutUrl = '/logout';
+    $emailUsuario = $_SESSION['representante_email'] ?? '';
+
+    // Busca dados completos do representante pelo email (model Representante possui buscarPorEmail)
+    if (!empty($emailUsuario)) {
+        $repModel = new Representante();
+        $repData = $repModel->buscarPorEmail($emailUsuario);
+        if ($repData) {
+            $dadosUsuario = $repData;
+            $ultimaAlteracaoSenha = $repData['atualizado_em'] ?? ''; // campo correto
+        }
+    }
 } else {
     // Nenhum usuário autenticado: redireciona para a tela de login
     header('Location: /login');
@@ -47,10 +81,22 @@ if (isset($_SESSION['admin_id'])) {
 }
 
 // ============================================================
-// 2. DEFINE O TÍTULO DA PÁGINA (FALLBACK)
+// 3. DEFINE O TÍTULO DA PÁGINA (FALLBACK)
 // ============================================================
-// Se a view não definiu $titulo, usa 'Dashboard' como valor padrão
 $titulo = $titulo ?? 'Dashboard';
+
+// ============================================================
+// 4. FUNÇÃO AUXILIAR PARA FORMATAR DATA (COM TRATAMENTO DE ERRO)
+// ============================================================
+function formatarDataHora(string $data): string {
+    if (empty($data)) return 'Nunca';
+    try {
+        $dt = new DateTime($data);
+        return $dt->format('d/m/Y \à\s H:i');
+    } catch (\Exception $e) {
+        return 'Nunca';
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -72,19 +118,102 @@ $titulo = $titulo ?? 'Dashboard';
             <span class="topbar-title">Umbrella Corporation</span>
         </div>
         <div class="topbar-right">
-            <!-- Nome do usuário logado -->
-            <span class="topbar-user"><i class="fas fa-user-circle"></i> <?= htmlspecialchars($nomeUsuario) ?></span>
-            <!-- Link de logout (URL varia conforme o perfil) -->
+            <!-- Nome do usuário logado (clicável) com dropdown -->
+            <div class="topbar-dropdown">
+                <span class="topbar-user" id="userDropdownToggle">
+                    <i class="fas fa-user-circle"></i> <?= htmlspecialchars($nomeUsuario) ?>
+                    <i class="fas fa-chevron-down" style="font-size:12px; margin-left:6px;"></i>
+                </span>
+                <div class="dropdown-menu" id="userDropdownMenu">
+                    <!-- Cabeçalho do dropdown -->
+                    <div class="dropdown-header">
+                        <strong><?= htmlspecialchars($nomeUsuario) ?></strong>
+                        <small><?= htmlspecialchars($emailUsuario) ?></small>
+                    </div>
+                    <div class="dropdown-divider"></div>
+
+                    <!-- Dados específicos do perfil -->
+                    <?php if ($perfil === 'representante' && !empty($dadosUsuario)): ?>
+                        <div class="dropdown-item">
+                            <i class="fas fa-building"></i> CNPJ: <?= htmlspecialchars($dadosUsuario['cnpj'] ?? '') ?>
+                        </div>
+                        <div class="dropdown-item">
+                            <i class="fas fa-tag"></i> <?= htmlspecialchars($dadosUsuario['nome_fantasia'] ?? '') ?>
+                        </div>
+                        <div class="dropdown-item">
+                            <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($dadosUsuario['municipio'] ?? '') ?>/<?= htmlspecialchars($dadosUsuario['estado'] ?? '') ?>
+                        </div>
+                    <?php elseif ($perfil === 'admin' && !empty($dadosUsuario)): ?>
+                        <div class="dropdown-item">
+                            <i class="fas fa-envelope"></i> <?= htmlspecialchars($dadosUsuario['email'] ?? '') ?>
+                        </div>
+                        <div class="dropdown-item">
+                            <i class="fas fa-user-shield"></i> Administrador
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="dropdown-divider"></div>
+
+                    <!-- Ações -->
+                    <a href="/<?= $perfil ?>/perfil" class="dropdown-item">
+                        <i class="fas fa-edit"></i> Editar Perfil
+                    </a>
+                    <a href="#" class="dropdown-item" id="btnAlterarSenha">
+                        <i class="fas fa-key"></i> Alterar Senha
+                    </a>
+
+                    <div class="dropdown-divider"></div>
+
+                    <!-- Última alteração de senha -->
+                    <div class="dropdown-item" style="font-size:12px; color:#999; cursor:default;">
+                        <i class="fas fa-clock"></i> Última alteração: <?= formatarDataHora($ultimaAlteracaoSenha) ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Link de logout -->
             <a href="<?= $logoutUrl ?>" class="topbar-logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
         </div>
     </header>
+
+    <!-- ==================== MODAL ALTERAR SENHA ==================== -->
+    <div id="modalSenha" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <span class="modal-close" id="modalSenhaClose">&times;</span>
+            <h2>Alterar Senha</h2>
+            <p>Preencha os campos abaixo para atualizar sua senha.</p>
+
+            <form method="POST" action="/<?= $perfil ?>/alterar-senha" id="formAlterarSenha">
+                <!-- Senha atual -->
+                <div class="input-group">
+                    <label for="senha_atual">Senha Atual</label>
+                    <input type="password" id="senha_atual" name="senha_atual" required placeholder="Digite sua senha atual">
+                </div>
+
+                <!-- Nova senha -->
+                <div class="input-group">
+                    <label for="nova_senha">Nova Senha</label>
+                    <input type="password" id="nova_senha" name="nova_senha" required placeholder="Digite a nova senha" minlength="6">
+                </div>
+
+                <!-- Confirmar nova senha -->
+                <div class="input-group">
+                    <label for="confirmar_senha">Confirmar Nova Senha</label>
+                    <input type="password" id="confirmar_senha" name="confirmar_senha" required placeholder="Confirme a nova senha">
+                </div>
+
+                <button type="submit" class="btn-entrar">Salvar Nova Senha</button>
+            </form>
+            <div id="msgSenha" style="margin-top:10px; display:none;"></div>
+        </div>
+    </div>
 
     <!-- ==================== MENU LATERAL + CONTEÚDO PRINCIPAL ==================== -->
     <div class="dashboard-wrapper">
         <!-- Menu lateral (sidebar) -->
         <nav class="sidebar">
             <ul class="sidebar-menu">
-                <!-- Link para o Dashboard (comum a ambos os perfis) -->
+                <!-- Link para o Dashboard (página inicial) -->
                 <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
 
                 <?php if ($perfil === 'admin'): ?>

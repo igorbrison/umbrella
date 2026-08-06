@@ -75,7 +75,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
         <td><?= $c['ativo'] ? 'Ativo' : 'Inativo' ?></td>
         <td>
             <a href="/painel/clientes/editar/<?= $c['id'] ?>" class="btn">Editar</a>
-            <a href="/painel/clientes/excluir/<?= $c['id'] ?>" class="btn" onclick="return confirm('Tem certeza?')">Excluir</a>
         </td>
     </tr>
     <?php endforeach; ?>

@@ -50,3 +50,7 @@ require_once __DIR__ . '/../routes/web.php';
 //   - Se NÃO encontrar: Automaticamente retorna um erro 404 (Página não encontrada).
 // É aqui que a resposta (HTML, JSON, etc.) é gerada e enviada de volta ao navegador.
 $router->run();
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);

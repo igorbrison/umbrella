@@ -58,10 +58,10 @@ class AuthController {
 
         // Verifica se o representante existe e a senha está correta
         if ($representante && password_verify($senha, $representante['senha'])) {
-            // Armazena dados na sessão
+            unset($_SESSION['admin_id'], $_SESSION['admin_nome'], $_SESSION['admin_email']);
             $_SESSION['representante_id'] = $representante['id'];
-            // Usa o nome de exibição se estiver preenchido; caso contrário, a razão social
             $_SESSION['representante_nome'] = $representante['nome_exibicao'] ?: $representante['nome_razao'];
+            $_SESSION['representante_email'] = $representante['email'];   // ← adicione esta linha
             header('Location: /painel');
             exit;
         } else {
