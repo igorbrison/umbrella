@@ -5,7 +5,7 @@
  * 
  * Organizado em abas:
  *   - Aba 1: Nova Solicitação (formulário para envio)
- *   - Aba 2: Histórico (tabela com todas as solicitações)
+ *   - Aba 2: Histórico (tabela com paginação)
  */
 
 if (!isset($solicitacoes) || !is_array($solicitacoes)) {
@@ -25,7 +25,6 @@ $sucesso = $sucesso ?? null;
 
 <!-- ==================== ABAS ==================== -->
 <div class="tabs-container">
-    <!-- Navegação das abas -->
     <div class="tabs-nav">
         <button type="button" class="tab-btn active" data-tab="tab-nova">
             <i class="fas fa-plus-circle"></i> Nova Solicitação
@@ -35,7 +34,6 @@ $sucesso = $sucesso ?? null;
         </button>
     </div>
 
-    <!-- Conteúdo das abas -->
     <div class="tab-content">
         <!-- ===================== ABA 1: NOVA SOLICITAÇÃO ===================== -->
         <div id="tab-nova" class="tab-pane active">
@@ -89,6 +87,31 @@ $sucesso = $sucesso ?? null;
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+
+                <!-- ==================== PAGINAÇÃO ==================== -->
+                <?php
+                $paginaAtual = $paginacao['pagina_atual'] ?? 1;
+                $totalPaginas = $paginacao['total_paginas'] ?? 1;
+                if ($totalPaginas > 1):
+                ?>
+                <div class="paginacao">
+                    <?php if ($paginaAtual > 1): ?>
+                        <a href="/painel/solicitacoes?pagina=<?= $paginaAtual - 1 ?>">&laquo; Anterior</a>
+                    <?php endif; ?>
+
+                    <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                        <?php if ($i == $paginaAtual): ?>
+                            <span class="pagina-atual"><?= $i ?></span>
+                        <?php else: ?>
+                            <a href="/painel/solicitacoes?pagina=<?= $i ?>"><?= $i ?></a>
+                        <?php endif; ?>
+                    <?php endfor; ?>
+
+                    <?php if ($paginaAtual < $totalPaginas): ?>
+                        <a href="/painel/solicitacoes?pagina=<?= $paginaAtual + 1 ?>">Próximo &raquo;</a>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
     </div>
@@ -118,7 +141,7 @@ $sucesso = $sucesso ?? null;
 <!-- ==================== JAVASCRIPT ==================== -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // --- Modal de edição ---
+    // Modal de edição
     document.querySelectorAll('.btn-editar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.dataset.id;
@@ -151,6 +174,18 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(res => res.text())
         .then(() => {
             window.location.href = '/painel/solicitacoes?sucesso=1';
+        });
+    });
+
+    // Sistema de abas (já existente no dashboard_footer, mas redundância não atrapalha)
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabPanes.forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById(this.getAttribute('data-tab')).classList.add('active');
         });
     });
 });

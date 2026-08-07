@@ -5,7 +5,7 @@
  * 
  * Responsável por:
  *   - Gerenciar as solicitações feitas pelos representantes.
- *   - Listar solicitações por representante (painel do representante).
+ *   - Listar solicitações por representante (painel do representante), com ou sem paginação.
  *   - Listar todas as solicitações (painel do administrador).
  *   - Inserir novas solicitações e atualizar o status delas.
  * 
@@ -47,6 +47,42 @@ class Solicitacao {
         $stmt = $this->pdo->prepare("SELECT * FROM solicitacoes WHERE representante_id = :rid ORDER BY criado_em DESC");
         $stmt->execute([':rid' => $representanteId]);
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Lista as solicitações de um representante com paginação.
+     * 
+     * @param int $representanteId ID do representante.
+     * @param int $pagina Número da página (começa em 1).
+     * @param int $limite Quantidade de registros por página (padrão 10).
+     * @return array Array com chaves: dados, total, pagina_atual, total_paginas.
+     */
+    public function listarPaginadoPorRepresentante(int $representanteId, int $pagina = 1, int $limite = 10): array {
+        // Conta o total de registros para calcular as páginas
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM solicitacoes WHERE representante_id = :rid");
+        $stmt->execute([':rid' => $representanteId]);
+        $total = (int)$stmt->fetchColumn();
+
+        $totalPaginas = $total > 0 ? (int)ceil($total / $limite) : 1;
+        $offset = ($pagina - 1) * $limite;
+
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM solicitacoes 
+             WHERE representante_id = :rid 
+             ORDER BY criado_em DESC 
+             LIMIT :limite OFFSET :offset"
+        );
+        $stmt->bindValue(':rid', $representanteId, \PDO::PARAM_INT);
+        $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        return [
+            'dados' => $stmt->fetchAll(),
+            'total' => $total,
+            'pagina_atual' => $pagina,
+            'total_paginas' => $totalPaginas
+        ];
     }
 
     /**
@@ -112,8 +148,17 @@ class Solicitacao {
         return $stmt->execute([':status' => $status, ':id' => $id]);
     }
 
+    /**
+     * Atualiza o título e a descrição de uma solicitação (mantém o status atual).
+     * Utilizado pelo representante para corrigir solicitações pendentes.
+     * 
+     * @param int $id ID da solicitação.
+     * @param string $titulo Novo título.
+     * @param string $descricao Nova descrição.
+     * @return bool True se a atualização for bem-sucedida.
+     */
     public function atualizar(int $id, string $titulo, string $descricao): bool {
-    $stmt = $this->pdo->prepare("UPDATE solicitacoes SET titulo = :titulo, descricao = :descricao WHERE id = :id");
-    return $stmt->execute([':titulo' => $titulo, ':descricao' => $descricao, ':id' => $id]);
-}
+        $stmt = $this->pdo->prepare("UPDATE solicitacoes SET titulo = :titulo, descricao = :descricao WHERE id = :id");
+        return $stmt->execute([':titulo' => $titulo, ':descricao' => $descricao, ':id' => $id]);
+    }
 }

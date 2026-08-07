@@ -24,8 +24,11 @@ class SolicitacaoController {
     }
 
     // Listar e formulário de nova
+    // Listar e formulário de nova (com paginação)
     public function index(): void {
-        $solicitacoes = $this->model->listarPorRepresentante($this->representanteId);
+        $pagina = (int)($_GET['pagina'] ?? 1);
+        $paginacao = $this->model->listarPaginadoPorRepresentante($this->representanteId, $pagina, 10);
+        $solicitacoes = $paginacao['dados'];
         $sucesso = $_SESSION['sucesso_solicitacao'] ?? null;
         unset($_SESSION['sucesso_solicitacao']);
         require __DIR__ . '/../Views/painel/solicitacoes/index.php';
