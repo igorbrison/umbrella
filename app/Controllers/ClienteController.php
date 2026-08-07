@@ -65,16 +65,22 @@ class ClienteController {
      * 
      * Suporta ordenação por coluna clicável (id, nome, cpf_cnpj, email, ativo).
      */
-    public function index(): void {
+   public function index(): void {
         $ordem = $_GET['ordem'] ?? 'id';
         $direcao = $_GET['direcao'] ?? 'asc';
-        
-        // Busca os clientes do representante
         $clientes = $this->model->listarPorRepresentante($this->representanteId, $ordem, $direcao);
 
         // Adiciona o valor total atualizado (dinâmico) a cada cliente
         foreach ($clientes as &$c) {
             $c['valor_total_atual'] = $this->model->getValorTotalAtual((int)$c['id']);
+        }
+
+        // Obtém a licença de cada cliente para exibir expiração
+        $licencaModel = new Licenca();
+        foreach ($clientes as &$c) {
+            $licenca = $licencaModel->buscarPorCliente((int)$c['id']);
+            $c['data_expiracao'] = $licenca['data_expiracao'] ?? null;
+            $c['licenca_ativa'] = $licenca['ativa'] ?? 0;
         }
 
         $ordenacaoAtual = ['coluna' => $ordem, 'direcao' => $direcao];
