@@ -73,7 +73,7 @@ class AdminLicencaController {
             exit;
         }
 
-        $pagamentoModel = new Pagamento();
+        $pagamentoModel = new \Pagamento();
         $pagamentoModel->inserir($clienteId, $valor, $dataPagamento, $mesReferencia, $observacao);
 
         // Renova a licença
