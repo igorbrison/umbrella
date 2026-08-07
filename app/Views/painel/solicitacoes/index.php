@@ -3,78 +3,157 @@
  * Arquivo: Views/painel/solicitacoes/index.php
  * Função: VIEW de solicitações do representante.
  * 
- * Exibe o formulário para envio de novas solicitações e o histórico
- * de solicitações já enviadas pelo representante logado.
- * 
- * Cada solicitação possui:
- *   - Título
- *   - Descrição
- *   - Status (pendente, deferido, indeferido, etc.)
- *   - Data de criação
- * 
- * O representante pode enviar novas solicitações, mas não pode
- * alterar o status delas (apenas o administrador).
- * 
- * Uso dos parciais:
- *   - dashboard_header.php : barra superior, menu lateral e abertura do main-content.
- *   - dashboard_footer.php : fechamento das tags abertas pelo header.
+ * Organizado em abas:
+ *   - Aba 1: Nova Solicitação (formulário para envio)
+ *   - Aba 2: Histórico (tabela com todas as solicitações)
  */
 
-// Inicializa variáveis para evitar avisos de análise
 if (!isset($solicitacoes) || !is_array($solicitacoes)) {
     $solicitacoes = [];
 }
 
-// Título da página
 $titulo = 'Solicitações';
-
-// Inclui o cabeçalho do painel (barra superior, menu lateral, abertura do main-content)
 require __DIR__ . '/../../partials/dashboard_header.php';
-
-// Mensagem de sucesso (definida pelo controller após envio)
 $sucesso = $sucesso ?? null;
 ?>
 
 <h1>Minhas Solicitações</h1>
 
-<!-- Mensagem de confirmação após envio bem-sucedido -->
 <?php if ($sucesso): ?>
-    <div class="mensagem sucesso"><?= htmlspecialchars($sucesso) ?></div>
+    <div class="mensagem-sucesso"><?= htmlspecialchars($sucesso) ?></div>
 <?php endif; ?>
 
-<!-- ==================== FORMULÁRIO DE NOVA SOLICITAÇÃO ==================== -->
-<h2>Nova Solicitação</h2>
-<form method="POST" action="/painel/solicitacoes/enviar">
-    <label>Título:
-        <input type="text" name="titulo" required>
-    </label>
-    
-    <label>Descrição:
-        <textarea name="descricao" rows="5" required></textarea>
-    </label>
-    
-    <button type="submit" class="btn-primary">Enviar</button>
-</form>
+<!-- ==================== ABAS ==================== -->
+<div class="tabs-container">
+    <!-- Navegação das abas -->
+    <div class="tabs-nav">
+        <button type="button" class="tab-btn active" data-tab="tab-nova">
+            <i class="fas fa-plus-circle"></i> Nova Solicitação
+        </button>
+        <button type="button" class="tab-btn" data-tab="tab-historico">
+            <i class="fas fa-history"></i> Histórico
+        </button>
+    </div>
 
-<!-- ==================== HISTÓRICO DE SOLICITAÇÕES ==================== -->
-<h2>Histórico</h2>
-<table>
-    <tr>
-        <th>Título</th>
-        <th>Status</th>
-        <th>Data</th>
-    </tr>
-    <?php foreach ($solicitacoes as $s): ?>
-    <tr>
-        <td><?= htmlspecialchars($s['titulo']) ?></td>
-        <!-- Exibe o status formatado: substitui underscores por espaços e capitaliza -->
-        <td><?= ucfirst(str_replace('_', ' ', $s['status'])) ?></td>
-        <td><?= date('d/m/Y', strtotime($s['criado_em'])) ?></td>
-    </tr>
-    <?php endforeach; ?>
-</table>
+    <!-- Conteúdo das abas -->
+    <div class="tab-content">
+        <!-- ===================== ABA 1: NOVA SOLICITAÇÃO ===================== -->
+        <div id="tab-nova" class="tab-pane active">
+            <form method="POST" action="/painel/solicitacoes/enviar" class="solicitacao-form">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Título <span class="obrigatorio">*</span>:
+                            <input type="text" name="titulo" placeholder="Digite o título da solicitação" required>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label>Descrição <span class="obrigatorio">*</span>:
+                            <textarea name="descricao" rows="5" placeholder="Descreva detalhadamente sua solicitação..." required></textarea>
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="btn-enviar">Enviar</button>
+            </form>
+        </div>
 
-<?php
-// Inclui o rodapé do painel (fecha main-content, div wrapper, body e html)
-require __DIR__ . '/../../partials/dashboard_footer.php';
-?>
+        <!-- ===================== ABA 2: HISTÓRICO ===================== -->
+        <div id="tab-historico" class="tab-pane">
+            <?php if (empty($solicitacoes)): ?>
+                <p style="color:#6c7a8a; text-align:center; padding:20px 0;">Nenhuma solicitação enviada até o momento.</p>
+            <?php else: ?>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Status</th>
+                            <th>Data</th>
+                            <th>Última Atualização</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($solicitacoes as $s): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($s['titulo']) ?></td>
+                            <td class="status-<?= $s['status'] ?>"><?= ucfirst(str_replace('_', ' ', $s['status'])) ?></td>
+                            <td><?= date('d/m/Y', strtotime($s['criado_em'])) ?></td>
+                            <td><?= date('d/m/Y H:i', strtotime($s['atualizado_em'])) ?></td>
+                            <td>
+                                <?php if ($s['status'] === 'pendente'): ?>
+                                    <button type="button" class="btn-editar" data-id="<?= $s['id'] ?>">Editar</button>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL DE EDIÇÃO ==================== -->
+<div id="modalEditar" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+        <span class="modal-close" id="modalEditarClose">&times;</span>
+        <h2>Editar Solicitação</h2>
+        <form id="formEditarSolicitacao">
+            <input type="hidden" name="id" id="edit-id">
+            <div class="input-group">
+                <label for="edit-titulo">Título</label>
+                <input type="text" id="edit-titulo" name="titulo" required>
+            </div>
+            <div class="input-group">
+                <label for="edit-descricao">Descrição</label>
+                <textarea id="edit-descricao" name="descricao" rows="5" required></textarea>
+            </div>
+            <button type="submit" class="btn-primary">Salvar</button>
+        </form>
+        <div id="edit-msg" style="margin-top:10px;"></div>
+    </div>
+</div>
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Modal de edição ---
+    document.querySelectorAll('.btn-editar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            fetch('/painel/solicitacoes/editar/' + id)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.erro) {
+                        alert(data.erro);
+                        return;
+                    }
+                    document.getElementById('edit-id').value = data.id;
+                    document.getElementById('edit-titulo').value = data.titulo;
+                    document.getElementById('edit-descricao').value = data.descricao;
+                    document.getElementById('modalEditar').style.display = 'flex';
+                });
+        });
+    });
+
+    document.getElementById('modalEditarClose').addEventListener('click', function() {
+        document.getElementById('modalEditar').style.display = 'none';
+    });
+
+    document.getElementById('formEditarSolicitacao').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        fetch('/painel/solicitacoes/atualizar', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.text())
+        .then(() => {
+            window.location.href = '/painel/solicitacoes?sucesso=1';
+        });
+    });
+});
+</script>
+
+<?php require __DIR__ . '/../../partials/dashboard_footer.php'; ?>

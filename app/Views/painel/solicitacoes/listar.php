@@ -37,40 +37,39 @@ require __DIR__ . '/../../partials/dashboard_header.php';
 
 <!-- Tabela de solicitações -->
 <table>
-    <tr>
-        <th>Representante</th>
-        <th>Título</th>
-        <th>Descrição</th>
-        <th>Status</th>
-        <th>Ação</th>
-    </tr>
-    <?php foreach ($solicitacoes as $s): ?>
-    <tr>
-        <!-- Nome do representante que fez a solicitação -->
-        <td><?= htmlspecialchars($s['representante_nome']) ?></td>
-        <!-- Título da solicitação -->
-        <td><?= htmlspecialchars($s['titulo']) ?></td>
-        <!-- Descrição (com quebras de linha preservadas) -->
-        <td><?= nl2br(htmlspecialchars($s['descricao'])) ?></td>
-        <!-- Status formatado (underscores substituídos por espaços) -->
-        <td><?= ucfirst(str_replace('_', ' ', $s['status'])) ?></td>
-        <!-- Formulário para alterar o status -->
-        <td>
-            <form method="POST" action="/admin/solicitacoes/atualizar">
-                <input type="hidden" name="id" value="<?= $s['id'] ?>">
-                <select name="status">
-                    <option value="pendente" <?= $s['status'] == 'pendente' ? 'selected' : '' ?>>Pendente</option>
-                    <option value="deferido" <?= $s['status'] == 'deferido' ? 'selected' : '' ?>>Deferido</option>
-                    <option value="indeferido" <?= $s['status'] == 'indeferido' ? 'selected' : '' ?>>Indeferido</option>
-                    <option value="em_desenvolvimento" <?= $s['status'] == 'em_desenvolvimento' ? 'selected' : '' ?>>Em Desenvolvimento</option>
-                    <option value="teste" <?= $s['status'] == 'teste' ? 'selected' : '' ?>>Teste</option>
-                    <option value="concluido" <?= $s['status'] == 'concluido' ? 'selected' : '' ?>>Concluído</option>
-                </select>
-                <button type="submit">Atualizar</button>
-            </form>
-        </td>
-    </tr>
-    <?php endforeach; ?>
+    <thead>
+        <tr>
+            <th>Representante</th>
+            <th>Título</th>
+            <th>Descrição</th>
+            <th>Status</th>
+            <th>Ação</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php foreach ($solicitacoes as $s): ?>
+        <tr>
+            <td><?= htmlspecialchars($s['representante_nome']) ?></td>
+            <td><?= htmlspecialchars($s['titulo']) ?></td>
+            <td><?= nl2br(htmlspecialchars($s['descricao'])) ?></td>
+            <td class="status-<?= $s['status'] ?>"><?= ucfirst(str_replace('_', ' ', $s['status'])) ?></td>
+            <td>
+                <form method="POST" action="/admin/solicitacoes/atualizar" class="status-actions">
+                    <input type="hidden" name="id" value="<?= $s['id'] ?>">
+                    <select name="status">
+                        <option value="pendente" <?= $s['status'] == 'pendente' ? 'selected' : '' ?>>Pendente</option>
+                        <option value="deferido" <?= $s['status'] == 'deferido' ? 'selected' : '' ?>>Deferido</option>
+                        <option value="indeferido" <?= $s['status'] == 'indeferido' ? 'selected' : '' ?>>Indeferido</option>
+                        <option value="em_desenvolvimento" <?= $s['status'] == 'em_desenvolvimento' ? 'selected' : '' ?>>Em Desenvolvimento</option>
+                        <option value="teste" <?= $s['status'] == 'teste' ? 'selected' : '' ?>>Teste</option>
+                        <option value="concluido" <?= $s['status'] == 'concluido' ? 'selected' : '' ?>>Concluído</option>
+                    </select>
+                    <button type="submit">Atualizar</button>
+                </form>
+            </td>
+        </tr>
+        <?php endforeach; ?>
+    </tbody>
 </table>
 
 <?php

@@ -111,4 +111,9 @@ class Solicitacao {
         $stmt = $this->pdo->prepare("UPDATE solicitacoes SET status = :status WHERE id = :id");
         return $stmt->execute([':status' => $status, ':id' => $id]);
     }
+
+    public function atualizar(int $id, string $titulo, string $descricao): bool {
+    $stmt = $this->pdo->prepare("UPDATE solicitacoes SET titulo = :titulo, descricao = :descricao WHERE id = :id");
+    return $stmt->execute([':titulo' => $titulo, ':descricao' => $descricao, ':id' => $id]);
+}
 }

@@ -13,6 +13,7 @@ CREATE TABLE licencas (
     cliente_id INT NOT NULL UNIQUE,
     chave VARCHAR(64) NOT NULL,
     data_expiracao DATE NOT NULL,
+    qtd_maquinas INT DEFAULT 1,
     ativa TINYINT(1) DEFAULT 1,
     criada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE

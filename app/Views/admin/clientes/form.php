@@ -1,18 +1,27 @@
 <?php
 /**
- * Arquivo: Views/painel/clientes/form.php
- * Função: VIEW de formulário para criação/edição de clientes (painel do representante).
+ * Arquivo: Views/admin/clientes/form.php
+ * Função: VIEW de formulário para edição de clientes (painel admin).
  * 
- * Agora organizado em abas para melhor usabilidade:
+ * Permite ao administrador editar completamente os dados de um cliente,
+ * inclusive alterar os módulos contratados e a quantidade de máquinas
+ * permitidas (privilégio exclusivo do admin).
+ * 
+ * Organizado em abas para melhor usabilidade:
  *   - Aba 1: Dados Principais (tipo pessoa, CPF/CNPJ, nome, etc.)
  *   - Aba 2: Endereço
- *   - Aba 3: Contato e Observações
- *   - Aba 4: Módulos (apenas na criação)
+ *   - Aba 3: Contato, Observações e Ativo
+ *   - Aba 4: Módulos Contratados e Quantidade de Máquinas
  * 
- * Mantém todos os recursos (busca CNPJ, CEP, validação de senha, etc.)
+ * Acesso restrito ao perfil 'admin'. O dashboard_header já verifica
+ * a autenticação e redireciona se necessário.
+ * 
+ * Uso dos parciais:
+ *   - dashboard_header.php : barra superior, menu lateral e abertura do main-content.
+ *   - dashboard_footer.php : fechamento das tags abertas pelo header.
  */
 
-// Garante que as variáveis estejam sempre inicializadas
+// Inicializações seguras para evitar avisos de análise
 if (!isset($cliente) || !is_array($cliente)) {
     $cliente = [];
 }
@@ -25,17 +34,24 @@ if (!isset($idsModulosCliente)) {
 
 // Define o modo de edição e o título da página
 $modoEdicao = !empty($cliente);
-$titulo = $modoEdicao ? 'Editar Cliente' : 'Novo Cliente';
+$titulo = $modoEdicao ? 'Editar Cliente (Admin)' : 'Novo Cliente';
 
-// Inclui o cabeçalho do painel
+// Mensagem de erro opcional (definida pelo controller em caso de falha)
+$erro = $erro ?? null;
+
+// Inclui o cabeçalho do painel (barra superior, menu lateral, abertura do main-content)
 require __DIR__ . '/../../partials/dashboard_header.php';
 ?>
 
 <h1><?= $titulo ?></h1>
-<p class="subtitle">Preencha os dados do cliente nos campos abaixo</p>
 
-<!-- FORMULÁRIO DE CLIENTE -->
-<form method="POST" action="/painel/clientes/salvar" id="form-cliente">
+<!-- Exibe mensagem de erro, se houver -->
+<?php if ($erro): ?>
+    <div class="erro-msg"><?= htmlspecialchars($erro) ?></div>
+<?php endif; ?>
+
+<!-- FORMULÁRIO DE EDIÇÃO DE CLIENTE (ADMIN) -->
+<form method="POST" action="/admin/clientes/salvar" id="form-cliente">
     <input type="hidden" name="id" value="<?= $modoEdicao ? $cliente['id'] : '' ?>">
 
     <div class="tabs-container">
@@ -223,33 +239,32 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                 </fieldset>
             </div>
 
-            <!-- ===================== ABA 4: MÓDULOS CONTRATADOS ===================== -->
+            <!-- ===================== ABA 4: MÓDULOS CONTRATADOS E MÁQUINAS ===================== -->
             <div id="tab-modulos" class="tab-pane">
+                <!-- Admin sempre pode alterar os módulos -->
                 <fieldset>
-                    <legend>Módulos Contratados</legend>
-                    <?php if ($modoEdicao): ?>
-                        <!-- Modo edição: exibe a lista de módulos como texto informativo -->
-                        <p><em>Apenas o administrador pode alterar os módulos contratados.</em></p>
-                        <?php if (!empty($idsModulosCliente)): ?>
-                            <ul>
-                                <?php foreach ($modulos as $m): ?>
-                                    <?php if (in_array($m['identificador'], $idsModulosCliente)): ?>
-                                        <li><?= htmlspecialchars($m['nome']) ?> (<?= htmlspecialchars($m['identificador']) ?>)</li>
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php else: ?>
-                            <p>Nenhum módulo contratado.</p>
-                        <?php endif; ?>
-                    <?php else: ?>
-                        <!-- Modo criação: exibe checkboxes para seleção -->
-                        <?php foreach ($modulos as $m): ?>
-                            <label>
-                                <input type="checkbox" name="modulos[]" value="<?= $m['id'] ?>">
-                                <?= htmlspecialchars($m['nome']) ?> (<?= htmlspecialchars($m['identificador']) ?>)
-                            </label><br>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                    <legend>Módulos Contratados (Admin pode alterar)</legend>
+                    <?php foreach ($modulos as $m): ?>
+                        <label>
+                            <input type="checkbox" name="modulos[]" value="<?= $m['id'] ?>"
+                            <?= in_array($m['identificador'], $idsModulosCliente) ? 'checked' : '' ?>>
+                            <?= htmlspecialchars($m['nome']) ?> (<?= htmlspecialchars($m['identificador']) ?>)
+                            - R$ <?= number_format($m['valor'] ?? 0, 2, ',', '.') ?>
+                        </label><br>
+                    <?php endforeach; ?>
+                </fieldset>
+
+                <!-- Quantidade de Máquinas Permitidas (admin pode alterar) -->
+                <fieldset>
+                    <legend>Limite de Máquinas</legend>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Quantidade de Máquinas Permitidas <span class="obrigatorio">*</span>:
+                                <input type="number" name="qtd_maquinas" required min="1"
+                                       value="<?= $cliente['qtd_maquinas'] ?? 1 ?>">
+                            </label>
+                        </div>
+                    </div>
                 </fieldset>
             </div>
         </div>
@@ -257,14 +272,13 @@ require __DIR__ . '/../../partials/dashboard_header.php';
 
     <!-- Botões de ação -->
     <div class="form-actions">
-        <a href="/painel/clientes" class="btn">Cancelar</a>
+        <a href="/admin/licencas" class="btn">Cancelar</a>
         <button type="submit" class="btn-primary">Salvar</button>
     </div>
 </form>
 
 <!-- ===================== JAVASCRIPT ===================== -->
 <script>
-    // Elementos do DOM
     const tipoSelect = document.getElementById('tipo_pessoa');
     const cpfCnpjInput = document.getElementById('cpf_cnpj');
     const btnBuscarCnpj = document.getElementById('btn-buscar-cnpj');
@@ -280,9 +294,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
     const btnBuscarCep = document.getElementById('btn-buscar-cep');
     const loadingCep = document.getElementById('loading-cep');
 
-    /**
-     * Ajusta a visibilidade e obrigatoriedade dos campos conforme o tipo de pessoa.
-     */
     function ajustarCamposPessoa() {
         const tipo = tipoSelect.value;
         if (tipo === 'F') {
@@ -324,7 +335,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
     tipoSelect.addEventListener('change', ajustarCamposPessoa);
     ajustarCamposPessoa();
 
-    // Conversão de data dd/mm/aaaa para yyyy-mm-dd
     function converterData(dataStr) {
         if (!dataStr) return '';
         const partes = dataStr.split('/');
@@ -332,7 +342,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
         return `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
     }
 
-    // Busca CNPJ
     btnBuscarCnpj.addEventListener('click', function() {
         let cnpj = cpfCnpjInput.value.replace(/\D/g, '');
         if (cnpj.length !== 14) {
@@ -369,7 +378,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
             });
     });
 
-    // Busca CEP
     btnBuscarCep.addEventListener('click', function() {
         let cep = cepInput.value.replace(/\D/g, '');
         if (cep.length !== 8) {
@@ -397,25 +405,16 @@ require __DIR__ . '/../../partials/dashboard_header.php';
             });
     });
 
-    // ============================================================
-    // ABAS - JAVASCRIPT PARA ALTERNAR ENTRE AS ABAS
-    // ============================================================
+    // Alternar entre abas
     document.addEventListener('DOMContentLoaded', function() {
         const tabBtns = document.querySelectorAll('.tab-btn');
         const tabPanes = document.querySelectorAll('.tab-pane');
-
         tabBtns.forEach(btn => {
             btn.addEventListener('click', function() {
-                // Remove classe active de todos os botões e painéis
                 tabBtns.forEach(b => b.classList.remove('active'));
                 tabPanes.forEach(p => p.classList.remove('active'));
-
-                // Adiciona active ao botão clicado
                 this.classList.add('active');
-
-                // Mostra o painel correspondente
-                const targetTab = this.getAttribute('data-tab');
-                document.getElementById(targetTab).classList.add('active');
+                document.getElementById(this.getAttribute('data-tab')).classList.add('active');
             });
         });
     });

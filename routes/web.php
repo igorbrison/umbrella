@@ -297,6 +297,18 @@ $router->mount('/painel', function() use ($router) {
         require_once __DIR__ . '/../app/Controllers/SolicitacaoController.php';
         (new SolicitacaoController())->enviar();
     });
+
+    // Editar solicitação (retorna JSON com os dados)
+    $router->get('/solicitacoes/editar/(\d+)', function($id) {
+        require_once __DIR__ . '/../app/Controllers/SolicitacaoController.php';
+        (new SolicitacaoController())->editar((int)$id);
+    });
+
+    // Atualizar solicitação (processa o formulário de edição)
+    $router->post('/solicitacoes/atualizar', function() {
+        require_once __DIR__ . '/../app/Controllers/SolicitacaoController.php';
+        (new SolicitacaoController())->atualizar();
+    });
 });
 
 // ============================================================

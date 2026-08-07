@@ -140,10 +140,10 @@ class RepresentanteController {
             ':inscricao_estadual' => $_POST['inscricao_estadual'] ?? null,
             ':nome_razao' => $_POST['nome_razao'],
             ':nome_fantasia' => $_POST['nome_fantasia'] ?? null,
-            ':nome_exibicao' => $_POST['nome_exibicao'] ?? null,   // NOVO CAMPO
+            ':nome_exibicao' => $_POST['nome_exibicao'] ?? null,
             ':cnae' => $_POST['cnae'] ?? null,
             ':crt' => $_POST['crt'] ?? null,
-            ':data_fundacao' => !empty($_POST['data_fundacao']) ? $_POST['data_fundacao'] : null, // evita string vazia
+            ':data_fundacao' => !empty($_POST['data_fundacao']) ? $_POST['data_fundacao'] : null,
             ':comissao_percentual' => $_POST['comissao_percentual'] ?? null,
             ':logradouro' => $_POST['logradouro'] ?? null,
             ':numero' => $_POST['numero'] ?? null,
@@ -156,8 +156,8 @@ class RepresentanteController {
             ':celular' => $_POST['celular'] ?? null,
             ':email' => $_POST['email'] ?? null,
             ':observacoes' => $_POST['observacoes'] ?? null,
-            ':ativo' => isset($_POST['ativo']) ? 1 : 0, // Checkbox: marcado = 1 (ativo), desmarcado = 0.
-            ':senha' => $_POST['senha'] ?? '' // Se não preencheu, salva como string vazia.
+            ':ativo' => 1,
+            ':senha' => $_POST['senha'] ?? ''
         ];
 
         // [DECISÃO: INSERIR OU ATUALIZAR?]

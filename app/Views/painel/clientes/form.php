@@ -6,10 +6,11 @@
  * Organizado em abas para melhor usabilidade:
  *   - Aba 1: Dados Principais (tipo pessoa, CPF/CNPJ, nome, etc.)
  *   - Aba 2: Endereço
- *   - Aba 3: Contato e Observações
+ *   - Aba 3: Contato, Observações e Quantidade de Máquinas
  *   - Aba 4: Módulos (apenas na criação)
  * 
  * Mantém todos os recursos (busca CNPJ, CEP, validação de senha, etc.)
+ * O campo "Ativo" foi removido – o representante não pode alterar o status.
  */
 
 // Garante que as variáveis estejam sempre inicializadas
@@ -77,7 +78,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                                        value="<?= $modoEdicao ? htmlspecialchars($cliente['cpf_cnpj']) : '' ?>"
                                        maxlength="18">
                             </label>
-                            <button type="button" id="btn-buscar-cnpj" class="btn-buscar" style="display:none;">Buscar dados pelo CNPJ</button>
+                            <button type="button" id="btn-buscar-cnpj" style="display:none;">Buscar dados pelo CNPJ</button>
                             <span id="loading-cnpj" style="display:none;">Buscando...</span>
                         </div>
                     </div>
@@ -125,7 +126,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                                 <input type="text" name="cep" id="cep" maxlength="9" required
                                        value="<?= $modoEdicao ? htmlspecialchars($cliente['cep'] ?? '') : '' ?>">
                             </label>
-                            <button type="button" id="btn-buscar-cep" class="btn-buscar">Buscar endereço pelo CEP</button>
+                            <button type="button" id="btn-buscar-cep">Buscar endereço pelo CEP</button>
                             <span id="loading-cep" style="display:none;">Buscando...</span>
                         </div>
                         <div class="form-col">
@@ -177,7 +178,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                 </fieldset>
             </div>
 
-            <!-- ===================== ABA 3: CONTATO E OBSERVAÇÕES ===================== -->
+            <!-- ===================== ABA 3: CONTATO, OBSERVAÇÕES E MÁQUINAS ===================== -->
             <div id="tab-contato" class="tab-pane">
                 <fieldset>
                     <legend>Contato</legend>
@@ -213,12 +214,19 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                         </div>
                     </div>
 
+                    <!-- ==================== QUANTIDADE DE MÁQUINAS ==================== -->
                     <div class="form-row">
                         <div class="form-col">
-                            <label class="checkbox-inline">
-                                <input type="checkbox" name="ativo" <?= (!$modoEdicao || ($cliente['ativo'] ?? 1)) ? 'checked' : '' ?>>
-                                Ativo
-                            </label>
+                            <?php if (!$modoEdicao): ?>
+                                <label>Quantidade de Máquinas Permitidas <span class="obrigatorio">*</span>:
+                                    <input type="number" name="qtd_maquinas" required min="1" value="1">
+                                </label>
+                            <?php else: ?>
+                                <label>Quantidade de Máquinas Permitidas:
+                                    <input type="text" value="<?= $cliente['qtd_maquinas'] ?? 1 ?>" disabled>
+                                    <span class="info">(Apenas o administrador pode alterar)</span>
+                                </label>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </fieldset>
@@ -229,7 +237,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                 <fieldset>
                     <legend>Módulos Contratados</legend>
                     <?php if ($modoEdicao): ?>
-                        <!-- Modo edição: exibe a lista de módulos como texto informativo -->
                         <p><em>Apenas o administrador pode alterar os módulos contratados.</em></p>
                         <?php if (!empty($idsModulosCliente)): ?>
                             <ul>
@@ -243,7 +250,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                             <p>Nenhum módulo contratado.</p>
                         <?php endif; ?>
                     <?php else: ?>
-                        <!-- Modo criação: exibe checkboxes para seleção -->
                         <?php foreach ($modulos as $m): ?>
                             <label>
                                 <input type="checkbox" name="modulos[]" value="<?= $m['id'] ?>">
@@ -256,16 +262,13 @@ require __DIR__ . '/../../partials/dashboard_header.php';
         </div>
     </div>
 
-    <!-- Botões de ação -->
     <div class="form-actions">
         <a href="/painel/clientes" class="btn">Cancelar</a>
         <button type="submit" class="btn-primary">Salvar</button>
     </div>
 </form>
 
-<!-- ===================== JAVASCRIPT ===================== -->
 <script>
-    // Elementos do DOM
     const tipoSelect = document.getElementById('tipo_pessoa');
     const cpfCnpjInput = document.getElementById('cpf_cnpj');
     const btnBuscarCnpj = document.getElementById('btn-buscar-cnpj');
@@ -281,9 +284,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
     const btnBuscarCep = document.getElementById('btn-buscar-cep');
     const loadingCep = document.getElementById('loading-cep');
 
-    /**
-     * Ajusta a visibilidade e obrigatoriedade dos campos conforme o tipo de pessoa.
-     */
     function ajustarCamposPessoa() {
         const tipo = tipoSelect.value;
         if (tipo === 'F') {
@@ -325,7 +325,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
     tipoSelect.addEventListener('change', ajustarCamposPessoa);
     ajustarCamposPessoa();
 
-    // Conversão de data dd/mm/aaaa para yyyy-mm-dd
     function converterData(dataStr) {
         if (!dataStr) return '';
         const partes = dataStr.split('/');
@@ -333,7 +332,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
         return `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
     }
 
-    // Busca CNPJ
     btnBuscarCnpj.addEventListener('click', function() {
         let cnpj = cpfCnpjInput.value.replace(/\D/g, '');
         if (cnpj.length !== 14) {
@@ -370,7 +368,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
             });
     });
 
-    // Busca CEP
     btnBuscarCep.addEventListener('click', function() {
         let cep = cepInput.value.replace(/\D/g, '');
         if (cep.length !== 8) {
@@ -396,6 +393,20 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                 loadingCep.style.display = 'none';
                 alert('Erro ao buscar CEP. Tente novamente.');
             });
+    });
+
+    // Alternar entre abas
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabPanes.forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById(this.getAttribute('data-tab')).classList.add('active');
+            });
+        });
     });
 </script>
 

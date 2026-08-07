@@ -52,20 +52,25 @@ class Licenca {
      * @param string $chave Nova chave de licença.
      * @return bool True se a operação for bem-sucedida.
      */
-    public function criarOuAtualizar(int $clienteId, string $chave): bool {
-        $dataExpiracao = $this->calcularExpiracaoDia5();
-        $existente = $this->buscarPorCliente($clienteId);
-        if ($existente) {
-            $stmt = $this->pdo->prepare(
-                "UPDATE licencas SET chave = :chave, data_expiracao = :exp, ativa = 1 WHERE cliente_id = :cid"
-            );
-        } else {
-            $stmt = $this->pdo->prepare(
-                "INSERT INTO licencas (cliente_id, chave, data_expiracao, ativa) VALUES (:cid, :chave, :exp, 1)"
-            );
-        }
-        return $stmt->execute([':cid' => $clienteId, ':chave' => $chave, ':exp' => $dataExpiracao]);
+    public function criarOuAtualizar(int $clienteId, string $chave, int $qtdMaquinas = 1): bool {
+    $dataExpiracao = $this->calcularExpiracaoDia5();
+    $existente = $this->buscarPorCliente($clienteId);
+    if ($existente) {
+        $stmt = $this->pdo->prepare(
+            "UPDATE licencas SET chave = :chave, data_expiracao = :exp, qtd_maquinas = :qtd, ativa = 1 WHERE cliente_id = :cid"
+        );
+    } else {
+        $stmt = $this->pdo->prepare(
+            "INSERT INTO licencas (cliente_id, chave, data_expiracao, qtd_maquinas, ativa) VALUES (:cid, :chave, :exp, :qtd, 1)"
+        );
     }
+    return $stmt->execute([
+        ':cid' => $clienteId,
+        ':chave' => $chave,
+        ':exp' => $dataExpiracao,
+        ':qtd' => $qtdMaquinas
+    ]);
+}
 
     /**
      * Desativa uma licença (soft delete).
