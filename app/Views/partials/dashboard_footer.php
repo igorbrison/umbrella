@@ -5,7 +5,8 @@
  * 
  * Fecha as tags abertas pelo dashboard_header.php e inclui os
  * scripts JavaScript para funcionamento do dropdown do usuário,
- * do modal de alteração de senha e do sistema de abas (tabs).
+ * do modal de alteração de senha, do sistema de abas (tabs),
+ * do modal de edição de solicitação e do modal de pagamento.
  * 
  * Os scripts são colocados aqui para garantir que todos os elementos
  * do DOM já tenham sido carregados antes da execução.
@@ -41,24 +42,24 @@
             // ============================================================
             // 2. MODAL DE ALTERAÇÃO DE SENHA
             // ============================================================
-            const modal = document.getElementById('modalSenha');
+            const modalSenha = document.getElementById('modalSenha');
             const btnAbrir = document.getElementById('btnAlterarSenha');
             const btnFechar = document.getElementById('modalSenhaClose');
 
-            if (btnAbrir && modal) {
+            if (btnAbrir && modalSenha) {
                 btnAbrir.addEventListener('click', function(e) {
                     e.preventDefault();
-                    modal.style.display = 'flex';
+                    modalSenha.style.display = 'flex';
                 });
             }
-            if (btnFechar && modal) {
+            if (btnFechar && modalSenha) {
                 btnFechar.addEventListener('click', function() {
-                    modal.style.display = 'none';
+                    modalSenha.style.display = 'none';
                 });
             }
             window.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.style.display = 'none';
+                if (e.target === modalSenha) {
+                    modalSenha.style.display = 'none';
                 }
             });
 
@@ -69,21 +70,14 @@
             const tabPanes = document.querySelectorAll('.tab-pane');
 
             if (tabBtns.length > 0 && tabPanes.length > 0) {
-                // Função para ativar uma aba
                 function activateTab(index) {
-                    // Remove a classe 'active' de todos os botões e painéis
                     tabBtns.forEach(btn => btn.classList.remove('active'));
                     tabPanes.forEach(pane => pane.classList.remove('active'));
-
-                    // Adiciona 'active' ao botão e painel correspondentes
                     if (tabBtns[index]) tabBtns[index].classList.add('active');
                     if (tabPanes[index]) tabPanes[index].classList.add('active');
-
-                    // Armazena a aba ativa no localStorage para lembrar após recarregar
                     localStorage.setItem('activeTab', index);
                 }
 
-                // Adiciona evento de clique a cada botão
                 tabBtns.forEach((btn, idx) => {
                     btn.addEventListener('click', function(e) {
                         e.preventDefault();
@@ -91,14 +85,48 @@
                     });
                 });
 
-                // Restaura a última aba ativa (se existir)
                 const savedTab = localStorage.getItem('activeTab');
                 if (savedTab !== null && tabBtns[savedTab]) {
                     activateTab(parseInt(savedTab));
                 } else {
-                    // Ativa a primeira aba por padrão
                     activateTab(0);
                 }
+            }
+
+            // ============================================================
+            // 4. MODAL DE EDIÇÃO DE SOLICITAÇÃO (FECHAR)
+            // ============================================================
+            const modalEditar = document.getElementById('modalEditar');
+            if (modalEditar) {
+                const closeEditar = document.getElementById('modalEditarClose');
+                if (closeEditar) {
+                    closeEditar.addEventListener('click', function() {
+                        modalEditar.style.display = 'none';
+                    });
+                }
+                window.addEventListener('click', function(e) {
+                    if (e.target === modalEditar) {
+                        modalEditar.style.display = 'none';
+                    }
+                });
+            }
+
+            // ============================================================
+            // 5. MODAL DE PAGAMENTO (FECHAR)
+            // ============================================================
+            const modalPagamento = document.getElementById('modalPagamento');
+            if (modalPagamento) {
+                const closePagamento = document.getElementById('modalPagamentoClose');
+                if (closePagamento) {
+                    closePagamento.addEventListener('click', function() {
+                        modalPagamento.style.display = 'none';
+                    });
+                }
+                window.addEventListener('click', function(e) {
+                    if (e.target === modalPagamento) {
+                        modalPagamento.style.display = 'none';
+                    }
+                });
             }
         });
     </script>

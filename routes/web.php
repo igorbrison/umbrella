@@ -134,6 +134,15 @@ $router->mount('/admin/licencas', function() use ($router) {
         require_once __DIR__ . '/../app/Controllers/AdminLicencaController.php';
         (new AdminLicencaController())->gerarTokenOffline((int)$id);
     });
+
+    // Registrar pagamento e renovar licença
+    $router->post('/pagar', function() {
+        require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
+        AuthAdminMiddleware::verificar();
+        require_once __DIR__ . '/../app/Controllers/AdminLicencaController.php';
+        require_once __DIR__ . '/../app/Models/Pagamento.php';
+        (new AdminLicencaController())->pagar();
+    });
 });
 
 // --- Clientes (admin) - Edição de clientes ---

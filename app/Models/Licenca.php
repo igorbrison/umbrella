@@ -154,4 +154,17 @@ class Licenca {
         }
         return $dataExpiracao->format('Y-m-d');
     }
+
+    public function contarPorStatus(int $representanteId): array {
+    $stmt = $this->pdo->prepare(
+        "SELECT 
+            SUM(CASE WHEN l.ativa = 1 AND l.data_expiracao >= CURDATE() THEN 1 ELSE 0 END) as ativas,
+            SUM(CASE WHEN l.ativa = 0 OR l.data_expiracao < CURDATE() THEN 1 ELSE 0 END) as expiradas
+         FROM licencas l
+         JOIN clientes c ON l.cliente_id = c.id
+         WHERE c.representante_id = :rid"
+    );
+    $stmt->execute([':rid' => $representanteId]);
+    return $stmt->fetch() ?: ['ativas' => 0, 'expiradas' => 0];
+}
 }

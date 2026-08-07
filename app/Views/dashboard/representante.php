@@ -3,13 +3,7 @@
  * Arquivo: Views/dashboard/representante.php
  * Função: Dashboard do representante.
  * 
- * Exibe cards com indicadores do seu negócio:
- *   - Total de clientes cadastrados.
- *   - Licenças a vencer nos próximos 7 dias.
- *   - Receita mensal estimada.
- * 
- * Os dados são fornecidos pelo DashboardController e repassados
- * no array associativo $dados.
+ * Exibe gráficos e indicadores de desempenho.
  * 
  * Uso dos parciais:
  *   - dashboard_header.php : barra superior, menu lateral e abertura do main-content.
@@ -21,39 +15,189 @@ if (!isset($dados) || !is_array($dados)) {
     $dados = [];
 }
 
-// Título da página
 $titulo = 'Dashboard';
-
-// Inclui o cabeçalho do painel (barra superior, menu lateral, abertura do main-content)
 require __DIR__ . '/../partials/dashboard_header.php';
 ?>
 
 <h1>Dashboard</h1>
 
-<!-- Cards de indicadores -->
-<div class="dashboard-cards">
-    <!-- Total de Clientes do Representante -->
+<div class="dashboard-grid">
+    <!-- Clientes Ativos/Inativos -->
     <div class="card">
-        <h3>Meus Clientes</h3>
-        <p><?= $dados['totalClientes'] ?? 0 ?></p>
+        <h3>Clientes</h3>
+        <canvas id="chartClientes"></canvas>
+        <p>Ativos: <?= $dados['clientes_ativos'] ?? 0 ?> | Inativos: <?= $dados['clientes_inativos'] ?? 0 ?></p>
     </div>
 
-    <!-- Licenças Próximas do Vencimento (7 dias) -->
+    <!-- Licenças -->
     <div class="card">
-        <h3>Licenças a Vencer (7 dias)</h3>
-        <p><?= $dados['proximasVencer'] ?? 0 ?></p>
+        <h3>Licenças</h3>
+        <canvas id="chartLicencas"></canvas>
+        <p>Ativas: <?= $dados['licencas_ativas'] ?? 0 ?> | Expiradas: <?= $dados['licencas_expiradas'] ?? 0 ?></p>
     </div>
 
-    <!-- Receita Mensal Estimada -->
-    <div class="card">
-        <h3>Receita Mensal</h3>
-        <p>R$ <?= number_format($dados['receitaMensal'] ?? 0, 2, ',', '.') ?></p>
+    <!-- Receita Mensal (Bar) -->
+    <div class="card wide">
+        <h3>Receita Mensal (R$)</h3>
+        <canvas id="chartReceitaMensal"></canvas>
     </div>
 
-    <!-- Placeholders para os demais cards (serão preenchidos posteriormente) -->
+    <!-- Comissão do Representante (Line) -->
+    <div class="card">
+        <h3>Comissão Mensal (R$)</h3>
+        <canvas id="chartComissao"></canvas>
+    </div>
+
+    <!-- Licenças Geradas por Mês (Bar) -->
+    <div class="card">
+        <h3>Licenças Geradas</h3>
+        <canvas id="chartLicencasGeradas"></canvas>
+    </div>
+
+    <!-- Comparativo Anual (Multilinha) -->
+    <div class="card wide">
+        <h3>Comparativo Anual de Receita</h3>
+        <canvas id="chartComparativoAnual"></canvas>
+    </div>
+
+    <!-- Card Numérico: Clientes em Atraso -->
+    <div class="card">
+        <h3>Clientes em Atraso</h3>
+        <div class="big-number"><?= $dados['clientes_em_atraso'] ?? 0 ?></div>
+        <p>licenças expiradas/inativas</p>
+    </div>
 </div>
 
-<?php
-// Inclui o rodapé do painel (fecha main-content, div wrapper, body e html)
-require __DIR__ . '/../partials/dashboard_footer.php';
-?>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Clientes Ativos/Inativos (Doughnut)
+    new Chart(document.getElementById('chartClientes'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Ativos', 'Inativos'],
+            datasets: [{
+                data: [<?= $dados['clientes_ativos'] ?? 0 ?>, <?= $dados['clientes_inativos'] ?? 0 ?>],
+                backgroundColor: ['#16a34a', '#dc2626']
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    // Licenças Ativas/Expiradas (Doughnut)
+    new Chart(document.getElementById('chartLicencas'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Ativas', 'Expiradas'],
+            datasets: [{
+                data: [<?= $dados['licencas_ativas'] ?? 0 ?>, <?= $dados['licencas_expiradas'] ?? 0 ?>],
+                backgroundColor: ['#2563eb', '#f59e0b']
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    // Receita Mensal (Bar)
+    new Chart(document.getElementById('chartReceitaMensal'), {
+        type: 'bar',
+        data: {
+            labels: <?= json_encode($dados['meses'] ?? []) ?>,
+            datasets: [{
+                label: 'Receita (R$)',
+                data: <?= json_encode($dados['receitaMensal'] ?? []) ?>,
+                backgroundColor: '#2563eb'
+            }]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+
+    // Comissão Mensal (Line)
+    new Chart(document.getElementById('chartComissao'), {
+        type: 'line',
+        data: {
+            labels: <?= json_encode($dados['meses'] ?? []) ?>,
+            datasets: [{
+                label: 'Comissão (R$)',
+                data: <?= json_encode($dados['comissaoMensal'] ?? []) ?>,
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139,92,246,0.1)',
+                fill: true
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    // Licenças Geradas por Mês (Bar)
+    new Chart(document.getElementById('chartLicencasGeradas'), {
+        type: 'bar',
+        data: {
+            labels: <?= json_encode($dados['meses'] ?? []) ?>,
+            datasets: [{
+                label: 'Licenças',
+                data: <?= json_encode($dados['licencasGeradas'] ?? []) ?>,
+                backgroundColor: '#059669'
+            }]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true, precision: 0 } } }
+    });
+
+    // Comparativo Anual (Multilinha)
+    new Chart(document.getElementById('chartComparativoAnual'), {
+        type: 'line',
+        data: {
+            labels: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
+            datasets: [
+                {
+                    label: '<?= $dados['comparativoAnos'][0] ?? 'Anterior' ?>',
+                    data: <?= json_encode($dados['receitaAnual1'] ?? []) ?>,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'transparent',
+                    tension: 0.3
+                },
+                {
+                    label: '<?= $dados['comparativoAnos'][1] ?? 'Atual' ?>',
+                    data: <?= json_encode($dados['receitaAnual2'] ?? []) ?>,
+                    borderColor: '#dc2626',
+                    backgroundColor: 'transparent',
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: { mode: 'index', intersect: false }
+            }
+        }
+    });
+</script>
+
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .card {
+        background: #fff;
+        border: 1px solid #e0e5ec;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .card.wide {
+        grid-column: span 2;
+    }
+    .card h3 {
+        margin-top: 0;
+        margin-bottom: 16px;
+        color: #1a2a3a;
+    }
+    .big-number {
+        font-size: 48px;
+        font-weight: 700;
+        color: #dc2626;
+    }
+</style>
+
+<?php require __DIR__ . '/../partials/dashboard_footer.php'; ?>
