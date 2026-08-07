@@ -169,6 +169,30 @@ $router->post('/admin/configuracao/salvar', function() {
     (new ConfiguracaoController())->salvar();
 });
 
+// ===== NOVAS ROTAS DE PERFIL E SENHA (ADMIN) =====
+// Perfil do Admin
+$router->get('/admin/perfil', function() {
+    require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
+    AuthAdminMiddleware::verificar();
+    require_once __DIR__ . '/../app/Controllers/AdminPerfilController.php';
+    (new AdminPerfilController())->editar();
+});
+
+$router->post('/admin/perfil/salvar', function() {
+    require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
+    AuthAdminMiddleware::verificar();
+    require_once __DIR__ . '/../app/Controllers/AdminPerfilController.php';
+    (new AdminPerfilController())->salvar();
+});
+
+// Alteração de senha do Admin
+$router->post('/admin/alterar-senha', function() {
+    require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
+    AuthAdminMiddleware::verificar();
+    require_once __DIR__ . '/../app/Controllers/SenhaController.php';
+    (new SenhaController())->alterar('admin');
+});
+
 // Redireciona /admin para a lista de representantes (após login)
 $router->get('/admin', function() {
     header('Location: /admin/representantes');
@@ -228,6 +252,24 @@ $router->mount('/painel', function() use ($router) {
     $router->get('/clientes/editar/(\d+)', function($id) {
         require_once __DIR__ . '/../app/Controllers/ClienteController.php';
         (new ClienteController())->editar((int)$id);
+    });
+
+    // ===== NOVAS ROTAS DE PERFIL E SENHA (REPRESENTANTE) =====
+    // Perfil do Representante
+    $router->get('/perfil', function() {
+        require_once __DIR__ . '/../app/Controllers/RepresentantePerfilController.php';
+        (new RepresentantePerfilController())->editar();
+    });
+
+    $router->post('/perfil/salvar', function() {
+        require_once __DIR__ . '/../app/Controllers/RepresentantePerfilController.php';
+        (new RepresentantePerfilController())->salvar();
+    });
+
+    // Alteração de senha do Representante
+    $router->post('/alterar-senha', function() {
+        require_once __DIR__ . '/../app/Controllers/SenhaController.php';
+        (new SenhaController())->alterar('representante');
     });
 });
 

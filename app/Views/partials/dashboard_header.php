@@ -154,8 +154,8 @@ function formatarDataHora(string $data): string {
 
                     <div class="dropdown-divider"></div>
 
-                    <!-- Ações -->
-                    <a href="/<?= $perfil ?>/perfil" class="dropdown-item">
+                    <!-- Ações (link e modal) -->
+                    <a href="/<?= $perfil === 'admin' ? 'admin' : 'painel' ?>/perfil" class="dropdown-item">
                         <i class="fas fa-edit"></i> Editar Perfil
                     </a>
                     <a href="#" class="dropdown-item" id="btnAlterarSenha">
@@ -183,7 +183,7 @@ function formatarDataHora(string $data): string {
             <h2>Alterar Senha</h2>
             <p>Preencha os campos abaixo para atualizar sua senha.</p>
 
-            <form method="POST" action="/<?= $perfil ?>/alterar-senha" id="formAlterarSenha">
+            <form method="POST" action="/<?= $perfil === 'admin' ? 'admin' : 'painel' ?>/alterar-senha" id="formAlterarSenha">
                 <!-- Senha atual -->
                 <div class="input-group">
                     <label for="senha_atual">Senha Atual</label>
