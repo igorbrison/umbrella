@@ -42,24 +42,33 @@ class ClienteController {
     }
 
     public function index(): void {
-        $ordem = $_GET['ordem'] ?? 'id';
-        $direcao = $_GET['direcao'] ?? 'asc';
-        $clientes = $this->model->listarPorRepresentante($this->representanteId, $ordem, $direcao);
+    $ordem = $_GET['ordem'] ?? 'id';
+    $direcao = $_GET['direcao'] ?? 'asc';
+    $pagina = (int)($_GET['pagina'] ?? 1);
+    $termo = $_GET['termo'] ?? '';
 
-        foreach ($clientes as &$c) {
-            $c['valor_total_atual'] = $this->model->getValorTotalAtual((int)$c['id']);
-        }
-
-        $licencaModel = new Licenca();
-        foreach ($clientes as &$c) {
-            $licenca = $licencaModel->buscarPorCliente((int)$c['id']);
-            $c['data_expiracao'] = $licenca['data_expiracao'] ?? null;
-            $c['licenca_ativa'] = $licenca['ativa'] ?? 0;
-        }
-
-        $ordenacaoAtual = ['coluna' => $ordem, 'direcao' => $direcao];
-        require __DIR__ . '/../Views/painel/clientes/listar.php';
+    if (!empty($termo)) {
+        $paginacao = $this->model->buscarPaginadoPorRepresentante($this->representanteId, $termo, $pagina, 10, $ordem, $direcao);
+    } else {
+        $paginacao = $this->model->listarPaginadoPorRepresentante($this->representanteId, $ordem, $direcao, $pagina, 10);
     }
+
+    $clientes = $paginacao['dados'];
+
+    foreach ($clientes as &$c) {
+        $c['valor_total_atual'] = $this->model->getValorTotalAtual((int)$c['id']);
+    }
+
+    $licencaModel = new Licenca();
+    foreach ($clientes as &$c) {
+        $licenca = $licencaModel->buscarPorCliente((int)$c['id']);
+        $c['data_expiracao'] = $licenca['data_expiracao'] ?? null;
+        $c['licenca_ativa'] = $licenca['ativa'] ?? 0;
+    }
+
+    $ordenacaoAtual = ['coluna' => $ordem, 'direcao' => $direcao];
+    require __DIR__ . '/../Views/painel/clientes/listar.php';
+}
 
     public function criar(): void {
         $cliente = [];

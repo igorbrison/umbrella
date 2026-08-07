@@ -161,4 +161,49 @@ class Solicitacao {
         $stmt = $this->pdo->prepare("UPDATE solicitacoes SET titulo = :titulo, descricao = :descricao WHERE id = :id");
         return $stmt->execute([':titulo' => $titulo, ':descricao' => $descricao, ':id' => $id]);
     }
+
+    public function listarFiltradoPaginado(int $representanteId, string $termo = '', string $status = '', int $pagina = 1, int $limite = 10): array {
+    $sql = "SELECT COUNT(*) FROM solicitacoes WHERE representante_id = :rid";
+    $params = [':rid' => $representanteId];
+
+    if (!empty($termo)) {
+        $sql .= " AND (titulo LIKE :termo OR descricao LIKE :termo)";
+        $params[':termo'] = '%' . $termo . '%';
+    }
+    if (!empty($status)) {
+        $sql .= " AND status = :status";
+        $params[':status'] = $status;
+    }
+
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute($params);
+    $total = (int)$stmt->fetchColumn();
+
+    $totalPaginas = $total > 0 ? (int)ceil($total / $limite) : 1;
+    $offset = ($pagina - 1) * $limite;
+
+    $sqlData = "SELECT * FROM solicitacoes WHERE representante_id = :rid";
+    if (!empty($termo)) {
+        $sqlData .= " AND (titulo LIKE :termo OR descricao LIKE :termo)";
+    }
+    if (!empty($status)) {
+        $sqlData .= " AND status = :status";
+    }
+    $sqlData .= " ORDER BY criado_em DESC LIMIT :limite OFFSET :offset";
+
+    $stmt = $this->pdo->prepare($sqlData);
+    $stmt->bindValue(':rid', $representanteId, \PDO::PARAM_INT);
+    if (!empty($termo)) $stmt->bindValue(':termo', '%' . $termo . '%');
+    if (!empty($status)) $stmt->bindValue(':status', $status);
+    $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+    $stmt->execute();
+
+    return [
+        'dados' => $stmt->fetchAll(),
+        'total' => $total,
+        'pagina_atual' => $pagina,
+        'total_paginas' => $totalPaginas
+    ];
+}
 }

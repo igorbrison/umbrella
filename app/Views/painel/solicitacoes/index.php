@@ -5,7 +5,7 @@
  * 
  * Organizado em abas:
  *   - Aba 1: Nova Solicitação (formulário para envio)
- *   - Aba 2: Histórico (tabela com paginação)
+ *   - Aba 2: Histórico (tabela com filtros e paginação)
  */
 
 if (!isset($solicitacoes) || !is_array($solicitacoes)) {
@@ -15,6 +15,10 @@ if (!isset($solicitacoes) || !is_array($solicitacoes)) {
 $titulo = 'Solicitações';
 require __DIR__ . '/../../partials/dashboard_header.php';
 $sucesso = $sucesso ?? null;
+
+// Parâmetros atuais dos filtros (para manter na paginação)
+$termoAtual = $_GET['termo'] ?? '';
+$statusAtual = $_GET['status'] ?? '';
 ?>
 
 <h1>Minhas Solicitações</h1>
@@ -58,8 +62,24 @@ $sucesso = $sucesso ?? null;
 
         <!-- ===================== ABA 2: HISTÓRICO ===================== -->
         <div id="tab-historico" class="tab-pane">
+            <!-- Filtros -->
+            <form method="GET" action="/painel/solicitacoes" style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+                <input type="text" name="termo" placeholder="Buscar por palavra-chave" value="<?= htmlspecialchars($termoAtual) ?>" style="flex:1; min-width:200px;">
+                <select name="status">
+                    <option value="">Todos os status</option>
+                    <option value="pendente" <?= $statusAtual == 'pendente' ? 'selected' : '' ?>>Pendente</option>
+                    <option value="deferido" <?= $statusAtual == 'deferido' ? 'selected' : '' ?>>Deferido</option>
+                    <option value="indeferido" <?= $statusAtual == 'indeferido' ? 'selected' : '' ?>>Indeferido</option>
+                    <option value="em_desenvolvimento" <?= $statusAtual == 'em_desenvolvimento' ? 'selected' : '' ?>>Em Desenvolvimento</option>
+                    <option value="teste" <?= $statusAtual == 'teste' ? 'selected' : '' ?>>Teste</option>
+                    <option value="concluido" <?= $statusAtual == 'concluido' ? 'selected' : '' ?>>Concluído</option>
+                </select>
+                <button type="submit" class="btn-primary">Filtrar</button>
+                <a href="/painel/solicitacoes" class="btn">Limpar</a>
+            </form>
+
             <?php if (empty($solicitacoes)): ?>
-                <p style="color:#6c7a8a; text-align:center; padding:20px 0;">Nenhuma solicitação enviada até o momento.</p>
+                <p style="color:#6c7a8a; text-align:center; padding:20px 0;">Nenhuma solicitação encontrada.</p>
             <?php else: ?>
                 <table>
                     <thead>
@@ -88,27 +108,30 @@ $sucesso = $sucesso ?? null;
                     </tbody>
                 </table>
 
-                <!-- ==================== PAGINAÇÃO ==================== -->
+                <!-- ==================== PAGINAÇÃO (mantendo filtros) ==================== -->
                 <?php
                 $paginaAtual = $paginacao['pagina_atual'] ?? 1;
                 $totalPaginas = $paginacao['total_paginas'] ?? 1;
                 if ($totalPaginas > 1):
+                    // Prepara query string mantendo os filtros atuais
+                    $queryParams = $_GET;
+                    unset($queryParams['pagina']); // será adicionado individualmente
                 ?>
                 <div class="paginacao">
                     <?php if ($paginaAtual > 1): ?>
-                        <a href="/painel/solicitacoes?pagina=<?= $paginaAtual - 1 ?>">&laquo; Anterior</a>
+                        <a href="/painel/solicitacoes?<?= http_build_query(array_merge($queryParams, ['pagina' => $paginaAtual - 1])) ?>">&laquo; Anterior</a>
                     <?php endif; ?>
 
                     <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
                         <?php if ($i == $paginaAtual): ?>
                             <span class="pagina-atual"><?= $i ?></span>
                         <?php else: ?>
-                            <a href="/painel/solicitacoes?pagina=<?= $i ?>"><?= $i ?></a>
+                            <a href="/painel/solicitacoes?<?= http_build_query(array_merge($queryParams, ['pagina' => $i])) ?>"><?= $i ?></a>
                         <?php endif; ?>
                     <?php endfor; ?>
 
                     <?php if ($paginaAtual < $totalPaginas): ?>
-                        <a href="/painel/solicitacoes?pagina=<?= $paginaAtual + 1 ?>">Próximo &raquo;</a>
+                        <a href="/painel/solicitacoes?<?= http_build_query(array_merge($queryParams, ['pagina' => $paginaAtual + 1])) ?>">Próximo &raquo;</a>
                     <?php endif; ?>
                 </div>
                 <?php endif; ?>
@@ -177,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Sistema de abas (já existente no dashboard_footer, mas redundância não atrapalha)
+    // Sistema de abas
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabPanes = document.querySelectorAll('.tab-pane');
     tabBtns.forEach(btn => {

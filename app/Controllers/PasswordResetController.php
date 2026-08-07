@@ -6,13 +6,13 @@
  * Responsável por:
  *   - Exibir o formulário "Esqueci minha senha" (informar email e tipo de usuário).
  *   - Gerar um token único de redefinição e armazená-lo no banco de dados.
- *   - Enviar o link de redefinição por email (em desenvolvimento, exibe o link na tela).
+ *   - Enviar o link de redefinição por email (utiliza o helper Email com PHPMailer).
  *   - Exibir o formulário de redefinição de senha (após validação do token).
  *   - Processar a nova senha e atualizá-la no banco de dados (admin ou representante).
  * 
  * Fluxo completo:
  *   1. Usuário acessa /forgot-password e informa email + tipo.
- *   2. Sistema gera token, salva em password_resets e envia link.
+ *   2. Sistema gera token, salva em password_resets e envia link por e-mail.
  *   3. Usuário clica no link (/reset-password?token=...&tipo=...).
  *   4. Sistema valida o token e exibe formulário de nova senha.
  *   5. Usuário define nova senha e sistema atualiza no banco.
@@ -21,6 +21,7 @@
  */
 
 require_once __DIR__ . '/../Models/Database.php';
+require_once __DIR__ . '/../Helpers/Email.php';
 
 class PasswordResetController {
     
@@ -62,7 +63,8 @@ class PasswordResetController {
      *   - Gera um token único (64 caracteres hexadecimais) com validade de 1 hora.
      *   - Remove tokens antigos do mesmo email/tipo.
      *   - Insere o novo token na tabela password_resets.
-     *   - Envia o link de redefinição por email (ou exibe na tela em desenvolvimento).
+     *   - Envia o link de redefinição por email usando o helper Email (PHPMailer).
+     *   - Em caso de falha no envio, exibe o link na tela como fallback.
      * 
      * SEGURANÇA: Não revela se o email existe ou não (mensagem genérica).
      * 
@@ -102,18 +104,27 @@ class PasswordResetController {
         $stmt = $this->pdo->prepare("INSERT INTO password_resets (email, token, tipo, expira_em) VALUES (:email, :token, :tipo, :expira)");
         $stmt->execute([':email' => $email, ':token' => $token, ':tipo' => $tipo, ':expira' => $expira]);
 
-        // Prepara o email de redefinição
-        $assunto = "Redefinição de senha";
+        // Prepara o e-mail de redefinição
+        $assunto = "Redefinição de senha - Umbrella Corporation";
         $link = "http://umbrella.test/reset-password?token=$token&tipo=$tipo";
-        $mensagem = "Clique no link para redefinir sua senha: $link";
-        $headers = "From: no-reply@umbrella.test\r\n";
+        $mensagem = "Olá,\n\n";
+        $mensagem .= "Você solicitou a redefinição de sua senha.\n\n";
+        $mensagem .= "Clique no link abaixo para criar uma nova senha:\n";
+        $mensagem .= "$link\n\n";
+        $mensagem .= "Este link é válido por 1 hora.\n\n";
+        $mensagem .= "Se você não solicitou esta alteração, ignore este e-mail.\n\n";
+        $mensagem .= "Atenciosamente,\nEquipe Umbrella Corporation";
 
-        // Tenta enviar o email (em desenvolvimento, exibe o link na tela como fallback)
-        if (mail($email, $assunto, $mensagem, $headers)) {
+        // Tenta enviar o e-mail utilizando o helper Email (PHPMailer)
+        $enviado = Email::enviar($email, $assunto, $mensagem);
+
+        if ($enviado) {
             echo "Email enviado com sucesso! Verifique sua caixa de entrada.";
         } else {
-            // Fallback para desenvolvimento: exibe o link diretamente
-            echo "Não foi possível enviar o email. Modo desenvolvimento: <a href='$link'>Clique aqui para redefinir</a>";
+            // Fallback para ambiente de desenvolvimento: exibe o link na tela
+            echo "Não foi possível enviar o e-mail automaticamente.";
+            echo "<br><br><strong>Modo desenvolvimento:</strong><br>";
+            echo "<a href='$link'>Clique aqui para redefinir sua senha</a>";
         }
     }
 

@@ -12,6 +12,7 @@
  * Após login bem-sucedido, armazena:
  *   - $_SESSION['admin_id']
  *   - $_SESSION['admin_nome']
+ *   - $_SESSION['admin_email']
  */
 
 require_once __DIR__ . '/../Models/Admin.php';
@@ -30,36 +31,29 @@ class AdminAuthController {
     }
 
     // ============================================================
-    // 2. PROCESSAR LOGIN
+    // 2. PROCESSAR LOGIN (resposta JSON)
     // ============================================================
     /**
      * Processa o envio do formulário de login.
-     * Verifica as credenciais no banco de dados (tabela administradores).
-     * Se válidas, cria as variáveis de sessão e redireciona para o painel.
-     * Caso contrário, exibe mensagem de erro.
+     * Retorna JSON com sucesso/erro em vez de redirecionar.
      * 
      * Rota associada: POST /admin/login
      */
     public function login(): void {
-        // Captura os dados do formulário
         $email = $_POST['email'] ?? '';
         $senha = $_POST['senha'] ?? '';
-        
-        // Busca o administrador pelo email
         $model = new Admin();
         $admin = $model->buscarPorEmail($email);
-        
-        // Verifica se o admin existe e a senha está correta (hash bcrypt)
+
         if ($admin && password_verify($senha, $admin['senha'])) {
             $_SESSION['admin_id'] = $admin['id'];
             $_SESSION['admin_nome'] = $admin['nome'];
-            $_SESSION['admin_email'] = $admin['email'];   // ← adicione esta linha
-            header('Location: /admin/representantes');
-            exit;
+            $_SESSION['admin_email'] = $admin['email'];
+            echo json_encode(['sucesso' => true, 'redirect' => '/admin/representantes']);
         } else {
-            // Credenciais inválidas
-            echo "Email ou senha inválidos. <a href='/admin/login'>Tentar novamente</a>";
+            echo json_encode(['sucesso' => false, 'erro' => 'Email ou senha inválidos.']);
         }
+        exit;
     }
 
     // ============================================================

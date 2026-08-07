@@ -188,4 +188,62 @@ class Cliente {
         $stmt = $this->pdo->prepare("DELETE FROM clientes WHERE id = :id AND representante_id = :rid");
         return $stmt->execute([':id' => $id, ':rid' => $representanteId]);
     }
+
+    public function listarPaginadoPorRepresentante(int $representanteId, string $ordem = 'id', string $direcao = 'asc', int $pagina = 1, int $limite = 10): array {
+    $colunasPermitidas = ['id', 'nome', 'cpf_cnpj', 'email', 'ativo'];
+    if (!in_array($ordem, $colunasPermitidas)) $ordem = 'id';
+    $direcao = strtolower($direcao) === 'desc' ? 'DESC' : 'ASC';
+
+    $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM clientes WHERE representante_id = :rid");
+    $stmt->execute([':rid' => $representanteId]);
+    $total = (int)$stmt->fetchColumn();
+
+    $totalPaginas = $total > 0 ? (int)ceil($total / $limite) : 1;
+    $offset = ($pagina - 1) * $limite;
+
+    $sql = "SELECT * FROM clientes WHERE representante_id = :rid ORDER BY $ordem $direcao LIMIT :limite OFFSET :offset";
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->bindValue(':rid', $representanteId, \PDO::PARAM_INT);
+    $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+    $stmt->execute();
+
+    return [
+        'dados' => $stmt->fetchAll(),
+        'total' => $total,
+        'pagina_atual' => $pagina,
+        'total_paginas' => $totalPaginas
+    ];
+}
+
+public function buscarPaginadoPorRepresentante(int $representanteId, string $termo, int $pagina = 1, int $limite = 10, string $ordem = 'id', string $direcao = 'asc'): array {
+    $colunasPermitidas = ['id', 'nome', 'cpf_cnpj', 'email', 'ativo'];
+    if (!in_array($ordem, $colunasPermitidas)) $ordem = 'id';
+    $direcao = strtolower($direcao) === 'desc' ? 'DESC' : 'ASC';
+
+    $where = "representante_id = :rid AND (nome LIKE :termo OR cpf_cnpj LIKE :termo OR email LIKE :termo)";
+    $params = [':rid' => $representanteId, ':termo' => '%' . $termo . '%'];
+
+    $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM clientes WHERE $where");
+    $stmt->execute($params);
+    $total = (int)$stmt->fetchColumn();
+
+    $totalPaginas = $total > 0 ? (int)ceil($total / $limite) : 1;
+    $offset = ($pagina - 1) * $limite;
+
+    $sql = "SELECT * FROM clientes WHERE $where ORDER BY $ordem $direcao LIMIT :limite OFFSET :offset";
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->bindValue(':rid', $representanteId, \PDO::PARAM_INT);
+    $stmt->bindValue(':termo', '%' . $termo . '%');
+    $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+    $stmt->execute();
+
+    return [
+        'dados' => $stmt->fetchAll(),
+        'total' => $total,
+        'pagina_atual' => $pagina,
+        'total_paginas' => $totalPaginas
+    ];
+}
 }
