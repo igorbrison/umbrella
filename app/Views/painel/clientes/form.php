@@ -3,21 +3,13 @@
  * Arquivo: Views/painel/clientes/form.php
  * Função: VIEW de formulário para criação/edição de clientes (painel do representante).
  * 
- * Este formulário é usado pelo representante para cadastrar um novo cliente
- * ou editar os dados de um cliente existente.
+ * Organizado em abas para melhor usabilidade:
+ *   - Aba 1: Dados Principais (tipo pessoa, CPF/CNPJ, nome, etc.)
+ *   - Aba 2: Endereço
+ *   - Aba 3: Contato e Observações
+ *   - Aba 4: Módulos (apenas na criação)
  * 
- * Comportamento:
- *   - Se $cliente estiver vazio, estamos no modo "Novo Cliente".
- *   - Se $cliente tiver dados, estamos no modo "Edição" (apenas dados básicos;
- *     os módulos contratados não podem ser alterados pelo representante).
- * 
- * Recursos:
- *   - Seleção de tipo de pessoa (Física/Jurídica) com ajuste dinâmico dos campos.
- *   - Busca automática de dados via CNPJ (API própria).
- *   - Busca de endereço pelo CEP (ViaCEP).
- *   - Lista de módulos disponíveis para contratação (apenas no momento da criação).
- * 
- * Observação: As validações de servidor são feitas no ClienteController@salvar.
+ * Mantém todos os recursos (busca CNPJ, CEP, validação de senha, etc.)
  */
 
 // Garante que as variáveis estejam sempre inicializadas
@@ -35,155 +27,240 @@ if (!isset($idsModulosCliente)) {
 $modoEdicao = !empty($cliente);
 $titulo = $modoEdicao ? 'Editar Cliente' : 'Novo Cliente';
 
-// Inclui o cabeçalho comum (HTML, CSS, favicon)
+// Inclui o cabeçalho do painel
 require __DIR__ . '/../../partials/dashboard_header.php';
 ?>
 
 <h1><?= $titulo ?></h1>
+<p class="subtitle">Preencha os dados do cliente nos campos abaixo</p>
 
 <!-- FORMULÁRIO DE CLIENTE -->
 <form method="POST" action="/painel/clientes/salvar" id="form-cliente">
-    <!-- ID oculto para identificar edição -->
     <input type="hidden" name="id" value="<?= $modoEdicao ? $cliente['id'] : '' ?>">
 
-    <!-- ===================== DADOS PRINCIPAIS ===================== -->
-    <fieldset><legend>Dados do Cliente</legend>
-        <label>Tipo Pessoa <span class="obrigatorio">*</span>:
-            <select name="tipo_pessoa" id="tipo_pessoa" required>
-                <option value="">Selecione...</option>
-                <option value="F" <?= $modoEdicao && ($cliente['tipo_pessoa'] ?? '') == 'F' ? 'selected' : '' ?>>Física</option>
-                <option value="J" <?= $modoEdicao && ($cliente['tipo_pessoa'] ?? '') == 'J' ? 'selected' : '' ?>>Jurídica</option>
-            </select>
-        </label>
+    <div class="tabs-container">
+        <!-- Navegação das abas -->
+        <div class="tabs-nav">
+            <button type="button" class="tab-btn active" data-tab="tab-principal">
+                <i class="fas fa-user"></i> Dados Principais
+            </button>
+            <button type="button" class="tab-btn" data-tab="tab-endereco">
+                <i class="fas fa-map-marker-alt"></i> Endereço
+            </button>
+            <button type="button" class="tab-btn" data-tab="tab-contato">
+                <i class="fas fa-phone"></i> Contato
+            </button>
+            <button type="button" class="tab-btn" data-tab="tab-modulos">
+                <i class="fas fa-cubes"></i> Módulos
+            </button>
+        </div>
 
-        <label>CPF/CNPJ <span class="obrigatorio">*</span>:
-            <input type="text" name="cpf_cnpj" id="cpf_cnpj" required
-                   value="<?= $modoEdicao ? htmlspecialchars($cliente['cpf_cnpj']) : '' ?>"
-                   maxlength="18">
-        </label>
-        <!-- Botão de busca por CNPJ (apenas PJ) -->
-        <button type="button" id="btn-buscar-cnpj" style="display:none;">Buscar dados pelo CNPJ</button>
-        <span id="loading-cnpj" style="display:none;">Buscando...</span>
+        <!-- Conteúdo das abas -->
+        <div class="tab-content">
+            <!-- ===================== ABA 1: DADOS PRINCIPAIS ===================== -->
+            <div id="tab-principal" class="tab-pane active">
+                <fieldset>
+                    <legend>Dados do Cliente</legend>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Tipo Pessoa <span class="obrigatorio">*</span>:
+                                <select name="tipo_pessoa" id="tipo_pessoa" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="F" <?= $modoEdicao && ($cliente['tipo_pessoa'] ?? '') == 'F' ? 'selected' : '' ?>>Física</option>
+                                    <option value="J" <?= $modoEdicao && ($cliente['tipo_pessoa'] ?? '') == 'J' ? 'selected' : '' ?>>Jurídica</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="form-col">
+                            <label>CPF/CNPJ <span class="obrigatorio">*</span>:
+                                <input type="text" name="cpf_cnpj" id="cpf_cnpj" required
+                                       value="<?= $modoEdicao ? htmlspecialchars($cliente['cpf_cnpj']) : '' ?>"
+                                       maxlength="18">
+                            </label>
+                            <button type="button" id="btn-buscar-cnpj" class="btn-buscar" style="display:none;">Buscar dados pelo CNPJ</button>
+                            <span id="loading-cnpj" style="display:none;">Buscando...</span>
+                        </div>
+                    </div>
 
-        <!-- Campo dinâmico: RG (PF) ou Inscrição Estadual (PJ) -->
-        <label id="label-ie-rg"><span id="texto-ie-rg">Inscrição Estadual</span> <span class="obrigatorio">*</span>:
-            <input type="text" name="ie_rg" id="ie_rg" required
-                   maxlength="14"
-                   value="<?= $modoEdicao ? htmlspecialchars($cliente['ie_rg'] ?? '') : '' ?>">
-        </label>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label id="label-ie-rg"><span id="texto-ie-rg">Inscrição Estadual</span> <span class="obrigatorio">*</span>:
+                                <input type="text" name="ie_rg" id="ie_rg" required
+                                       maxlength="14"
+                                       value="<?= $modoEdicao ? htmlspecialchars($cliente['ie_rg'] ?? '') : '' ?>">
+                            </label>
+                        </div>
+                        <div class="form-col">
+                            <label>Nome / Razão Social <span class="obrigatorio">*</span>:
+                                <input type="text" name="nome" required
+                                       value="<?= $modoEdicao ? htmlspecialchars($cliente['nome']) : '' ?>">
+                            </label>
+                        </div>
+                    </div>
 
-        <label>Nome / Razão Social <span class="obrigatorio">*</span>:
-            <input type="text" name="nome" required
-                   value="<?= $modoEdicao ? htmlspecialchars($cliente['nome']) : '' ?>">
-        </label>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label id="label-nome-fantasia">Nome Fantasia <span class="obrigatorio">*</span>:
+                                <input type="text" name="nome_fantasia" id="nome_fantasia" required
+                                       value="<?= $modoEdicao ? htmlspecialchars($cliente['nome_fantasia'] ?? '') : '' ?>">
+                            </label>
+                        </div>
+                        <div class="form-col">
+                            <label id="label-data-fundacao">Data de Fundação <span class="obrigatorio">*</span>:
+                                <input type="date" name="data_fundacao" id="data_fundacao" required
+                                       value="<?= $modoEdicao ? ($cliente['data_fundacao'] ?? '') : '' ?>">
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
 
-        <!-- Campos específicos de PJ (visibilidade controlada por JS) -->
-        <label id="label-nome-fantasia">Nome Fantasia <span class="obrigatorio">*</span>:
-            <input type="text" name="nome_fantasia" id="nome_fantasia" required
-                   value="<?= $modoEdicao ? htmlspecialchars($cliente['nome_fantasia'] ?? '') : '' ?>">
-        </label>
+            <!-- ===================== ABA 2: ENDEREÇO ===================== -->
+            <div id="tab-endereco" class="tab-pane">
+                <fieldset>
+                    <legend>Endereço</legend>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>CEP <span class="obrigatorio">*</span>:
+                                <input type="text" name="cep" id="cep" maxlength="9" required
+                                       value="<?= $modoEdicao ? htmlspecialchars($cliente['cep'] ?? '') : '' ?>">
+                            </label>
+                            <button type="button" id="btn-buscar-cep" class="btn-buscar">Buscar endereço pelo CEP</button>
+                            <span id="loading-cep" style="display:none;">Buscando...</span>
+                        </div>
+                        <div class="form-col">
+                            <label>Logradouro <span class="obrigatorio">*</span>:
+                                <input type="text" name="logradouro" required
+                                       value="<?= $modoEdicao ? htmlspecialchars($cliente['logradouro'] ?? '') : '' ?>">
+                            </label>
+                        </div>
+                    </div>
 
-        <label id="label-data-fundacao">Data de Fundação <span class="obrigatorio">*</span>:
-            <input type="date" name="data_fundacao" id="data_fundacao" required
-                   value="<?= $modoEdicao ? ($cliente['data_fundacao'] ?? '') : '' ?>">
-        </label>
-    </fieldset>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Número <span class="obrigatorio">*</span>:
+                                <input type="text" name="numero" required
+                                       value="<?= $modoEdicao ? htmlspecialchars($cliente['numero'] ?? '') : '' ?>">
+                            </label>
+                        </div>
+                        <div class="form-col">
+                            <label>Complemento:
+                                <input type="text" name="complemento"
+                                       value="<?= $modoEdicao ? htmlspecialchars($cliente['complemento'] ?? '') : '' ?>">
+                            </label>
+                        </div>
+                    </div>
 
-    <!-- ===================== ENDEREÇO ===================== -->
-    <fieldset class="grupo"><legend>Endereço</legend>
-        <label>CEP <span class="obrigatorio">*</span>:
-            <input type="text" name="cep" id="cep" maxlength="9" required
-                   value="<?= $modoEdicao ? htmlspecialchars($cliente['cep'] ?? '') : '' ?>">
-        </label>
-        <button type="button" id="btn-buscar-cep">Buscar endereço pelo CEP</button>
-        <span id="loading-cep" style="display:none;">Buscando...</span>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Bairro <span class="obrigatorio">*</span>:
+                                <input type="text" name="bairro" required
+                                       value="<?= $modoEdicao ? htmlspecialchars($cliente['bairro'] ?? '') : '' ?>">
+                            </label>
+                        </div>
+                        <div class="form-col">
+                            <label>Estado <span class="obrigatorio">*</span>:
+                                <input type="text" name="estado" maxlength="2" required
+                                       value="<?= $modoEdicao ? htmlspecialchars($cliente['estado'] ?? '') : '' ?>">
+                            </label>
+                        </div>
+                    </div>
 
-        <label>Logradouro <span class="obrigatorio">*</span>:
-            <input type="text" name="logradouro" required
-                   value="<?= $modoEdicao ? htmlspecialchars($cliente['logradouro'] ?? '') : '' ?>">
-        </label>
-        <label>Número <span class="obrigatorio">*</span>:
-            <input type="text" name="numero" required
-                   value="<?= $modoEdicao ? htmlspecialchars($cliente['numero'] ?? '') : '' ?>">
-        </label>
-        <label>Complemento:
-            <input type="text" name="complemento"
-                   value="<?= $modoEdicao ? htmlspecialchars($cliente['complemento'] ?? '') : '' ?>">
-        </label>
-        <label>Bairro <span class="obrigatorio">*</span>:
-            <input type="text" name="bairro" required
-                   value="<?= $modoEdicao ? htmlspecialchars($cliente['bairro'] ?? '') : '' ?>">
-        </label>
-        <label>Estado <span class="obrigatorio">*</span>:
-            <input type="text" name="estado" maxlength="2" required
-                   value="<?= $modoEdicao ? htmlspecialchars($cliente['estado'] ?? '') : '' ?>">
-        </label>
-        <label>Município <span class="obrigatorio">*</span>:
-            <input type="text" name="municipio" required
-                   value="<?= $modoEdicao ? htmlspecialchars($cliente['municipio'] ?? '') : '' ?>">
-        </label>
-    </fieldset>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Município <span class="obrigatorio">*</span>:
+                                <input type="text" name="municipio" required
+                                       value="<?= $modoEdicao ? htmlspecialchars($cliente['municipio'] ?? '') : '' ?>">
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
 
-    <!-- ===================== CONTATO ===================== -->
-    <fieldset class="grupo"><legend>Contato</legend>
-        <label>Telefone <span class="obrigatorio">*</span>:
-            <input type="text" name="telefone" required
-                   value="<?= $modoEdicao ? htmlspecialchars($cliente['telefone'] ?? '') : '' ?>">
-        </label>
-        <label>Celular <span class="obrigatorio">*</span>:
-            <input type="text" name="celular" required
-                   value="<?= $modoEdicao ? htmlspecialchars($cliente['celular'] ?? '') : '' ?>">
-        </label>
-        <label>Email <span class="obrigatorio">*</span>:
-            <input type="email" name="email" required
-                   value="<?= $modoEdicao ? htmlspecialchars($cliente['email'] ?? '') : '' ?>">
-        </label>
-    </fieldset>
+            <!-- ===================== ABA 3: CONTATO E OBSERVAÇÕES ===================== -->
+            <div id="tab-contato" class="tab-pane">
+                <fieldset>
+                    <legend>Contato</legend>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Telefone <span class="obrigatorio">*</span>:
+                                <input type="text" name="telefone" required
+                                       value="<?= $modoEdicao ? htmlspecialchars($cliente['telefone'] ?? '') : '' ?>">
+                            </label>
+                        </div>
+                        <div class="form-col">
+                            <label>Celular <span class="obrigatorio">*</span>:
+                                <input type="text" name="celular" required
+                                       value="<?= $modoEdicao ? htmlspecialchars($cliente['celular'] ?? '') : '' ?>">
+                            </label>
+                        </div>
+                    </div>
 
-    <!-- ===================== OBSERVAÇÕES E STATUS ===================== -->
-    <fieldset class="grupo">
-        <label>Observações:
-            <textarea name="observacoes" rows="4"><?= $modoEdicao ? htmlspecialchars($cliente['observacoes'] ?? '') : '' ?></textarea>
-        </label>
-        <label>Ativo:
-            <input type="checkbox" name="ativo" <?= (!$modoEdicao || ($cliente['ativo'] ?? 1)) ? 'checked' : '' ?>>
-        </label>
-    </fieldset>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Email <span class="obrigatorio">*</span>:
+                                <input type="email" name="email" required
+                                       value="<?= $modoEdicao ? htmlspecialchars($cliente['email'] ?? '') : '' ?>">
+                            </label>
+                        </div>
+                    </div>
 
-    <!-- ===================== MÓDULOS CONTRATADOS ===================== -->
-    <!--
-        No modo EDIÇÃO o representante apenas visualiza os módulos.
-        No modo CRIAÇÃO ele seleciona quais módulos contratar.
-    -->
-    <fieldset class="grupo">
-        <legend>Módulos Contratados</legend>
-        <?php if ($modoEdicao): ?>
-            <!-- Modo edição: exibe a lista de módulos como texto informativo -->
-            <p><em>Apenas o administrador pode alterar os módulos contratados.</em></p>
-            <?php if (!empty($idsModulosCliente)): ?>
-                <ul>
-                    <?php foreach ($modulos as $m): ?>
-                        <?php if (in_array($m['identificador'], $idsModulosCliente)): ?>
-                            <li><?= htmlspecialchars($m['nome']) ?> (<?= htmlspecialchars($m['identificador']) ?>)</li>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Observações:
+                                <textarea name="observacoes" rows="4"><?= $modoEdicao ? htmlspecialchars($cliente['observacoes'] ?? '') : '' ?></textarea>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="ativo" <?= (!$modoEdicao || ($cliente['ativo'] ?? 1)) ? 'checked' : '' ?>>
+                                Ativo
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+
+            <!-- ===================== ABA 4: MÓDULOS CONTRATADOS ===================== -->
+            <div id="tab-modulos" class="tab-pane">
+                <fieldset>
+                    <legend>Módulos Contratados</legend>
+                    <?php if ($modoEdicao): ?>
+                        <!-- Modo edição: exibe a lista de módulos como texto informativo -->
+                        <p><em>Apenas o administrador pode alterar os módulos contratados.</em></p>
+                        <?php if (!empty($idsModulosCliente)): ?>
+                            <ul>
+                                <?php foreach ($modulos as $m): ?>
+                                    <?php if (in_array($m['identificador'], $idsModulosCliente)): ?>
+                                        <li><?= htmlspecialchars($m['nome']) ?> (<?= htmlspecialchars($m['identificador']) ?>)</li>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php else: ?>
+                            <p>Nenhum módulo contratado.</p>
                         <?php endif; ?>
-                    <?php endforeach; ?>
-                </ul>
-            <?php else: ?>
-                <p>Nenhum módulo contratado.</p>
-            <?php endif; ?>
-        <?php else: ?>
-            <!-- Modo criação: exibe checkboxes para seleção -->
-            <?php foreach ($modulos as $m): ?>
-                <label>
-                    <input type="checkbox" name="modulos[]" value="<?= $m['id'] ?>">
-                    <?= htmlspecialchars($m['nome']) ?> (<?= htmlspecialchars($m['identificador']) ?>)
-                </label><br>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </fieldset>
+                    <?php else: ?>
+                        <!-- Modo criação: exibe checkboxes para seleção -->
+                        <?php foreach ($modulos as $m): ?>
+                            <label>
+                                <input type="checkbox" name="modulos[]" value="<?= $m['id'] ?>">
+                                <?= htmlspecialchars($m['nome']) ?> (<?= htmlspecialchars($m['identificador']) ?>)
+                            </label><br>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </fieldset>
+            </div>
+        </div>
+    </div>
 
-    <button type="submit">Salvar</button>
-    <a href="/painel/clientes">Cancelar</a>
+    <!-- Botões de ação -->
+    <div class="form-actions">
+        <a href="/painel/clientes" class="btn">Cancelar</a>
+        <button type="submit" class="btn-primary">Salvar</button>
+    </div>
 </form>
 
 <!-- ===================== JAVASCRIPT ===================== -->
