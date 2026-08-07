@@ -12,20 +12,48 @@
  * 
  * Uso: Rota associada → GET /dashboard
  */
+require_once __DIR__ . '/../Models/Cliente.php';
+require_once __DIR__ . '/../Models/Licenca.php';
+require_once __DIR__ . '/../Models/Representante.php';
 
 class DashboardController {
-    
-    /**
-     * Redireciona para a página inicial adequada ao perfil do usuário.
-     */
     public function index(): void {
+        $dados = [];
+
         if (isset($_SESSION['admin_id'])) {
-            header('Location: /admin/representantes');
+            // Admin
+            $clienteModel = new Cliente();
+            $licencaModel = new Licenca();
+            $dados['totalClientes'] = count($licencaModel->listarTodas()); // total de licenças = clientes
+            $dados['totalRepresentantes'] = count((new Representante())->listarTodos());
+            // Placeholders para outros cards
+            $dados['receitaMensal'] = 0;
+            $dados['clientesEmAtraso'] = 0;
+            require __DIR__ . '/../Views/dashboard/admin.php';
         } elseif (isset($_SESSION['representante_id'])) {
-            header('Location: /painel/clientes');
+            // Representante
+            $representanteId = $_SESSION['representante_id'];
+            $clienteModel = new Cliente();
+            $clientes = $clienteModel->listarPorRepresentante($representanteId);
+            $dados['totalClientes'] = count($clientes);
+            // Calcula licenças próximas do vencimento (exemplo: até 7 dias)
+            $licencaModel = new Licenca();
+            $licencas = $licencaModel->listarPorRepresentante($representanteId);
+            $proximasVencer = 0;
+            $hoje = new DateTime();
+            foreach ($licencas as $l) {
+                $exp = new DateTime($l['data_expiracao']);
+                $diff = (int)$hoje->diff($exp)->format('%r%a');
+                if ($diff <= 7 && $diff >= 0) {
+                    $proximasVencer++;
+                }
+            }
+            $dados['proximasVencer'] = $proximasVencer;
+            $dados['receitaMensal'] = 0; // placeholder
+            require __DIR__ . '/../Views/dashboard/representante.php';
         } else {
             header('Location: /login');
+            exit;
         }
-        exit;
     }
 }

@@ -169,7 +169,7 @@ $router->post('/admin/configuracao/salvar', function() {
     (new ConfiguracaoController())->salvar();
 });
 
-// ===== NOVAS ROTAS DE PERFIL E SENHA (ADMIN) =====
+// ===== ROTAS DE PERFIL E SENHA (ADMIN) =====
 // Perfil do Admin
 $router->get('/admin/perfil', function() {
     require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
@@ -191,6 +191,21 @@ $router->post('/admin/alterar-senha', function() {
     AuthAdminMiddleware::verificar();
     require_once __DIR__ . '/../app/Controllers/SenhaController.php';
     (new SenhaController())->alterar('admin');
+});
+
+// ===== SOLICITAÇÕES (ADMIN) =====
+$router->get('/admin/solicitacoes', function() {
+    require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
+    AuthAdminMiddleware::verificar();
+    require_once __DIR__ . '/../app/Controllers/AdminSolicitacaoController.php';
+    (new AdminSolicitacaoController())->index();
+});
+
+$router->post('/admin/solicitacoes/atualizar', function() {
+    require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
+    AuthAdminMiddleware::verificar();
+    require_once __DIR__ . '/../app/Controllers/AdminSolicitacaoController.php';
+    (new AdminSolicitacaoController())->atualizarStatus();
 });
 
 // Redireciona /admin para a lista de representantes (após login)
@@ -254,7 +269,7 @@ $router->mount('/painel', function() use ($router) {
         (new ClienteController())->editar((int)$id);
     });
 
-    // ===== NOVAS ROTAS DE PERFIL E SENHA (REPRESENTANTE) =====
+    // ===== ROTAS DE PERFIL E SENHA (REPRESENTANTE) =====
     // Perfil do Representante
     $router->get('/perfil', function() {
         require_once __DIR__ . '/../app/Controllers/RepresentantePerfilController.php';
@@ -271,10 +286,21 @@ $router->mount('/painel', function() use ($router) {
         require_once __DIR__ . '/../app/Controllers/SenhaController.php';
         (new SenhaController())->alterar('representante');
     });
+
+    // ===== SOLICITAÇÕES (REPRESENTANTE) =====
+    $router->get('/solicitacoes', function() {
+        require_once __DIR__ . '/../app/Controllers/SolicitacaoController.php';
+        (new SolicitacaoController())->index();
+    });
+
+    $router->post('/solicitacoes/enviar', function() {
+        require_once __DIR__ . '/../app/Controllers/SolicitacaoController.php';
+        (new SolicitacaoController())->enviar();
+    });
 });
 
 // ============================================================
-// 6. ROTA DO DASHBOARD (REDIRECIONA CONFORME PERFIL)
+// 6. ROTA DO DASHBOARD (PÁGINA DE INDICADORES)
 // ============================================================
 $router->get('/dashboard', function() {
     require_once __DIR__ . '/../app/Controllers/DashboardController.php';
