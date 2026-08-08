@@ -5,7 +5,7 @@
  * 
  * Responsável por:
  *   - Listar todas as solicitações enviadas pelos representantes.
- *   - Permitir que o administrador atualize o status de cada solicitação.
+ *   - Permitir que o administrador atualize o status e a resposta de cada solicitação.
  * 
  * Status disponíveis:
  *   - pendente          : Aguardando avaliação.
@@ -41,7 +41,7 @@ class AdminSolicitacaoController {
     // ============================================================
     /**
      * Exibe a lista de todas as solicitações de todos os representantes,
-     * com opção de alterar o status de cada uma.
+     * com opção de alterar o status e a resposta de cada uma.
      */
     public function index(): void {
         $solicitacoes = $this->model->listarTodas();
@@ -49,7 +49,7 @@ class AdminSolicitacaoController {
     }
 
     // ============================================================
-    // 2. ATUALIZAR STATUS DE UMA SOLICITAÇÃO
+    // 2. ATUALIZAR STATUS DE UMA SOLICITAÇÃO (mantido para compatibilidade)
     // ============================================================
     /**
      * Processa a alteração de status de uma solicitação.
@@ -60,6 +60,36 @@ class AdminSolicitacaoController {
         $id = (int)($_POST['id'] ?? 0);
         $status = $_POST['status'] ?? '';
         $this->model->atualizarStatus($id, $status);
+        header('Location: /admin/solicitacoes');
+        exit;
+    }
+
+    // ============================================================
+    // 3. RESPONDER E ATUALIZAR STATUS DE UMA SOLICITAÇÃO
+    // ============================================================
+    /**
+     * Processa a atualização de status e a resposta do administrador.
+     * 
+     * Recebe o ID, o novo status e a resposta via POST.
+     * Atualiza ambos no banco de dados e redireciona para a lista.
+     * 
+     * Rota associada: POST /admin/solicitacoes/atualizar
+     */
+    public function responder(): void {
+        $id = (int)($_POST['id'] ?? 0);
+        $status = $_POST['status'] ?? '';
+        $resposta = $_POST['resposta'] ?? '';
+
+        if ($id <= 0 || empty($status)) {
+            echo "Dados inválidos.";
+            exit;
+        }
+
+        // Atualiza o status
+        $this->model->atualizarStatus($id, $status);
+        // Atualiza a resposta
+        $this->model->responder($id, $resposta);
+
         header('Location: /admin/solicitacoes');
         exit;
     }

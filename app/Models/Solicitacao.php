@@ -8,12 +8,14 @@
  *   - Listar solicitações por representante (painel do representante), com ou sem paginação.
  *   - Listar todas as solicitações (painel do administrador).
  *   - Inserir novas solicitações e atualizar o status delas.
+ *   - Registrar respostas do administrador às solicitações.
  * 
  * Fluxo:
  *   1. Representante envia uma solicitação (título + descrição).
  *   2. Administrador visualiza todas as solicitações em uma lista.
  *   3. Administrador atualiza o status (pendente, deferido, indeferido,
- *      em desenvolvimento, teste, concluído).
+ *      em desenvolvimento, teste, concluído) e opcionalmente insere uma resposta.
+ *   4. Representante visualiza a resposta em um modal de detalhes.
  * 
  * Conexão: Utiliza o Singleton Database para obter uma instância PDO única.
  */
@@ -58,7 +60,6 @@ class Solicitacao {
      * @return array Array com chaves: dados, total, pagina_atual, total_paginas.
      */
     public function listarPaginadoPorRepresentante(int $representanteId, int $pagina = 1, int $limite = 10): array {
-        // Conta o total de registros para calcular as páginas
         $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM solicitacoes WHERE representante_id = :rid");
         $stmt->execute([':rid' => $representanteId]);
         $total = (int)$stmt->fetchColumn();
@@ -162,48 +163,71 @@ class Solicitacao {
         return $stmt->execute([':titulo' => $titulo, ':descricao' => $descricao, ':id' => $id]);
     }
 
+    /**
+     * Registra ou atualiza a resposta do administrador para uma solicitação.
+     * 
+     * @param int $id ID da solicitação.
+     * @param string $resposta Texto da resposta fornecida pelo administrador.
+     * @return bool True se a atualização for bem-sucedida.
+     */
+    public function responder(int $id, string $resposta): bool {
+        $stmt = $this->pdo->prepare("UPDATE solicitacoes SET resposta = :resposta WHERE id = :id");
+        return $stmt->execute([':resposta' => $resposta, ':id' => $id]);
+    }
+
+    /**
+     * Lista as solicitações de um representante com filtros e paginação.
+     * Permite busca por termo (título ou descrição) e por status.
+     * 
+     * @param int $representanteId ID do representante.
+     * @param string $termo Termo de busca (opcional).
+     * @param string $status Status para filtrar (opcional).
+     * @param int $pagina Número da página.
+     * @param int $limite Quantidade de registros por página.
+     * @return array Array com chaves: dados, total, pagina_atual, total_paginas.
+     */
     public function listarFiltradoPaginado(int $representanteId, string $termo = '', string $status = '', int $pagina = 1, int $limite = 10): array {
-    $sql = "SELECT COUNT(*) FROM solicitacoes WHERE representante_id = :rid";
-    $params = [':rid' => $representanteId];
+        $sql = "SELECT COUNT(*) FROM solicitacoes WHERE representante_id = :rid";
+        $params = [':rid' => $representanteId];
 
-    if (!empty($termo)) {
-        $sql .= " AND (titulo LIKE :termo OR descricao LIKE :termo)";
-        $params[':termo'] = '%' . $termo . '%';
+        if (!empty($termo)) {
+            $sql .= " AND (titulo LIKE :termo OR descricao LIKE :termo)";
+            $params[':termo'] = '%' . $termo . '%';
+        }
+        if (!empty($status)) {
+            $sql .= " AND status = :status";
+            $params[':status'] = $status;
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $total = (int)$stmt->fetchColumn();
+
+        $totalPaginas = $total > 0 ? (int)ceil($total / $limite) : 1;
+        $offset = ($pagina - 1) * $limite;
+
+        $sqlData = "SELECT * FROM solicitacoes WHERE representante_id = :rid";
+        if (!empty($termo)) {
+            $sqlData .= " AND (titulo LIKE :termo OR descricao LIKE :termo)";
+        }
+        if (!empty($status)) {
+            $sqlData .= " AND status = :status";
+        }
+        $sqlData .= " ORDER BY criado_em DESC LIMIT :limite OFFSET :offset";
+
+        $stmt = $this->pdo->prepare($sqlData);
+        $stmt->bindValue(':rid', $representanteId, \PDO::PARAM_INT);
+        if (!empty($termo)) $stmt->bindValue(':termo', '%' . $termo . '%');
+        if (!empty($status)) $stmt->bindValue(':status', $status);
+        $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        return [
+            'dados' => $stmt->fetchAll(),
+            'total' => $total,
+            'pagina_atual' => $pagina,
+            'total_paginas' => $totalPaginas
+        ];
     }
-    if (!empty($status)) {
-        $sql .= " AND status = :status";
-        $params[':status'] = $status;
-    }
-
-    $stmt = $this->pdo->prepare($sql);
-    $stmt->execute($params);
-    $total = (int)$stmt->fetchColumn();
-
-    $totalPaginas = $total > 0 ? (int)ceil($total / $limite) : 1;
-    $offset = ($pagina - 1) * $limite;
-
-    $sqlData = "SELECT * FROM solicitacoes WHERE representante_id = :rid";
-    if (!empty($termo)) {
-        $sqlData .= " AND (titulo LIKE :termo OR descricao LIKE :termo)";
-    }
-    if (!empty($status)) {
-        $sqlData .= " AND status = :status";
-    }
-    $sqlData .= " ORDER BY criado_em DESC LIMIT :limite OFFSET :offset";
-
-    $stmt = $this->pdo->prepare($sqlData);
-    $stmt->bindValue(':rid', $representanteId, \PDO::PARAM_INT);
-    if (!empty($termo)) $stmt->bindValue(':termo', '%' . $termo . '%');
-    if (!empty($status)) $stmt->bindValue(':status', $status);
-    $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
-    $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
-    $stmt->execute();
-
-    return [
-        'dados' => $stmt->fetchAll(),
-        'total' => $total,
-        'pagina_atual' => $pagina,
-        'total_paginas' => $totalPaginas
-    ];
-}
 }

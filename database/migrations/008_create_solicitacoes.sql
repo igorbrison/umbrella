@@ -3,6 +3,7 @@ CREATE TABLE solicitacoes (
     representante_id INT NOT NULL,
     titulo VARCHAR(150) NOT NULL,
     descricao TEXT NOT NULL,
+    resposta TEXT DEFAULT NULL,
     status ENUM('pendente','deferido','indeferido','em_desenvolvimento','teste','concluido') DEFAULT 'pendente',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

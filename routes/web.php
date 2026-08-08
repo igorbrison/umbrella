@@ -210,11 +210,12 @@ $router->get('/admin/solicitacoes', function() {
     (new AdminSolicitacaoController())->index();
 });
 
+// Rota corrigida para chamar o método responder (status + resposta)
 $router->post('/admin/solicitacoes/atualizar', function() {
     require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
     AuthAdminMiddleware::verificar();
     require_once __DIR__ . '/../app/Controllers/AdminSolicitacaoController.php';
-    (new AdminSolicitacaoController())->atualizarStatus();
+    (new AdminSolicitacaoController())->responder();
 });
 
 // Redireciona /admin para a lista de representantes (após login)
@@ -317,6 +318,12 @@ $router->mount('/painel', function() use ($router) {
     $router->post('/solicitacoes/atualizar', function() {
         require_once __DIR__ . '/../app/Controllers/SolicitacaoController.php';
         (new SolicitacaoController())->atualizar();
+    });
+
+    // Visualizar detalhes da solicitação (retorna JSON)
+    $router->get('/solicitacoes/ver/(\d+)', function($id) {
+        require_once __DIR__ . '/../app/Controllers/SolicitacaoController.php';
+        (new SolicitacaoController())->ver((int)$id);
     });
 });
 

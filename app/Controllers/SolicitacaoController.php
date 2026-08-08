@@ -4,8 +4,9 @@
  * Função: Controlador de solicitações do representante.
  * 
  * Responsável por:
- *   - Listar, criar, editar e excluir solicitações do representante.
+ *   - Listar, criar, editar e visualizar solicitações do representante.
  *   - A edição só é permitida se o status for "pendente".
+ *   - A visualização inclui a resposta do administrador.
  */
 
 require_once __DIR__ . '/../Models/Solicitacao.php';
@@ -23,18 +24,17 @@ class SolicitacaoController {
         $this->representanteId = $_SESSION['representante_id'];
     }
 
-    // Listar e formulário de nova
     // Listar e formulário de nova (com paginação)
     public function index(): void {
-    $pagina = (int)($_GET['pagina'] ?? 1);
-    $termo = $_GET['termo'] ?? '';
-    $status = $_GET['status'] ?? '';
-    $paginacao = $this->model->listarFiltradoPaginado($this->representanteId, $termo, $status, $pagina, 10);
-    $solicitacoes = $paginacao['dados'];
-    $sucesso = $_SESSION['sucesso_solicitacao'] ?? null;
-    unset($_SESSION['sucesso_solicitacao']);
-    require __DIR__ . '/../Views/painel/solicitacoes/index.php';
-}
+        $pagina = (int)($_GET['pagina'] ?? 1);
+        $termo = $_GET['termo'] ?? '';
+        $status = $_GET['status'] ?? '';
+        $paginacao = $this->model->listarFiltradoPaginado($this->representanteId, $termo, $status, $pagina, 10);
+        $solicitacoes = $paginacao['dados'];
+        $sucesso = $_SESSION['sucesso_solicitacao'] ?? null;
+        unset($_SESSION['sucesso_solicitacao']);
+        require __DIR__ . '/../Views/painel/solicitacoes/index.php';
+    }
 
     // Enviar nova
     public function enviar(): void {
@@ -92,5 +92,16 @@ class SolicitacaoController {
         $_SESSION['sucesso_solicitacao'] = 'Solicitação atualizada com sucesso!';
         header('Location: /painel/solicitacoes');
         exit;
+    }
+
+    // Visualizar detalhes da solicitação (retorna JSON)
+    public function ver(int $id): void {
+        $solicitacao = $this->model->buscarPorId($id);
+        if (!$solicitacao || $solicitacao['representante_id'] != $this->representanteId) {
+            http_response_code(404);
+            echo json_encode(['erro' => 'Solicitação não encontrada.']);
+            exit;
+        }
+        echo json_encode($solicitacao);
     }
 }

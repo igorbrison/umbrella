@@ -5,7 +5,7 @@
  * 
  * Organizado em abas:
  *   - Aba 1: Nova Solicitação (formulário para envio)
- *   - Aba 2: Histórico (tabela com filtros e paginação)
+ *   - Aba 2: Histórico (tabela com filtros, paginação, ações de editar e visualizar)
  */
 
 if (!isset($solicitacoes) || !is_array($solicitacoes)) {
@@ -102,6 +102,7 @@ $statusAtual = $_GET['status'] ?? '';
                                 <?php if ($s['status'] === 'pendente'): ?>
                                     <button type="button" class="btn-editar" data-id="<?= $s['id'] ?>">Editar</button>
                                 <?php endif; ?>
+                                <button type="button" class="btn-ver" data-id="<?= $s['id'] ?>">Ver</button>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -158,6 +159,23 @@ $statusAtual = $_GET['status'] ?? '';
     </div>
 </div>
 
+<!-- ==================== MODAL DE VISUALIZAÇÃO ==================== -->
+<div id="modalVer" class="modal-overlay">
+    <div class="modal-content">
+        <span class="modal-close" id="modalVerClose">&times;</span>
+        <h2>Detalhes da Solicitação</h2>
+        <div id="ver-conteudo">
+            <p><strong>Título:</strong> <span id="ver-titulo"></span></p>
+            <p><strong>Status:</strong> <span id="ver-status"></span></p>
+            <p><strong>Data de criação:</strong> <span id="ver-data"></span></p>
+            <p><strong>Descrição:</strong></p>
+            <div id="ver-descricao" style="white-space: pre-wrap; background:#f8fafc; padding:10px; border-radius:6px; margin-bottom:12px;"></div>
+            <p><strong>Resposta do Administrador:</strong></p>
+            <div id="ver-resposta" style="white-space: pre-wrap; background:#f8fafc; padding:10px; border-radius:6px; color:#1a2a3a;"></div>
+        </div>
+    </div>
+</div>
+
 <!-- ==================== JAVASCRIPT ==================== -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -196,6 +214,36 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = '/painel/solicitacoes?sucesso=1';
         });
     });
+
+    // Modal de visualização (novo)
+    document.querySelectorAll('.btn-ver').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            fetch('/painel/solicitacoes/ver/' + id)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.erro) {
+                        alert(data.erro);
+                        return;
+                    }
+                    document.getElementById('ver-titulo').textContent = data.titulo;
+                    document.getElementById('ver-status').textContent = ucfirst(data.status.replace(/_/g, ' '));
+                    document.getElementById('ver-data').textContent = new Date(data.criado_em).toLocaleDateString('pt-BR');
+                    document.getElementById('ver-descricao').textContent = data.descricao;
+                    document.getElementById('ver-resposta').textContent = data.resposta || 'Aguardando resposta...';
+                    document.getElementById('modalVer').style.display = 'flex';
+                });
+        });
+    });
+
+    document.getElementById('modalVerClose').addEventListener('click', function() {
+        document.getElementById('modalVer').style.display = 'none';
+    });
+
+    // Função auxiliar para capitalizar status
+    function ucfirst(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
 
     // Sistema de abas
     const tabBtns = document.querySelectorAll('.tab-btn');
