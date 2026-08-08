@@ -55,13 +55,13 @@ require __DIR__ . '/../../partials/dashboard_header.php';
 </p>
 
 <!-- Barra de pesquisa -->
-<form method="GET" action="/painel/clientes" style="display:flex; gap:10px; margin-bottom:16px;">
-    <input type="text" name="termo" placeholder="Buscar por nome, CPF/CNPJ ou email" value="<?= htmlspecialchars($termoAtual) ?>" style="flex:1;">
+<form method="GET" action="/painel/clientes" class="barra-pesquisa">
+    <input type="text" name="termo" placeholder="Buscar por nome, CPF/CNPJ ou email" value="<?= htmlspecialchars($termoAtual) ?>" class="campo-pesquisa">
     <!-- mantém ordenação atual ao buscar -->
     <input type="hidden" name="ordem" value="<?= htmlspecialchars($colAtual) ?>">
     <input type="hidden" name="direcao" value="<?= htmlspecialchars($dirAtual) ?>">
     <button type="submit" class="btn-primary">Buscar</button>
-    <a href="/painel/clientes" class="btn">Limpar</a>
+    <a href="/painel/clientes" class="btn btn-limpar">Limpar</a>
 </form>
 
 <table>

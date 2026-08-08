@@ -31,7 +31,7 @@ require __DIR__ . '/../partials/header.php';
                     <option value="admin">Administrador</option>
                 </select>
             </div>
-            <div id="forgot-msg" style="margin-bottom: 10px; display: none;"></div>
+            <div id="forgot-msg" class="login-msg"></div>
             <button type="submit" class="btn-entrar">Enviar link de recuperação</button>
         </form>
 

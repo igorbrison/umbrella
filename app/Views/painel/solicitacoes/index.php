@@ -63,8 +63,8 @@ $statusAtual = $_GET['status'] ?? '';
         <!-- ===================== ABA 2: HISTÓRICO ===================== -->
         <div id="tab-historico" class="tab-pane">
             <!-- Filtros -->
-            <form method="GET" action="/painel/solicitacoes" style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
-                <input type="text" name="termo" placeholder="Buscar por palavra-chave" value="<?= htmlspecialchars($termoAtual) ?>" style="flex:1; min-width:200px;">
+            <form method="GET" action="/painel/solicitacoes" class="barra-pesquisa-filtros">
+                <input type="text" name="termo" placeholder="Buscar por palavra-chave" value="<?= htmlspecialchars($termoAtual) ?>" class="campo-pesquisa">
                 <select name="status">
                     <option value="">Todos os status</option>
                     <option value="pendente" <?= $statusAtual == 'pendente' ? 'selected' : '' ?>>Pendente</option>
@@ -75,11 +75,11 @@ $statusAtual = $_GET['status'] ?? '';
                     <option value="concluido" <?= $statusAtual == 'concluido' ? 'selected' : '' ?>>Concluído</option>
                 </select>
                 <button type="submit" class="btn-primary">Filtrar</button>
-                <a href="/painel/solicitacoes" class="btn">Limpar</a>
+                <a href="/painel/solicitacoes" class="btn btn-limpar">Limpar</a>
             </form>
 
             <?php if (empty($solicitacoes)): ?>
-                <p style="color:#6c7a8a; text-align:center; padding:20px 0;">Nenhuma solicitação encontrada.</p>
+                <p class="mensagem-vazia">Nenhuma solicitação encontrada.</p>
             <?php else: ?>
                 <table>
                     <thead>
@@ -113,15 +113,13 @@ $statusAtual = $_GET['status'] ?? '';
                 $paginaAtual = $paginacao['pagina_atual'] ?? 1;
                 $totalPaginas = $paginacao['total_paginas'] ?? 1;
                 if ($totalPaginas > 1):
-                    // Prepara query string mantendo os filtros atuais
                     $queryParams = $_GET;
-                    unset($queryParams['pagina']); // será adicionado individualmente
+                    unset($queryParams['pagina']);
                 ?>
                 <div class="paginacao">
                     <?php if ($paginaAtual > 1): ?>
                         <a href="/painel/solicitacoes?<?= http_build_query(array_merge($queryParams, ['pagina' => $paginaAtual - 1])) ?>">&laquo; Anterior</a>
                     <?php endif; ?>
-
                     <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
                         <?php if ($i == $paginaAtual): ?>
                             <span class="pagina-atual"><?= $i ?></span>
@@ -129,7 +127,6 @@ $statusAtual = $_GET['status'] ?? '';
                             <a href="/painel/solicitacoes?<?= http_build_query(array_merge($queryParams, ['pagina' => $i])) ?>"><?= $i ?></a>
                         <?php endif; ?>
                     <?php endfor; ?>
-
                     <?php if ($paginaAtual < $totalPaginas): ?>
                         <a href="/painel/solicitacoes?<?= http_build_query(array_merge($queryParams, ['pagina' => $paginaAtual + 1])) ?>">Próximo &raquo;</a>
                     <?php endif; ?>
@@ -141,7 +138,7 @@ $statusAtual = $_GET['status'] ?? '';
 </div>
 
 <!-- ==================== MODAL DE EDIÇÃO ==================== -->
-<div id="modalEditar" class="modal-overlay" style="display:none;">
+<div id="modalEditar" class="modal-overlay">
     <div class="modal-content">
         <span class="modal-close" id="modalEditarClose">&times;</span>
         <h2>Editar Solicitação</h2>
@@ -157,7 +154,7 @@ $statusAtual = $_GET['status'] ?? '';
             </div>
             <button type="submit" class="btn-primary">Salvar</button>
         </form>
-        <div id="edit-msg" style="margin-top:10px;"></div>
+        <div id="edit-msg" class="modal-msg"></div>
     </div>
 </div>
 

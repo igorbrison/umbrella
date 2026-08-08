@@ -28,7 +28,7 @@ require __DIR__ . '/partials/header.php';
                     <input type="password" id="senha" name="senha" placeholder="Digite sua senha" required>
                 </label>
             </div>
-            <div id="login-msg" style="color: red; margin-bottom: 10px; display: none;"></div>
+            <div id="login-msg" class="login-msg"></div>
             <button type="submit" class="btn-entrar">Entrar</button>
         </form>
 

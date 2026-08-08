@@ -355,6 +355,10 @@ body.dashboard {
     margin: 2px 4px 2px 0;
     border: none;
     cursor: pointer;
+    flex-shrink: 0;         /* ← evita que o botão encolha */
+    white-space: nowrap;    /* ← impede que o texto quebre */
+    text-overflow: ellipsis;/* ← caso exceda, mostra “…” */
+    overflow: hidden;       /* ← mas com largura automática não deve ocorrer */
 }
 
 .btn:hover {
@@ -364,7 +368,8 @@ body.dashboard {
 /* ======================================================================
    BOTÃO PRIMÁRIO (FUNDO COLORIDO)
    ====================================================================== */
-.btn-primary {
+.btn-primary,
+.main-content .btn.btn-primary {
     background-color: #2563eb;
     color: #fff;
     border: none;
@@ -375,11 +380,28 @@ body.dashboard {
     display: inline-block;
     transition: background-color 0.2s;
     margin-bottom: 5px;
+    flex-shrink: 0;       /* ← impede encolhimento */
+    white-space: nowrap;   /* ← não deixa o texto quebrar */
 }
 
 .btn-primary:hover {
     background-color: #1d4ed8;
     color: #fff;
+}
+
+.btn-primary,
+.btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.barra-pesquisa .btn,
+.barra-pesquisa-filtros .btn,
+.barra-pesquisa .btn-primary,
+.barra-pesquisa-filtros .btn-primary {
+    flex-shrink: 0;
+    white-space: nowrap;
+    min-width: fit-content;
 }
 
 /* ======================================================================
@@ -524,7 +546,7 @@ body.dashboard {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.5);
-    display: none;
+    display: none;                   /* ← garanta que esta linha esteja presente */
     align-items: center;
     justify-content: center;
     z-index: 9999;
@@ -1052,4 +1074,74 @@ body.dashboard {
 
 .comparativo-controles .btn-primary:hover {
     background: #1d4ed8;
+}
+
+/* ======================================================================
+   ESTILOS MOVIDOS DOS INLINE
+   ====================================================================== */
+
+/* Mensagens de feedback (login e forgot-password) */
+.login-msg {
+    margin-bottom: 10px;
+    display: none;
+}
+
+/* Barra de pesquisa */
+.barra-pesquisa {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.barra-pesquisa .campo-pesquisa {
+    flex: 1;
+}
+.barra-pesquisa-filtros {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.barra-pesquisa-filtros .campo-pesquisa {
+    flex: 1;
+    min-width: 200px;
+}
+
+/* Mensagem "nenhum registro" */
+.mensagem-vazia {
+    color: #6c7a8a;
+    text-align: center;
+    padding: 20px 0;
+}
+
+/* Espaçador do modal de edição */
+.modal-msg {
+    margin-top: 10px;
+}
+
+/* ======================================================================
+   BOTÃO LIMPAR (COR MAIS ESCURA)
+   ====================================================================== */
+.btn-limpar {
+    background: #9ca3af;
+    color: #fff;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.btn-limpar:hover {
+    background: #6b7280;
+    color: #fff;
+}
+
+/* ======================================================================
+   AUMENTO DO TAMANHO DA FONTE GERAL
+   ====================================================================== */
+body {
+    font-size: 16px;   /* base maior para facilitar leitura */
+}
+
+.feedback-sucesso {
+    color: #16a34a;
+}
+.feedback-erro {
+    color: #dc2626;
 }

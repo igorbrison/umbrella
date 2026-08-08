@@ -220,21 +220,22 @@ class PasswordResetController {
      * Padroniza a resposta do controlador.
      */
     private function responder(bool $sucesso, string $mensagem): void {
-        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) 
-                  && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) 
+              && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
-        if ($isAjax) {
-            echo json_encode(['sucesso' => $sucesso, 'mensagem' => $mensagem]);
-            exit;
-        }
-
-        $cor = $sucesso ? 'green' : 'red';
-        echo "<div style='color:$cor;'>$mensagem</div>";
-        if (!$sucesso) {
-            echo "<a href='/forgot-password'>Voltar</a>";
-        }
+    if ($isAjax) {
+        echo json_encode(['sucesso' => $sucesso, 'mensagem' => $mensagem]);
         exit;
     }
+
+    // Fallback HTML (agora com classes)
+    $classe = $sucesso ? 'feedback-sucesso' : 'feedback-erro';
+    echo "<div class=\"$classe\">$mensagem</div>";
+    if (!$sucesso) {
+        echo "<a href='/forgot-password'>Voltar</a>";
+    }
+    exit;
+}
 
     /**
      * Monta o corpo do e‑mail de redefinição em HTML compatível com clientes de e‑mail.
