@@ -5,15 +5,10 @@
  * 
  * Permite que o usuário (administrador ou representante) solicite
  * um link de recuperação de senha informando seu e-mail.
- * 
- * O tipo de usuário é selecionado para que o sistema saiba em qual
- * tabela (administradores ou representantes) buscar o e-mail.
+ * O envio é feito via AJAX e a resposta aparece na própria tela.
  */
 
-// Título da página (aparecerá na aba do navegador)
 $titulo = 'Recuperar Senha';
-
-// Inclui o cabeçalho comum (HTML, CSS, favicon)
 require __DIR__ . '/../partials/header.php';
 ?>
 
@@ -21,23 +16,22 @@ require __DIR__ . '/../partials/header.php';
     <img src="/img/logo-sem-fundo.png" alt="Logo Umbrella" class="logo">
     <div class="login-card">
         <h1>Recuperar senha</h1>
-        <p class="subtitle">Informe seu e-mail para receber o link de redefinição</p>
+        <p class="subtitle">Informe seu e-mail cadastrado</p>
 
-        <form method="POST" action="/forgot-password">
+        <form id="form-forgot" method="POST" action="/forgot-password">
             <div class="input-group">
                 <label for="email">
                     <input type="email" id="email" name="email" placeholder="Digite seu e-mail" required>
                 </label>
             </div>
-
             <div class="input-group">
-                <label for="tipo">Tipo de usuário</label>
-                <select name="tipo" id="tipo" class="form-select" required>
+                <label for="tipo">Tipo de usuário:</label>
+                <select id="tipo" name="tipo" class="form-select">
                     <option value="representante">Representante</option>
                     <option value="admin">Administrador</option>
                 </select>
             </div>
-
+            <div id="forgot-msg" style="margin-bottom: 10px; display: none;"></div>
             <button type="submit" class="btn-entrar">Enviar link de recuperação</button>
         </form>
 
@@ -51,9 +45,48 @@ require __DIR__ . '/../partials/header.php';
     </div>
 </div>
 
-<?php
-// Não inclui footer.php porque o header.php já abre e fecha as tags HTML
-// O fechamento é feito aqui mesmo
-?>
+<script>
+document.getElementById('form-forgot').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const msgDiv = document.getElementById('forgot-msg');
+    msgDiv.style.display = 'none';
+
+    fetch('/forgot-password', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'   // necessário para o controller identificar AJAX
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        msgDiv.style.display = 'block';
+        if (data.sucesso) {
+            msgDiv.style.color = '#16a34a';   // verde
+            msgDiv.textContent = data.mensagem;
+        } else {
+            msgDiv.style.color = '#dc2626';   // vermelho
+            msgDiv.textContent = data.erro || data.mensagem;
+        }
+    })
+    .catch(() => {
+        msgDiv.style.display = 'block';
+        msgDiv.style.color = '#dc2626';
+        msgDiv.textContent = 'Erro inesperado. Tente novamente.';
+    });
+});
+
+// Enter em qualquer campo já submete
+document.querySelectorAll('#form-forgot input, #form-forgot select').forEach(el => {
+    el.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('form-forgot').dispatchEvent(new Event('submit'));
+        }
+    });
+});
+</script>
+
 </body>
 </html>

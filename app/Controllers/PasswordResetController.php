@@ -12,7 +12,7 @@
  * 
  * Fluxo completo:
  *   1. Usuário acessa /forgot-password e informa email + tipo.
- *   2. Sistema gera token, salva em password_resets e envia link por e-mail.
+ *   2. Sistema gera token, salva em password_resets e envia link por e‑mail.
  *   3. Usuário clica no link (/reset-password?token=...&tipo=...).
  *   4. Sistema valida o token e exibe formulário de nova senha.
  *   5. Usuário define nova senha e sistema atualiza no banco.
@@ -33,10 +33,13 @@ class PasswordResetController {
 
     /**
      * Construtor da classe.
-     * Obtém a instância única do banco de dados via Database::getInstance().
+     * Obtém a instância única do banco de dados e força o fuso UTC na sessão MySQL,
+     * garantindo que todas as funções de data trabalhem no mesmo fuso que o PHP (UTC).
      */
     public function __construct() {
         $this->pdo = Database::getInstance();
+        // Força a sessão MySQL a usar UTC, alinhando com gmdate() do PHP
+        $this->pdo->exec("SET time_zone = '+00:00'");
     }
 
     // ============================================================
@@ -60,11 +63,11 @@ class PasswordResetController {
      * Fluxo:
      *   - Valida se o email foi informado.
      *   - Verifica se o email existe na tabela correspondente (admin ou representante).
-     *   - Gera um token único (64 caracteres hexadecimais) com validade de 1 hora.
+     *   - Gera um token único (64 caracteres hexadecimais) com validade de 1 hora (UTC).
      *   - Remove tokens antigos do mesmo email/tipo.
      *   - Insere o novo token na tabela password_resets.
      *   - Envia o link de redefinição por email usando o helper Email (PHPMailer).
-     *   - Em caso de falha no envio, exibe o link na tela como fallback.
+     *   - Retorna JSON para requisições AJAX; fallback HTML caso contrário.
      * 
      * SEGURANÇA: Não revela se o email existe ou não (mensagem genérica).
      * 
@@ -76,8 +79,8 @@ class PasswordResetController {
 
         // Valida se o email foi informado
         if (empty($email)) {
-            echo "Email é obrigatório. <a href='/forgot-password'>Voltar</a>";
-            exit;
+            $this->responder(false, 'Email é obrigatório.');
+            return;
         }
 
         // Verifica se o email existe na tabela correta
@@ -88,43 +91,34 @@ class PasswordResetController {
 
         if (!$usuario) {
             // Mensagem genérica: não revela se o email existe (segurança)
-            echo "Se o email estiver cadastrado, um link de recuperação foi enviado.";
-            exit;
+            $this->responder(true, 'Se o email estiver cadastrado, um link de recuperação foi enviado.');
+            return;
         }
 
-        // Gera token único e define expiração (1 hora)
+        // Gera token único e define expiração (1 hora) – gmdate() já está em UTC
         $token = bin2hex(random_bytes(32));
-        $expira = date('Y-m-d H:i:s', strtotime('+1 hour'));
+        $expira = gmdate('Y-m-d H:i:s', strtotime('+1 hour'));
 
         // Remove tokens antigos do mesmo email/tipo (evita acúmulo)
         $stmt = $this->pdo->prepare("DELETE FROM password_resets WHERE email = :email AND tipo = :tipo");
         $stmt->execute([':email' => $email, ':tipo' => $tipo]);
 
-        // Insere o novo token no banco
+        // Insere o novo token no banco (a conexão MySQL já está em UTC)
         $stmt = $this->pdo->prepare("INSERT INTO password_resets (email, token, tipo, expira_em) VALUES (:email, :token, :tipo, :expira)");
         $stmt->execute([':email' => $email, ':token' => $token, ':tipo' => $tipo, ':expira' => $expira]);
 
-        // Prepara o e-mail de redefinição
+        // Prepara o e‑mail de redefinição
         $assunto = "Redefinição de senha - Umbrella Corporation";
         $link = "http://umbrella.test/reset-password?token=$token&tipo=$tipo";
-        $mensagem = "Olá,\n\n";
-        $mensagem .= "Você solicitou a redefinição de sua senha.\n\n";
-        $mensagem .= "Clique no link abaixo para criar uma nova senha:\n";
-        $mensagem .= "$link\n\n";
-        $mensagem .= "Este link é válido por 1 hora.\n\n";
-        $mensagem .= "Se você não solicitou esta alteração, ignore este e-mail.\n\n";
-        $mensagem .= "Atenciosamente,\nEquipe Umbrella Corporation";
+        $mensagem = $this->montarEmailRedefinicao($link);
 
-        // Tenta enviar o e-mail utilizando o helper Email (PHPMailer)
+        // Tenta enviar o e‑mail utilizando o helper Email (PHPMailer)
         $enviado = Email::enviar($email, $assunto, $mensagem);
 
         if ($enviado) {
-            echo "Email enviado com sucesso! Verifique sua caixa de entrada.";
+            $this->responder(true, 'Email enviado com sucesso! Verifique sua caixa de entrada.');
         } else {
-            // Fallback para ambiente de desenvolvimento: exibe o link na tela
-            echo "Não foi possível enviar o e-mail automaticamente.";
-            echo "<br><br><strong>Modo desenvolvimento:</strong><br>";
-            echo "<a href='$link'>Clique aqui para redefinir sua senha</a>";
+            $this->responder(false, 'Não foi possível enviar o e‑mail. Tente novamente mais tarde.');
         }
     }
 
@@ -144,13 +138,12 @@ class PasswordResetController {
         $token = $_GET['token'] ?? '';
         $tipo = $_GET['tipo'] ?? '';
         
-        // Valida se token e tipo foram informados
         if (empty($token) || empty($tipo)) {
             echo "Token inválido.";
             exit;
         }
 
-        // Verifica se o token existe e não expirou
+        // A conexão já está em UTC, então NOW() retorna UTC
         $stmt = $this->pdo->prepare("SELECT * FROM password_resets WHERE token = :token AND tipo = :tipo AND expira_em > NOW()");
         $stmt->execute([':token' => $token, ':tipo' => $tipo]);
         $reset = $stmt->fetch();
@@ -160,7 +153,6 @@ class PasswordResetController {
             exit;
         }
 
-        // Carrega a view de redefinição (formulário de nova senha)
         require __DIR__ . '/../Views/password/reset.php';
     }
 
@@ -191,13 +183,12 @@ class PasswordResetController {
         $senha = $_POST['senha'] ?? '';
         $confirmar = $_POST['confirmar_senha'] ?? '';
 
-        // Valida se as senhas conferem
         if ($senha !== $confirmar) {
             echo "Senhas não conferem.";
             exit;
         }
 
-        // Busca o token válido
+        // A conexão está em UTC, NOW() retorna UTC
         $stmt = $this->pdo->prepare("SELECT * FROM password_resets WHERE token = :token AND tipo = :tipo AND expira_em > NOW()");
         $stmt->execute([':token' => $token, ':tipo' => $tipo]);
         $reset = $stmt->fetch();
@@ -207,21 +198,96 @@ class PasswordResetController {
             exit;
         }
 
-        // Obtém o email associado ao token
         $email = $reset['email'];
         $tabela = $tipo === 'admin' ? 'administradores' : 'representantes';
         
-        // Gera o hash seguro da nova senha
         $hash = password_hash($senha, PASSWORD_DEFAULT);
 
-        // Atualiza a senha na tabela correta
         $stmt = $this->pdo->prepare("UPDATE $tabela SET senha = :senha WHERE email = :email");
         $stmt->execute([':senha' => $hash, ':email' => $email]);
 
-        // Remove o token usado (evita reuso)
         $stmt = $this->pdo->prepare("DELETE FROM password_resets WHERE token = :token");
         $stmt->execute([':token' => $token]);
 
         echo "Senha redefinida com sucesso! <a href='/login'>Faça login</a>";
     }
+
+    // ============================================================
+    // MÉTODOS AUXILIARES PRIVADOS
+    // ============================================================
+
+    /**
+     * Padroniza a resposta do controlador.
+     */
+    private function responder(bool $sucesso, string $mensagem): void {
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) 
+                  && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
+        if ($isAjax) {
+            echo json_encode(['sucesso' => $sucesso, 'mensagem' => $mensagem]);
+            exit;
+        }
+
+        $cor = $sucesso ? 'green' : 'red';
+        echo "<div style='color:$cor;'>$mensagem</div>";
+        if (!$sucesso) {
+            echo "<a href='/forgot-password'>Voltar</a>";
+        }
+        exit;
+    }
+
+    /**
+     * Monta o corpo do e‑mail de redefinição em HTML compatível com clientes de e‑mail.
+     */
+   /**
+ * Monta o corpo do e‑mail de redefinição de senha em HTML.
+ * 
+ * Responsável por gerar um template de e‑mail profissional e compatível
+ * com a maioria dos clientes de e‑mail (Gmail, Outlook, etc.).
+ * 
+ * O layout é baseado em tabelas, garantindo melhor compatibilidade.
+ * O cabeçalho exibe o nome da empresa como texto estilizado,
+ * evitando problemas de carregamento de imagens externas.
+ * 
+ * @param string $link URL completa do link de redefinição de senha.
+ * @return string HTML pronto para ser enviado como corpo do e‑mail.
+ */
+private function montarEmailRedefinicao(string $link): string {
+    return <<<HTML
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0; padding:0; background:#f0f4f8; font-family:Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:500px; margin:30px auto; background:#fff; border-radius:8px; overflow:hidden; border:1px solid #e0e5ec;">
+        <tr>
+            <td style="background:#1a2a3a; padding:20px; text-align:center;">
+                <span style="color:#fff; font-size:22px; font-weight:bold; letter-spacing:0.5px;">UMBRELLA CORPORATION</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding:30px;">
+                <h2 style="color:#1a2a3a; margin-top:0;">Redefinição de senha</h2>
+                <p style="color:#333;">Você solicitou a redefinição de sua senha. Clique no botão abaixo para criar uma nova senha:</p>
+                <table cellpadding="0" cellspacing="0" style="margin:20px 0;">
+                    <tr>
+                        <td align="center" bgcolor="#2563eb" style="border-radius:6px;">
+                            <a href="$link" target="_blank" style="display:inline-block; padding:12px 30px; color:#fff; text-decoration:none; font-weight:bold;">Redefinir senha</a>
+                        </td>
+                    </tr>
+                </table>
+                <p style="font-size:13px; color:#6c7a8a;">Se o botão não funcionar, copie e cole o link abaixo no seu navegador:</p>
+                <p style="font-size:12px; color:#6c7a8a; word-break:break-all;"><a href="$link" style="color:#6c7a8a;">$link</a></p>
+                <p style="font-size:13px; color:#6c7a8a;">Este link é válido por 1 hora. Se você não solicitou esta alteração, ignore este e‑mail.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="background:#f8fafc; padding:15px; text-align:center; font-size:12px; color:#9aa6b5;">
+                © 2026 Umbrella Corporation
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+HTML;
+}
 }

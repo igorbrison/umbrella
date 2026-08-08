@@ -4,40 +4,42 @@
  * Função: VIEW do formulário de redefinição de senha.
  * 
  * Esta tela é exibida após o usuário clicar no link de recuperação
- * enviado por e-mail. O token e o tipo de usuário são passados via GET
- * e armazenados em campos ocultos do formulário.
- * 
- * Ao enviar o formulário, o controller PasswordResetController@resetPassword
- * valida o token e atualiza a senha no banco de dados.
+ * enviado por e-mail.
  */
 
-// Título da página (aparecerá na aba do navegador)
 $titulo = 'Redefinir Senha';
-
-// Inclui o cabeçalho comum (HTML, CSS, favicon)
 require __DIR__ . '/../partials/header.php';
 ?>
 
-<h1>Nova senha</h1>
+<div class="login-wrapper">
+    <img src="/img/logo-sem-fundo.png" alt="Logo Umbrella" class="logo">
+    <div class="login-card">
+        <h1>Nova senha</h1>
+        <p class="subtitle">Digite sua nova senha abaixo</p>
 
-<!-- FORMULÁRIO DE REDEFINIÇÃO DE SENHA -->
-<!-- Envia os dados via POST para a rota /reset-password -->
-<form method="POST" action="/reset-password">
-    <!-- Token recebido pelo link (validação de segurança) -->
-    <input type="hidden" name="token" value="<?= htmlspecialchars($_GET['token']) ?>">
-    <!-- Tipo de usuário (admin ou representante) -->
-    <input type="hidden" name="tipo" value="<?= htmlspecialchars($_GET['tipo']) ?>">
-    
-    <label>Nova senha:
-        <input type="password" name="senha" required>
-    </label>
-    
-    <label>Confirmar senha:
-        <input type="password" name="confirmar_senha" required>
-    </label>
-    
-    <button type="submit">Redefinir senha</button>
-</form>
+        <form method="POST" action="/reset-password">
+            <!-- Token e tipo recebidos pelo link -->
+            <input type="hidden" name="token" value="<?= htmlspecialchars($_GET['token']) ?>">
+            <input type="hidden" name="tipo" value="<?= htmlspecialchars($_GET['tipo']) ?>">
+
+            <div class="input-group">
+                <label for="senha">
+                    <input type="password" id="senha" name="senha" placeholder="Nova senha" required>
+                </label>
+            </div>
+            <div class="input-group">
+                <label for="confirmar_senha">
+                    <input type="password" id="confirmar_senha" name="confirmar_senha" placeholder="Confirmar senha" required>
+                </label>
+            </div>
+            <button type="submit" class="btn-entrar">Redefinir senha</button>
+        </form>
+    </div>
+
+    <div class="footer">
+        <p>© 2026 UMBRELLA - Todos os direitos reservados</p>
+    </div>
+</div>
 
 </body>
 </html>
