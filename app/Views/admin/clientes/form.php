@@ -25,7 +25,7 @@ if (!isset($idsModulosCliente)) {
 }
 
 $modoEdicao = !empty($cliente);
-$titulo = $modoEdicao ? 'Editar Cliente (Admin)' : 'Novo Cliente';
+$titulo = $modoEdicao ? 'Editar Cliente' : 'Novo Cliente';
 $erro = $erro ?? null;
 
 require __DIR__ . '/../../partials/dashboard_header.php';
@@ -226,7 +226,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
             <!-- ABA 4: MÓDULOS CONTRATADOS E MÁQUINAS -->
             <div id="tab-modulos" class="tab-pane">
                 <fieldset>
-                    <legend>Módulos Contratados (Admin pode alterar)</legend>
+                    <legend>Módulos Contratados</legend>
                     <?php foreach ($modulos as $m): ?>
                         <label class="checkbox-inline">
                             <input type="checkbox" name="modulos[]" value="<?= $m['id'] ?>"
@@ -253,7 +253,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
     </div>
 
     <div class="form-actions">
-        <a href="/admin/clientes" class="btn">Cancelar</a>
+        <a href="/admin/clientes" class="btn btn-limpar">Cancelar</a>
         <button type="submit" class="btn-primary">Salvar</button>
     </div>
 </form>
