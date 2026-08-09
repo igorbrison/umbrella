@@ -6,6 +6,7 @@
  * Organizado em abas:
  *   - Aba 1: Nova Solicitação (formulário para envio)
  *   - Aba 2: Histórico (tabela com filtros, paginação, ações de editar e visualizar)
+ *   - Mobile: visualização em cards.
  */
 
 if (!isset($solicitacoes) || !is_array($solicitacoes)) {
@@ -81,35 +82,39 @@ $statusAtual = $_GET['status'] ?? '';
             <?php if (empty($solicitacoes)): ?>
                 <p class="mensagem-vazia">Nenhuma solicitação encontrada.</p>
             <?php else: ?>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Título</th>
-                            <th>Status</th>
-                            <th>Data</th>
-                            <th>Última Atualização</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($solicitacoes as $s): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($s['titulo']) ?></td>
-                            <td class="status-<?= $s['status'] ?>"><?= ucfirst(str_replace('_', ' ', $s['status'])) ?></td>
-                            <td><?= date('d/m/Y', strtotime($s['criado_em'])) ?></td>
-                            <td><?= date('d/m/Y H:i', strtotime($s['atualizado_em'])) ?></td>
-                            <td>
-                                <?php if ($s['status'] === 'pendente'): ?>
-                                    <button type="button" class="btn-editar" data-id="<?= $s['id'] ?>">Editar</button>
-                                <?php endif; ?>
-                                <button type="button" class="btn-ver" data-id="<?= $s['id'] ?>">Ver</button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                <div class="tabela-responsiva">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Status</th>
+                                <th>Data</th>
+                                <th>Última Atualização</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($solicitacoes as $s): ?>
+                            <tr>
+                                <td data-label="Título"><?= htmlspecialchars($s['titulo']) ?></td>
+                                <td data-label="Status" class="status-<?= $s['status'] ?>">
+                                    <?= ucfirst(str_replace('_', ' ', $s['status'])) ?>
+                                </td>
+                                <td data-label="Data"><?= date('d/m/Y', strtotime($s['criado_em'])) ?></td>
+                                <td data-label="Última Atualização"><?= date('d/m/Y H:i', strtotime($s['atualizado_em'])) ?></td>
+                                <td data-label="Ações">
+                                    <?php if ($s['status'] === 'pendente'): ?>
+                                        <button type="button" class="btn-editar" data-id="<?= $s['id'] ?>">Editar</button>
+                                    <?php endif; ?>
+                                    <button type="button" class="btn-ver" data-id="<?= $s['id'] ?>">Ver</button>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
 
-                <!-- ==================== PAGINAÇÃO (mantendo filtros) ==================== -->
+                <!-- Paginação -->
                 <?php
                 $paginaAtual = $paginacao['pagina_atual'] ?? 1;
                 $totalPaginas = $paginacao['total_paginas'] ?? 1;
@@ -138,7 +143,7 @@ $statusAtual = $_GET['status'] ?? '';
     </div>
 </div>
 
-<!-- ==================== MODAL DE EDIÇÃO ==================== -->
+<!-- ==================== MODAL DE EDIÇÃO (mantido igual) ==================== -->
 <div id="modalEditar" class="modal-overlay">
     <div class="modal-content">
         <span class="modal-close" id="modalEditarClose">&times;</span>
@@ -159,7 +164,7 @@ $statusAtual = $_GET['status'] ?? '';
     </div>
 </div>
 
-<!-- ==================== MODAL DE VISUALIZAÇÃO ==================== -->
+<!-- Modal de Visualização -->
 <div id="modalVer" class="modal-overlay">
     <div class="modal-content">
         <span class="modal-close" id="modalVerClose">&times;</span>
@@ -176,20 +181,16 @@ $statusAtual = $_GET['status'] ?? '';
     </div>
 </div>
 
-<!-- ==================== JAVASCRIPT ==================== -->
+<!-- Scripts (mantidos) -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Modal de edição
     document.querySelectorAll('.btn-editar').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.dataset.id;
             fetch('/painel/solicitacoes/editar/' + id)
                 .then(res => res.json())
                 .then(data => {
-                    if (data.erro) {
-                        alert(data.erro);
-                        return;
-                    }
+                    if (data.erro) { alert(data.erro); return; }
                     document.getElementById('edit-id').value = data.id;
                     document.getElementById('edit-titulo').value = data.titulo;
                     document.getElementById('edit-descricao').value = data.descricao;
@@ -197,35 +198,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         });
     });
-
     document.getElementById('modalEditarClose').addEventListener('click', function() {
         document.getElementById('modalEditar').style.display = 'none';
     });
-
     document.getElementById('formEditarSolicitacao').addEventListener('submit', function(e) {
         e.preventDefault();
-        const formData = new FormData(this);
         fetch('/painel/solicitacoes/atualizar', {
             method: 'POST',
-            body: formData
-        })
-        .then(res => res.text())
-        .then(() => {
-            window.location.href = '/painel/solicitacoes?sucesso=1';
-        });
+            body: new FormData(this)
+        }).then(() => { window.location.href = '/painel/solicitacoes?sucesso=1'; });
     });
-
-    // Modal de visualização (novo)
     document.querySelectorAll('.btn-ver').forEach(btn => {
         btn.addEventListener('click', function() {
-            const id = this.dataset.id;
-            fetch('/painel/solicitacoes/ver/' + id)
+            fetch('/painel/solicitacoes/ver/' + this.dataset.id)
                 .then(res => res.json())
                 .then(data => {
-                    if (data.erro) {
-                        alert(data.erro);
-                        return;
-                    }
                     document.getElementById('ver-titulo').textContent = data.titulo;
                     document.getElementById('ver-status').textContent = ucfirst(data.status.replace(/_/g, ' '));
                     document.getElementById('ver-data').textContent = new Date(data.criado_em).toLocaleDateString('pt-BR');
@@ -235,17 +222,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         });
     });
-
     document.getElementById('modalVerClose').addEventListener('click', function() {
         document.getElementById('modalVer').style.display = 'none';
     });
-
-    // Função auxiliar para capitalizar status
-    function ucfirst(str) {
-        return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-
-    // Sistema de abas
+    function ucfirst(str) { return str.charAt(0).toUpperCase() + str.slice(1); }
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabPanes = document.querySelectorAll('.tab-pane');
     tabBtns.forEach(btn => {
