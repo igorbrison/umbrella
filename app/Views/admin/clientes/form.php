@@ -253,7 +253,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
     </div>
 
     <div class="form-actions">
-        <a href="/admin/licencas" class="btn">Cancelar</a>
+        <a href="/admin/clientes" class="btn">Cancelar</a>
         <button type="submit" class="btn-primary">Salvar</button>
     </div>
 </form>

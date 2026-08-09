@@ -25,7 +25,9 @@ class AdminLicencaController {
         $this->licencaModel = new Licenca();
     }
 
-    // Lista todas as licenças/clientes com busca, ordenação e paginação
+    /**
+     * Lista todas as licenças/clientes com busca, ordenação e paginação.
+     */
     public function index(): void {
         $pagina = (int)($_GET['pagina'] ?? 1);
         $termo = $_GET['termo'] ?? '';
@@ -51,15 +53,23 @@ class AdminLicencaController {
         require __DIR__ . '/../Views/admin/clientes/listar.php';
     }
 
-    // Renova a licença de um cliente específico
+    /**
+     * Renova a licença de um cliente específico.
+     * 
+     * @param int $clienteId ID do cliente.
+     */
     public function renovar(int $clienteId): void {
         $chave = $this->licencaModel->gerarChave();
         $this->licencaModel->criarOuAtualizar($clienteId, $chave);
-        header('Location: /admin/licencas');
+        header('Location: /admin/clientes');
         exit;
     }
 
-    // Gera token offline para um cliente
+    /**
+     * Gera token offline para um cliente.
+     * 
+     * @param int $clienteId ID do cliente.
+     */
     public function gerarTokenOffline(int $clienteId): void {
         $tokenModel = new TokenRenovacao();
         try {
@@ -68,11 +78,13 @@ class AdminLicencaController {
         } catch (\Exception $e) {
             $_SESSION['erro_token'] = $e->getMessage();
         }
-        header('Location: /admin/licencas');
+        header('Location: /admin/clientes');
         exit;
     }
 
-    // Registrar pagamento e renovar licença
+    /**
+     * Registra pagamento e renova a licença do cliente automaticamente.
+     */
     public function pagar(): void {
         $clienteId = (int)($_POST['cliente_id'] ?? 0);
         $valor = (float)($_POST['valor'] ?? 0);
@@ -94,7 +106,7 @@ class AdminLicencaController {
         $this->licencaModel->criarOuAtualizar($clienteId, $chave, $qtdMaquinas);
 
         $_SESSION['token_gerado'] = "Pagamento registrado e licença renovada!";
-        header('Location: /admin/licencas');
+        header('Location: /admin/clientes');
         exit;
     }
 }

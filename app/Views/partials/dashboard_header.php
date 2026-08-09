@@ -15,23 +15,8 @@
  * 
  * Deve ser utilizado em conjunto com o arquivo dashboard_footer.php,
  * que fecha as tags abertas por este cabeçalho.
- * 
- * Uso: Incluir no início de cada view interna do painel, após definir $titulo.
- * Exemplo:
- *   $titulo = 'Minha Página';
- *   require __DIR__ . '/../partials/dashboard_header.php';
- *   // conteúdo da página...
- *   require __DIR__ . '/../partials/dashboard_footer.php';
- * 
- * Espera que a sessão esteja iniciada e contenha:
- *   - $_SESSION['admin_nome'] ou $_SESSION['representante_nome'] (para exibição).
- *   - $_SESSION['admin_id'] ou $_SESSION['representante_id'] (para perfil).
- *   - $_SESSION['admin_email'] ou $_SESSION['representante_email'] (para busca).
  */
 
-// ============================================================
-// 1. CARREGA OS MODELS PARA BUSCAR DADOS DO USUÁRIO
-// ============================================================
 require_once __DIR__ . '/../../Models/Representante.php';
 require_once __DIR__ . '/../../Models/Admin.php';
 
@@ -43,51 +28,40 @@ $dadosUsuario = [];
 $ultimaAlteracaoSenha = 'Nunca';
 
 if (isset($_SESSION['admin_id'])) {
-    // Administrador autenticado
     $perfil = 'admin';
     $nomeUsuario = $_SESSION['admin_nome'] ?? 'Administrador';
     $logoutUrl = '/admin/logout';
     $emailUsuario = $_SESSION['admin_email'] ?? '';
 
-    // Busca dados completos do admin pelo email (model Admin possui buscarPorEmail)
     if (!empty($emailUsuario)) {
         $adminModel = new Admin();
         $adminData = $adminModel->buscarPorEmail($emailUsuario);
         if ($adminData) {
             $dadosUsuario = $adminData;
-            $ultimaAlteracaoSenha = $adminData['atualizado_em'] ?? ''; // campo correto
+            $ultimaAlteracaoSenha = $adminData['atualizado_em'] ?? '';
         }
     }
 } elseif (isset($_SESSION['representante_id'])) {
-    // Representante autenticado
     $perfil = 'representante';
     $nomeUsuario = $_SESSION['representante_nome'] ?? 'Representante';
     $logoutUrl = '/logout';
     $emailUsuario = $_SESSION['representante_email'] ?? '';
 
-    // Busca dados completos do representante pelo email (model Representante possui buscarPorEmail)
     if (!empty($emailUsuario)) {
         $repModel = new Representante();
         $repData = $repModel->buscarPorEmail($emailUsuario);
         if ($repData) {
             $dadosUsuario = $repData;
-            $ultimaAlteracaoSenha = $repData['atualizado_em'] ?? ''; // campo correto
+            $ultimaAlteracaoSenha = $repData['atualizado_em'] ?? '';
         }
     }
 } else {
-    // Nenhum usuário autenticado: redireciona para a tela de login
     header('Location: /login');
     exit;
 }
 
-// ============================================================
-// 3. DEFINE O TÍTULO DA PÁGINA (FALLBACK)
-// ============================================================
 $titulo = $titulo ?? 'Dashboard';
 
-// ============================================================
-// 4. FUNÇÃO AUXILIAR PARA FORMATAR DATA (COM TRATAMENTO DE ERRO)
-// ============================================================
 function formatarDataHora(string $data): string {
     if (empty($data)) return 'Nunca';
     try {
@@ -106,7 +80,6 @@ function formatarDataHora(string $data): string {
     <title><?= htmlspecialchars($titulo) ?> - Umbrella Corporation</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="icon" href="/img/logo-sem-fundo.png" type="image/x-icon">
-    <!-- Font Awesome (biblioteca de ícones) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="dashboard">
@@ -118,21 +91,18 @@ function formatarDataHora(string $data): string {
             <span class="topbar-title">Umbrella Corporation</span>
         </div>
         <div class="topbar-right">
-            <!-- Nome do usuário logado (clicável) com dropdown -->
             <div class="topbar-dropdown">
                 <span class="topbar-user" id="userDropdownToggle">
                     <i class="fas fa-user-circle"></i> <?= htmlspecialchars($nomeUsuario) ?>
                     <i class="fas fa-chevron-down" style="font-size:12px; margin-left:6px;"></i>
                 </span>
                 <div class="dropdown-menu" id="userDropdownMenu">
-                    <!-- Cabeçalho do dropdown -->
                     <div class="dropdown-header">
                         <strong><?= htmlspecialchars($nomeUsuario) ?></strong>
                         <small><?= htmlspecialchars($emailUsuario) ?></small>
                     </div>
                     <div class="dropdown-divider"></div>
 
-                    <!-- Dados específicos do perfil -->
                     <?php if ($perfil === 'representante' && !empty($dadosUsuario)): ?>
                         <div class="dropdown-item">
                             <i class="fas fa-building"></i> CNPJ: <?= htmlspecialchars($dadosUsuario['cnpj'] ?? '') ?>
@@ -154,7 +124,6 @@ function formatarDataHora(string $data): string {
 
                     <div class="dropdown-divider"></div>
 
-                    <!-- Ações (link e modal) -->
                     <a href="/<?= $perfil === 'admin' ? 'admin' : 'painel' ?>/perfil" class="dropdown-item">
                         <i class="fas fa-edit"></i> Editar Perfil
                     </a>
@@ -164,14 +133,12 @@ function formatarDataHora(string $data): string {
 
                     <div class="dropdown-divider"></div>
 
-                    <!-- Última alteração de senha -->
                     <div class="dropdown-item" style="font-size:12px; color:#999; cursor:default;">
                         <i class="fas fa-clock"></i> Última alteração: <?= formatarDataHora($ultimaAlteracaoSenha) ?>
                     </div>
                 </div>
             </div>
 
-            <!-- Link de logout -->
             <a href="<?= $logoutUrl ?>" class="topbar-logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
         </div>
     </header>
@@ -184,24 +151,18 @@ function formatarDataHora(string $data): string {
             <p>Preencha os campos abaixo para atualizar sua senha.</p>
 
             <form method="POST" action="/<?= $perfil === 'admin' ? 'admin' : 'painel' ?>/alterar-senha" id="formAlterarSenha">
-                <!-- Senha atual -->
                 <div class="input-group">
                     <label for="senha_atual">Senha Atual</label>
                     <input type="password" id="senha_atual" name="senha_atual" required placeholder="Digite sua senha atual">
                 </div>
-
-                <!-- Nova senha -->
                 <div class="input-group">
                     <label for="nova_senha">Nova Senha</label>
                     <input type="password" id="nova_senha" name="nova_senha" required placeholder="Digite a nova senha" minlength="6">
                 </div>
-
-                <!-- Confirmar nova senha -->
                 <div class="input-group">
                     <label for="confirmar_senha">Confirmar Nova Senha</label>
                     <input type="password" id="confirmar_senha" name="confirmar_senha" required placeholder="Confirme a nova senha">
                 </div>
-
                 <button type="submit" class="btn-entrar">Salvar Nova Senha</button>
             </form>
             <div id="msgSenha" style="margin-top:10px; display:none;"></div>
@@ -210,21 +171,18 @@ function formatarDataHora(string $data): string {
 
     <!-- ==================== MENU LATERAL + CONTEÚDO PRINCIPAL ==================== -->
     <div class="dashboard-wrapper">
-        <!-- Menu lateral (sidebar) -->
         <nav class="sidebar">
             <ul class="sidebar-menu">
-                <!-- Link para o Dashboard (página inicial) -->
                 <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
 
                 <?php if ($perfil === 'admin'): ?>
-                    <!-- ===== LINKS DO ADMINISTRADOR ===== -->
                     <li class="menu-divider">Administração</li>
                     <li><a href="/admin/representantes"><i class="fas fa-users"></i> Representantes</a></li>
                     <li><a href="/admin/modulos"><i class="fas fa-cubes"></i> Módulos</a></li>
                     <li><a href="/admin/clientes"><i class="fas fa-building"></i> Clientes</a></li>
+                    <li><a href="/admin/solicitacoes"><i class="fas fa-ticket-alt"></i> Solicitações</a></li>
                     <li><a href="/admin/configuracao"><i class="fas fa-cog"></i> Configurações</a></li>
                 <?php else: ?>
-                    <!-- ===== LINKS DO REPRESENTANTE ===== -->
                     <li class="menu-divider">Meu Painel</li>
                     <li><a href="/painel/clientes"><i class="fas fa-user-tie"></i> Meus Clientes</a></li>
                     <li><a href="/painel/solicitacoes"><i class="fas fa-ticket-alt"></i> Solicitações</a></li>
@@ -232,5 +190,4 @@ function formatarDataHora(string $data): string {
             </ul>
         </nav>
 
-        <!-- Área de conteúdo principal (abre a div que será fechada no dashboard_footer) -->
         <main class="main-content">

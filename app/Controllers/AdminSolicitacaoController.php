@@ -4,16 +4,8 @@
  * Função: Controlador de gerenciamento de solicitações pelo administrador.
  * 
  * Responsável por:
- *   - Listar todas as solicitações enviadas pelos representantes.
+ *   - Listar todas as solicitações enviadas pelos representantes com filtros e paginação.
  *   - Permitir que o administrador atualize o status e a resposta de cada solicitação.
- * 
- * Status disponíveis:
- *   - pendente          : Aguardando avaliação.
- *   - deferido          : Aprovado, mas ainda não iniciado.
- *   - indeferido        : Recusado.
- *   - em_desenvolvimento: Em andamento.
- *   - teste             : Em fase de testes.
- *   - concluido         : Finalizado.
  * 
  * Acesso: Rotas protegidas pelo middleware AuthAdminMiddleware.
  */
@@ -22,58 +14,34 @@ require_once __DIR__ . '/../Models/Solicitacao.php';
 
 class AdminSolicitacaoController {
     
-    /**
-     * @var Solicitacao $model
-     * Instância do Model Solicitacao para operações de banco de dados.
-     */
     private Solicitacao $model;
 
-    /**
-     * Construtor da classe.
-     * Inicializa o Model Solicitacao.
-     */
     public function __construct() {
         $this->model = new Solicitacao();
     }
 
-    // ============================================================
-    // 1. LISTAR TODAS AS SOLICITAÇÕES
-    // ============================================================
     /**
-     * Exibe a lista de todas as solicitações de todos os representantes,
-     * com opção de alterar o status e a resposta de cada uma.
+     * Lista todas as solicitações com filtros e paginação.
      */
     public function index(): void {
-        $solicitacoes = $this->model->listarTodas();
+        $pagina = (int)($_GET['pagina'] ?? 1);
+        $status = $_GET['status'] ?? '';
+        $termo = $_GET['termo'] ?? '';
+
+        $solicitacoes = $this->model->listarTodasPaginado($pagina, 10, $status, $termo);
+        $total = $this->model->contarTodas($status, $termo);
+        $totalPaginas = ceil($total / 10);
+
+        $paginacao = [
+            'pagina_atual' => $pagina,
+            'total_paginas' => $totalPaginas,
+        ];
+
         require __DIR__ . '/../Views/admin/solicitacoes/listar.php';
     }
 
-    // ============================================================
-    // 2. ATUALIZAR STATUS DE UMA SOLICITAÇÃO (mantido para compatibilidade)
-    // ============================================================
     /**
-     * Processa a alteração de status de uma solicitação.
-     * Recebe o ID da solicitação e o novo status via POST.
-     * Redireciona de volta para a lista de solicitações.
-     */
-    public function atualizarStatus(): void {
-        $id = (int)($_POST['id'] ?? 0);
-        $status = $_POST['status'] ?? '';
-        $this->model->atualizarStatus($id, $status);
-        header('Location: /admin/solicitacoes');
-        exit;
-    }
-
-    // ============================================================
-    // 3. RESPONDER E ATUALIZAR STATUS DE UMA SOLICITAÇÃO
-    // ============================================================
-    /**
-     * Processa a atualização de status e a resposta do administrador.
-     * 
-     * Recebe o ID, o novo status e a resposta via POST.
-     * Atualiza ambos no banco de dados e redireciona para a lista.
-     * 
-     * Rota associada: POST /admin/solicitacoes/atualizar
+     * Atualiza status e resposta de uma solicitação.
      */
     public function responder(): void {
         $id = (int)($_POST['id'] ?? 0);
@@ -85,12 +53,10 @@ class AdminSolicitacaoController {
             exit;
         }
 
-        // Atualiza o status
         $this->model->atualizarStatus($id, $status);
-        // Atualiza a resposta
         $this->model->responder($id, $resposta);
 
-        header('Location: /admin/solicitacoes');
+        header('Location: /admin/solicitacoes?sucesso=1');
         exit;
     }
 }
