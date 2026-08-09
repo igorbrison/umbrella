@@ -221,8 +221,7 @@ function formatarDataHora(string $data): string {
                     <li class="menu-divider">Administração</li>
                     <li><a href="/admin/representantes"><i class="fas fa-users"></i> Representantes</a></li>
                     <li><a href="/admin/modulos"><i class="fas fa-cubes"></i> Módulos</a></li>
-                    <li><a href="/admin/licencas"><i class="fas fa-key"></i> Licenças</a></li>
-                    <li><a href="/admin/clientes"><i class="fas fa-building"></i> Clientes (Admin)</a></li>
+                    <li><a href="/admin/clientes"><i class="fas fa-building"></i> Clientes</a></li>
                     <li><a href="/admin/configuracao"><i class="fas fa-cog"></i> Configurações</a></li>
                 <?php else: ?>
                     <!-- ===== LINKS DO REPRESENTANTE ===== -->

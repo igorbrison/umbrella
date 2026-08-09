@@ -1,11 +1,10 @@
 <?php
 /**
  * Arquivo: Controllers/AdminLicencaController.php
- * Função: Controlador de gerenciamento de licenças pelo administrador.
+ * Função: Controlador de gerenciamento de licenças/clientes pelo administrador.
  * 
  * Responsável por:
- *   - Listar todas as licenças do sistema.
- *   - Exibir o valor total atualizado de cada licença.
+ *   - Listar todas as licenças/clientes com busca, ordenação e paginação.
  *   - Renovar licenças manualmente.
  *   - Gerar tokens offline para clientes.
  *   - Registrar pagamentos e renovar licenças automaticamente.
@@ -17,7 +16,6 @@ require_once __DIR__ . '/../Models/Licenca.php';
 require_once __DIR__ . '/../Models/TokenRenovacao.php';
 require_once __DIR__ . '/../Models/Cliente.php';
 require_once __DIR__ . '/../Models/Pagamento.php';
-use Pagamento;
 
 class AdminLicencaController {
     
@@ -27,16 +25,30 @@ class AdminLicencaController {
         $this->licencaModel = new Licenca();
     }
 
-    // Lista todas as licenças do sistema
+    // Lista todas as licenças/clientes com busca, ordenação e paginação
     public function index(): void {
-        $licencas = $this->licencaModel->listarTodas();
+        $pagina = (int)($_GET['pagina'] ?? 1);
+        $termo = $_GET['termo'] ?? '';
+        $ordem = $_GET['ordem'] ?? 'cliente_nome';
+        $direcao = $_GET['direcao'] ?? 'asc';
 
-        $clienteModel = new Cliente();
-        foreach ($licencas as &$l) {
-            $l['valor_total_atual'] = $clienteModel->getValorTotalAtual((int)$l['cliente_id']);
-        }
+        $licencas = $this->licencaModel->listarTodasPaginado($pagina, 10, $termo, $ordem, $direcao);
+        $total = $this->licencaModel->contarTodas($termo);
+        $totalPaginas = ceil($total / 10);
 
-        require __DIR__ . '/../Views/admin/licencas/listar.php';
+        $paginacao = [
+            'pagina_atual' => $pagina,
+            'total_paginas' => $totalPaginas,
+        ];
+        $ordenacaoAtual = ['coluna' => $ordem, 'direcao' => $direcao];
+        $termoAtual = $termo;
+
+        // Mensagens de token
+        $tokenGerado = $_SESSION['token_gerado'] ?? null;
+        $erroToken = $_SESSION['erro_token'] ?? null;
+        unset($_SESSION['token_gerado'], $_SESSION['erro_token']);
+
+        require __DIR__ . '/../Views/admin/clientes/listar.php';
     }
 
     // Renova a licença de um cliente específico
@@ -73,7 +85,7 @@ class AdminLicencaController {
             exit;
         }
 
-        $pagamentoModel = new \Pagamento();
+        $pagamentoModel = new Pagamento();
         $pagamentoModel->inserir($clienteId, $valor, $dataPagamento, $mesReferencia, $observacao);
 
         // Renova a licença

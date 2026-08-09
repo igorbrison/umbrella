@@ -1,35 +1,93 @@
 <?php
 /**
  * Arquivo: Views/admin/configuracao/form.php
- * Função: VIEW de configuração do salário mínimo (painel admin).
+ * Função: VIEW de configuração completa do sistema (painel admin).
  * 
- * Permite ao administrador visualizar e atualizar o valor do salário
- * mínimo, que é utilizado como base para o cálculo dos preços dos
- * módulos contratados pelos clientes.
- * 
- * Apenas o administrador tem acesso a esta tela.
+ * Permite ao administrador atualizar:
+ *   - Nome da empresa e e-mail de contato.
+ *   - Salário mínimo (base de cálculo dos módulos).
+ *   - Dados do servidor SMTP para envio de e-mails.
  */
 
-// Garante que a variável $salarioMinimo esteja sempre definida
-if (!isset($salarioMinimo)) {
-    $salarioMinimo = 0.0;
-}
+// Valores default caso não venham do controller
+$configs = $configs ?? [];
+$salarioMinimo = $configs['salario_minimo'] ?? 1621.00;
+$nomeEmpresa   = $configs['nome_empresa'] ?? 'Umbrella Corporation';
+$emailContato  = $configs['email_contato'] ?? '';
+$smtpHost      = $configs['smtp_host'] ?? '';
+$smtpPort      = $configs['smtp_port'] ?? 587;
+$smtpUser      = $configs['smtp_user'] ?? '';
+$smtpPass      = $configs['smtp_pass'] ?? '';
 
-// Título da página
-$titulo = 'Configuração - Salário Mínimo';
-
-// Inclui o cabeçalho comum (HTML, CSS, favicon)
-require __DIR__ . '/../partials/dashboard_header.php';
+$titulo = 'Configurações do Sistema';
+require __DIR__ . '/../../partials/dashboard_header.php';
 ?>
 
-<h1>Salário Mínimo Atual</h1>
+<h1>Configurações</h1>
 
-<!-- FORMULÁRIO DE ATUALIZAÇÃO DO SALÁRIO MÍNIMO -->
 <form method="POST" action="/admin/configuracao/salvar">
-    <label>Valor (R$):
-        <input type="number" step="0.01" name="salario_minimo" value="<?= $salarioMinimo ?>">
-    </label>
-    <button type="submit">Atualizar</button>
+    <!-- ==================== IDENTIDADE DA EMPRESA ==================== -->
+    <fieldset>
+        <legend>Identidade da Empresa</legend>
+        <div class="form-row">
+            <div class="form-col">
+                <label>Nome da Empresa:
+                    <input type="text" name="nome_empresa" value="<?= htmlspecialchars($nomeEmpresa) ?>">
+                </label>
+            </div>
+            <div class="form-col">
+                <label>E-mail de Contato:
+                    <input type="email" name="email_contato" value="<?= htmlspecialchars($emailContato) ?>">
+                </label>
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- ==================== SALÁRIO MÍNIMO ==================== -->
+    <fieldset>
+        <legend>Salário Mínimo</legend>
+        <div class="form-row">
+            <div class="form-col">
+                <label>Valor (R$):
+                    <input type="number" step="0.01" name="salario_minimo" value="<?= $salarioMinimo ?>">
+                </label>
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- ==================== CONFIGURAÇÃO DE E-MAIL (SMTP) ==================== -->
+    <fieldset>
+        <legend>Configuração de E-mail (SMTP)</legend>
+        <div class="form-row">
+            <div class="form-col">
+                <label>Servidor SMTP:
+                    <input type="text" name="smtp_host" value="<?= htmlspecialchars($smtpHost) ?>">
+                </label>
+            </div>
+            <div class="form-col">
+                <label>Porta:
+                    <input type="number" name="smtp_port" value="<?= $smtpPort ?>">
+                </label>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-col">
+                <label>Usuário:
+                    <input type="text" name="smtp_user" value="<?= htmlspecialchars($smtpUser) ?>">
+                </label>
+            </div>
+            <div class="form-col">
+                <label>Senha:
+                    <input type="password" name="smtp_pass" value="<?= htmlspecialchars($smtpPass) ?>">
+                </label>
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- ==================== BOTÕES ==================== -->
+    <div class="form-actions">
+        <button type="submit" class="btn-primary">Salvar Configurações</button>
+    </div>
 </form>
 
-<?php require __DIR__ . '/../partials/dashboard_footer.php'; ?>
+<?php require __DIR__ . '/../../partials/dashboard_footer.php'; ?>

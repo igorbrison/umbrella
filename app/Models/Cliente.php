@@ -9,6 +9,7 @@
  *   - Calcular o valor total atual do cliente com base nos módulos contratados
  *     e no salário mínimo vigente.
  *   - Permitir operações administrativas (sem restrição de representante).
+ *   - Fornecer indicadores para o Dashboard (contagens e detalhes).
  * 
  * Conexão: Utiliza o Singleton Database para obter uma instância PDO única.
  */
@@ -189,61 +190,203 @@ class Cliente {
         return $stmt->execute([':id' => $id, ':rid' => $representanteId]);
     }
 
+    /**
+     * Listagem paginada de clientes de um representante (com dados completos e totais).
+     * 
+     * @param int $representanteId ID do representante.
+     * @param string $ordem Coluna de ordenação.
+     * @param string $direcao Direção da ordenação.
+     * @param int $pagina Número da página.
+     * @param int $limite Registros por página.
+     * @return array Contendo 'dados', 'total', 'pagina_atual', 'total_paginas'.
+     */
     public function listarPaginadoPorRepresentante(int $representanteId, string $ordem = 'id', string $direcao = 'asc', int $pagina = 1, int $limite = 10): array {
-    $colunasPermitidas = ['id', 'nome', 'cpf_cnpj', 'email', 'ativo'];
-    if (!in_array($ordem, $colunasPermitidas)) $ordem = 'id';
-    $direcao = strtolower($direcao) === 'desc' ? 'DESC' : 'ASC';
+        $colunasPermitidas = ['id', 'nome', 'cpf_cnpj', 'email', 'ativo'];
+        if (!in_array($ordem, $colunasPermitidas)) $ordem = 'id';
+        $direcao = strtolower($direcao) === 'desc' ? 'DESC' : 'ASC';
 
-    $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM clientes WHERE representante_id = :rid");
-    $stmt->execute([':rid' => $representanteId]);
-    $total = (int)$stmt->fetchColumn();
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM clientes WHERE representante_id = :rid");
+        $stmt->execute([':rid' => $representanteId]);
+        $total = (int)$stmt->fetchColumn();
 
-    $totalPaginas = $total > 0 ? (int)ceil($total / $limite) : 1;
-    $offset = ($pagina - 1) * $limite;
+        $totalPaginas = $total > 0 ? (int)ceil($total / $limite) : 1;
+        $offset = ($pagina - 1) * $limite;
 
-    $sql = "SELECT * FROM clientes WHERE representante_id = :rid ORDER BY $ordem $direcao LIMIT :limite OFFSET :offset";
-    $stmt = $this->pdo->prepare($sql);
-    $stmt->bindValue(':rid', $representanteId, \PDO::PARAM_INT);
-    $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
-    $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
-    $stmt->execute();
+        $sql = "SELECT * FROM clientes WHERE representante_id = :rid ORDER BY $ordem $direcao LIMIT :limite OFFSET :offset";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':rid', $representanteId, \PDO::PARAM_INT);
+        $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
 
-    return [
-        'dados' => $stmt->fetchAll(),
-        'total' => $total,
-        'pagina_atual' => $pagina,
-        'total_paginas' => $totalPaginas
-    ];
-}
+        return [
+            'dados' => $stmt->fetchAll(),
+            'total' => $total,
+            'pagina_atual' => $pagina,
+            'total_paginas' => $totalPaginas
+        ];
+    }
 
-public function buscarPaginadoPorRepresentante(int $representanteId, string $termo, int $pagina = 1, int $limite = 10, string $ordem = 'id', string $direcao = 'asc'): array {
-    $colunasPermitidas = ['id', 'nome', 'cpf_cnpj', 'email', 'ativo'];
-    if (!in_array($ordem, $colunasPermitidas)) $ordem = 'id';
-    $direcao = strtolower($direcao) === 'desc' ? 'DESC' : 'ASC';
+    /**
+     * Busca paginada de clientes com termo de pesquisa (representante).
+     * 
+     * @param int $representanteId ID do representante.
+     * @param string $termo Termo a buscar (nome, CPF/CNPJ ou email).
+     * @param int $pagina Número da página.
+     * @param int $limite Registros por página.
+     * @param string $ordem Coluna de ordenação.
+     * @param string $direcao Direção da ordenação.
+     * @return array Contendo 'dados', 'total', 'pagina_atual', 'total_paginas'.
+     */
+    public function buscarPaginadoPorRepresentante(int $representanteId, string $termo, int $pagina = 1, int $limite = 10, string $ordem = 'id', string $direcao = 'asc'): array {
+        $colunasPermitidas = ['id', 'nome', 'cpf_cnpj', 'email', 'ativo'];
+        if (!in_array($ordem, $colunasPermitidas)) $ordem = 'id';
+        $direcao = strtolower($direcao) === 'desc' ? 'DESC' : 'ASC';
 
-    $where = "representante_id = :rid AND (nome LIKE :termo OR cpf_cnpj LIKE :termo OR email LIKE :termo)";
-    $params = [':rid' => $representanteId, ':termo' => '%' . $termo . '%'];
+        $where = "representante_id = :rid AND (nome LIKE :termo OR cpf_cnpj LIKE :termo OR email LIKE :termo)";
+        $params = [':rid' => $representanteId, ':termo' => '%' . $termo . '%'];
 
-    $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM clientes WHERE $where");
-    $stmt->execute($params);
-    $total = (int)$stmt->fetchColumn();
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM clientes WHERE $where");
+        $stmt->execute($params);
+        $total = (int)$stmt->fetchColumn();
 
-    $totalPaginas = $total > 0 ? (int)ceil($total / $limite) : 1;
-    $offset = ($pagina - 1) * $limite;
+        $totalPaginas = $total > 0 ? (int)ceil($total / $limite) : 1;
+        $offset = ($pagina - 1) * $limite;
 
-    $sql = "SELECT * FROM clientes WHERE $where ORDER BY $ordem $direcao LIMIT :limite OFFSET :offset";
-    $stmt = $this->pdo->prepare($sql);
-    $stmt->bindValue(':rid', $representanteId, \PDO::PARAM_INT);
-    $stmt->bindValue(':termo', '%' . $termo . '%');
-    $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
-    $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
-    $stmt->execute();
+        $sql = "SELECT * FROM clientes WHERE $where ORDER BY $ordem $direcao LIMIT :limite OFFSET :offset";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':rid', $representanteId, \PDO::PARAM_INT);
+        $stmt->bindValue(':termo', '%' . $termo . '%');
+        $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
 
-    return [
-        'dados' => $stmt->fetchAll(),
-        'total' => $total,
-        'pagina_atual' => $pagina,
-        'total_paginas' => $totalPaginas
-    ];
-}
+        return [
+            'dados' => $stmt->fetchAll(),
+            'total' => $total,
+            'pagina_atual' => $pagina,
+            'total_paginas' => $totalPaginas
+        ];
+    }
+
+    // ==================== INDICADORES PARA O DASHBOARD ====================
+
+    /**
+     * Conta o total de clientes ativos em todo o sistema.
+     * 
+     * @return int Número de clientes ativos.
+     */
+    public function contarAtivos(): int {
+        $stmt = $this->pdo->query("SELECT COUNT(*) FROM clientes WHERE ativo = 1");
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Conta o total de clientes inativos em todo o sistema.
+     * 
+     * @return int Número de clientes inativos.
+     */
+    public function contarInativos(): int {
+        $stmt = $this->pdo->query("SELECT COUNT(*) FROM clientes WHERE ativo = 0");
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Conta clientes com licença vencida ou sem licença (em atraso) – global.
+     * 
+     * @return int Número de clientes em atraso.
+     */
+    public function contarEmAtraso(): int {
+        $stmt = $this->pdo->query("
+            SELECT COUNT(*) FROM clientes c
+            LEFT JOIN licencas l ON l.cliente_id = c.id
+            WHERE c.ativo = 1 AND (l.ativa = 0 OR l.data_expiracao < CURDATE())
+        ");
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Conta clientes ativos de um representante específico.
+     * 
+     * @param int $representanteId ID do representante.
+     * @return int Número de clientes ativos.
+     */
+    public function contarAtivosPorRepresentante(int $representanteId): int {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM clientes WHERE representante_id = :rid AND ativo = 1");
+        $stmt->execute([':rid' => $representanteId]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Conta clientes inativos de um representante específico.
+     * 
+     * @param int $representanteId ID do representante.
+     * @return int Número de clientes inativos.
+     */
+    public function contarInativosPorRepresentante(int $representanteId): int {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM clientes WHERE representante_id = :rid AND ativo = 0");
+        $stmt->execute([':rid' => $representanteId]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Conta clientes em atraso de um representante específico.
+     * 
+     * @param int $representanteId ID do representante.
+     * @return int Número de clientes em atraso.
+     */
+    public function contarEmAtrasoPorRepresentante(int $representanteId): int {
+        $stmt = $this->pdo->prepare("
+            SELECT COUNT(*) FROM clientes c
+            LEFT JOIN licencas l ON l.cliente_id = c.id
+            WHERE c.representante_id = :rid AND c.ativo = 1 AND (l.ativa = 0 OR l.data_expiracao < CURDATE())
+        ");
+        $stmt->execute([':rid' => $representanteId]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Retorna todos os clientes (apenas id e nome) para os detalhes do dashboard (admin).
+     * 
+     * @return array Lista de clientes com id e nome.
+     */
+    public function listarParaDetalhes(): array {
+        $stmt = $this->pdo->query("SELECT id, nome FROM clientes ORDER BY nome");
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Retorna os clientes em atraso (id, nome e nome do representante) para o dashboard (admin).
+     * Inclui o representante vinculado para facilitar a cobrança.
+     * 
+     * @return array Lista de clientes com id, nome e representante_nome.
+     */
+    public function listarEmAtraso(): array {
+        $stmt = $this->pdo->query("
+            SELECT c.id, c.nome, r.nome_razao AS representante_nome
+            FROM clientes c
+            LEFT JOIN licencas l ON l.cliente_id = c.id
+            JOIN representantes r ON r.id = c.representante_id
+            WHERE c.ativo = 1 AND (l.ativa = 0 OR l.data_expiracao < CURDATE())
+            ORDER BY c.nome
+        ");
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Retorna os clientes em atraso de um representante (apenas id e nome) para o dashboard.
+     * 
+     * @param int $representanteId ID do representante.
+     * @return array Lista de clientes com id e nome.
+     */
+    public function listarEmAtrasoPorRepresentante(int $representanteId): array {
+        $stmt = $this->pdo->prepare("
+            SELECT c.id, c.nome FROM clientes c
+            LEFT JOIN licencas l ON l.cliente_id = c.id
+            WHERE c.representante_id = :rid AND c.ativo = 1 AND (l.ativa = 0 OR l.data_expiracao < CURDATE())
+            ORDER BY c.nome
+        ");
+        $stmt->execute([':rid' => $representanteId]);
+        return $stmt->fetchAll();
+    }
 }

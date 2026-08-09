@@ -113,45 +113,20 @@ $router->mount('/admin/modulos', function() use ($router) {
     });
 });
 
-// --- Licenças (admin) ---
-$router->mount('/admin/licencas', function() use ($router) {
-    $router->before('GET|POST', '/.*', function() {
-        require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
-        AuthAdminMiddleware::verificar();
-    });
-
-    $router->get('/', function() {
-        require_once __DIR__ . '/../app/Controllers/AdminLicencaController.php';
-        (new AdminLicencaController())->index();
-    });
-
-    $router->get('/renovar/(\d+)', function($id) {
-        require_once __DIR__ . '/../app/Controllers/AdminLicencaController.php';
-        (new AdminLicencaController())->renovar((int)$id);
-    });
-
-    $router->get('/gerar-token/(\d+)', function($id) {
-        require_once __DIR__ . '/../app/Controllers/AdminLicencaController.php';
-        (new AdminLicencaController())->gerarTokenOffline((int)$id);
-    });
-
-    // Registrar pagamento e renovar licença
-    $router->post('/pagar', function() {
-        require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
-        AuthAdminMiddleware::verificar();
-        require_once __DIR__ . '/../app/Controllers/AdminLicencaController.php';
-        require_once __DIR__ . '/../app/Models/Pagamento.php';
-        (new AdminLicencaController())->pagar();
-    });
-});
-
-// --- Clientes (admin) - Edição de clientes ---
+// --- Clientes (admin) – listagem e ações de licença ---
 $router->mount('/admin/clientes', function() use ($router) {
     $router->before('GET|POST', '/.*', function() {
         require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
         AuthAdminMiddleware::verificar();
     });
 
+    // Listagem de clientes (com informações de licença)
+    $router->get('/', function() {
+        require_once __DIR__ . '/../app/Controllers/AdminLicencaController.php';
+        (new AdminLicencaController())->index();
+    });
+
+    // Editar cadastro do cliente
     $router->get('/editar/(\d+)', function($id) {
         require_once __DIR__ . '/../app/Controllers/AdminClienteController.php';
         (new AdminClienteController())->editar((int)$id);
@@ -160,6 +135,24 @@ $router->mount('/admin/clientes', function() use ($router) {
     $router->post('/salvar', function() {
         require_once __DIR__ . '/../app/Controllers/AdminClienteController.php';
         (new AdminClienteController())->salvar();
+    });
+
+    // Renovar licença
+    $router->get('/renovar/(\d+)', function($id) {
+        require_once __DIR__ . '/../app/Controllers/AdminLicencaController.php';
+        (new AdminLicencaController())->renovar((int)$id);
+    });
+
+    // Gerar token offline
+    $router->get('/gerar-token/(\d+)', function($id) {
+        require_once __DIR__ . '/../app/Controllers/AdminLicencaController.php';
+        (new AdminLicencaController())->gerarTokenOffline((int)$id);
+    });
+
+    // Registrar pagamento
+    $router->post('/pagar', function() {
+        require_once __DIR__ . '/../app/Controllers/AdminLicencaController.php';
+        (new AdminLicencaController())->pagar();
     });
 });
 

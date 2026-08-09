@@ -1,6 +1,6 @@
 <?php
 /**
- * Arquivo: listar.php
+ * Arquivo: Views/representantes/listar.php
  * Função: VIEW da lista de representantes.
  * 
  * Características:
@@ -33,9 +33,9 @@ function seta(string $coluna, string $colAtual, string $dirAtual): string {
 ?>
 
 <h1>Representantes</h1>
-<a href="/admin/representantes/criar" class="btn">Novo Representante</a>
-<a href="/admin/modulos" class="btn">Módulos</a>
-<a href="/admin/licencas" class="btn">Licenças</a>
+<div class="barra-pesquisa">
+    <a href="/admin/representantes/criar" class="btn btn-primary">Novo Representante</a>
+</div>
 
 <table>
     <tr>

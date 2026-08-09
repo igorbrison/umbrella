@@ -1,11 +1,12 @@
 <?php
 /**
  * Arquivo: Models/Configuracao.php
- * Função: Model para acesso às configurações globais do sistema.
+ * Função: Model da entidade "Configuracao".
  * 
  * Responsável por:
- *   - Obter e atualizar o valor do salário mínimo (usado como base para
- *     o cálculo dos preços dos módulos).
+ *   - Gerenciar as configurações globais do sistema (chave/valor).
+ *   - Oferecer métodos para obter e definir qualquer configuração.
+ *   - Manter compatibilidade com os métodos antigos (getSalarioMinimo, setSalarioMinimo).
  * 
  * Conexão: Utiliza o Singleton Database para obter uma instância PDO única.
  */
@@ -29,23 +30,52 @@ class Configuracao {
     }
 
     /**
-     * Retorna o valor atual do salário mínimo cadastrado.
+     * Obtém o valor de uma configuração pelo nome da chave.
      * 
-     * @return float Valor do salário mínimo (padrão 1621.00 caso não exista).
+     * @param string $chave Nome da chave de configuração.
+     * @return string|null Valor da configuração ou null se não encontrada.
      */
-    public function getSalarioMinimo(): float {
-        $stmt = $this->pdo->query("SELECT valor FROM configuracoes WHERE chave = 'salario_minimo'");
-        $row = $stmt->fetch();
-        return $row ? (float)$row['valor'] : 1621.00;
+    public function get(string $chave): ?string {
+        $stmt = $this->pdo->prepare("SELECT valor FROM configuracoes WHERE chave = :chave");
+        $stmt->execute([':chave' => $chave]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? $row['valor'] : null;
     }
 
     /**
-     * Atualiza o valor do salário mínimo no banco de dados.
+     * Define (insere ou atualiza) o valor de uma configuração.
+     * 
+     * @param string $chave Nome da chave de configuração.
+     * @param mixed  $valor Novo valor a ser armazenado.
+     */
+    public function set(string $chave, $valor): void {
+        $stmt = $this->pdo->prepare(
+            "INSERT INTO configuracoes (chave, valor) VALUES (:chave, :valor) 
+             ON DUPLICATE KEY UPDATE valor = :valor2"
+        );
+        $stmt->execute([
+            ':chave' => $chave,
+            ':valor' => $valor,
+            ':valor2' => $valor
+        ]);
+    }
+
+    /**
+     * Obtém o valor do salário mínimo (método legado mantido para compatibilidade).
+     * 
+     * @return float Salário mínimo atual.
+     */
+    public function getSalarioMinimo(): float {
+        $valor = $this->get('salario_minimo');
+        return $valor !== null ? (float)$valor : 1621.00;
+    }
+
+    /**
+     * Define o valor do salário mínimo (método legado mantido para compatibilidade).
      * 
      * @param float $valor Novo valor do salário mínimo.
      */
     public function setSalarioMinimo(float $valor): void {
-        $stmt = $this->pdo->prepare("UPDATE configuracoes SET valor = :val WHERE chave = 'salario_minimo'");
-        $stmt->execute([':val' => $valor]);
+        $this->set('salario_minimo', $valor);
     }
 }

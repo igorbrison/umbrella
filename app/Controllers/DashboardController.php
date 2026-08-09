@@ -1,170 +1,172 @@
 <?php
 /**
  * Arquivo: Controllers/DashboardController.php
- * Função: Controlador da página inicial do dashboard.
+ * Função: Controlador do Dashboard.
  * 
  * Responsável por:
- *   - Exibir o dashboard do administrador (cards simples).
- *   - Exibir o dashboard do representante com gráficos e indicadores.
+ *   - Exibir indicadores e gráficos de acordo com o perfil do usuário logado.
+ *   - Para administradores: dados consolidados de todos os representantes.
+ *   - Para representantes: dados restritos aos seus próprios clientes.
+ *   - Preparar os arrays necessários para os gráficos do Chart.js.
  * 
- * Uso: Rota associada → GET /dashboard
+ * Acesso: Rotas protegidas por verificação de sessão no próprio controlador.
  */
 
 require_once __DIR__ . '/../Models/Cliente.php';
 require_once __DIR__ . '/../Models/Licenca.php';
-require_once __DIR__ . '/../Models/Representante.php';
-require_once __DIR__ . '/../Models/ClienteModulo.php';
-require_once __DIR__ . '/../Models/Configuracao.php';
-require_once __DIR__ . '/../Models/Database.php';
 require_once __DIR__ . '/../Models/Pagamento.php';
 
-class DashboardController {
-
-    public function index(): void {
-        // Administrador: dados básicos
+class DashboardController
+{
+    /**
+     * Ponto de entrada do dashboard.
+     * Redireciona para o método adequado conforme o perfil do usuário.
+     */
+    public function index(): void
+    {
+        // Verifica se é admin ou representante
         if (isset($_SESSION['admin_id'])) {
-            $dados = [];
-            $dados['totalRepresentantes'] = count((new Representante())->listarTodos());
-            $licencaModel = new Licenca();
-            $dados['totalClientes'] = count($licencaModel->listarTodas());
-            $dados['receitaMensal'] = 0;
-            $dados['clientesEmAtraso'] = 0;
-            require __DIR__ . '/../Views/dashboard/admin.php';
-            return;
-        }
-
-        // Representante
-        if (!isset($_SESSION['representante_id'])) {
+            $this->admin();
+        } elseif (isset($_SESSION['representante_id'])) {
+            $this->representante();
+        } else {
             header('Location: /login');
             exit;
         }
+    }
 
-        $representanteId = $_SESSION['representante_id'];
-        $clienteModel = new Cliente();
-        $licencaModel = new Licenca();
-        $representanteModel = new Representante();
+    /**
+     * Dashboard do administrador.
+     * Exibe dados globais de todos os representantes e clientes.
+     */
+    private function admin(): void
+    {
+        $clienteModel    = new Cliente();
+        $licencaModel    = new Licenca();
+        /** @var \Pagamento $pagamentoModel */
+        $pagamentoModel  = new Pagamento();
+
+        // Totais gerais
+        $clientesAtivos    = $clienteModel->contarAtivos();
+        $clientesInativos  = $clienteModel->contarInativos();
+        $licencasAtivas    = $licencaModel->contarAtivas();
+        $licencasExpiradas = $licencaModel->contarExpiradas();
+        $clientesAtraso    = $clienteModel->contarEmAtraso();
+
+        // Receitas e comissões
+        $receitaMensal   = $pagamentoModel->receitaMensalGlobal();
+        $comissaoMensal  = $pagamentoModel->comissaoMensalGlobal();
+        $licencasGeradas = $pagamentoModel->contagemMensalGlobal();  // <- alterado
+
+        // Meses e anos para os gráficos
+        $meses           = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+        $ano1            = $_GET['ano1'] ?? date('Y') - 1;
+        $ano2            = $_GET['ano2'] ?? date('Y');
+        $anosDisponiveis = range(date('Y') - 3, date('Y'));
+
+        // Dados comparativos anuais
+        $receitaAnual1 = $pagamentoModel->receitaAnual((int)$ano1);
+        $receitaAnual2 = $pagamentoModel->receitaAnual((int)$ano2);
+
+        // Máximos para escala dos gráficos
+        $maxReceita     = max(max($receitaMensal ?: [0]), 1000);
+        $maxComissao    = max(max($comissaoMensal ?: [0]), 1000);
+        $maxLicencas    = max(max($licencasGeradas ?: [0]), 5);
+        $maxComparativo = max(max($receitaAnual1 ?: [0]), max($receitaAnual2 ?: [0]), 1000);
+
+        // Empacota tudo em um array para a view
+        $dados = [
+            'clientes_ativos'      => $clientesAtivos,
+            'clientes_inativos'    => $clientesInativos,
+            'licencas_ativas'      => $licencasAtivas,
+            'licencas_expiradas'   => $licencasExpiradas,
+            'clientes_em_atraso'   => $clientesAtraso,
+            'receitaMensal'        => $receitaMensal,
+            'comissaoMensal'       => $comissaoMensal,
+            'licencasGeradas'      => $licencasGeradas,
+            'meses'                => $meses,
+            'ano1'                 => $ano1,
+            'ano2'                 => $ano2,
+            'anosDisponiveis'      => $anosDisponiveis,
+            'receitaAnual1'        => $receitaAnual1,
+            'receitaAnual2'        => $receitaAnual2,
+            'maxReceita'           => $maxReceita,
+            'maxComissao'          => $maxComissao,
+            'maxLicencas'          => $maxLicencas,
+            'maxComparativo'       => $maxComparativo,
+            'clientes_detalhes'    => $clienteModel->listarParaDetalhes(),
+            'licencas_detalhes'    => $licencaModel->listarParaDetalhes(),
+            'atraso_detalhes'      => $clienteModel->listarEmAtraso(),
+        ];
+
+        require __DIR__ . '/../Views/dashboard/admin.php';
+    }
+
+    /**
+     * Dashboard do representante.
+     * Exibe apenas os dados vinculados ao representante logado.
+     */
+    private function representante(): void
+    {
+        $repId = $_SESSION['representante_id'];
+
+        $clienteModel   = new Cliente();
+        $licencaModel   = new Licenca();
+        /** @var \Pagamento $pagamentoModel */
         $pagamentoModel = new Pagamento();
-        $representante = $representanteModel->buscarPorId($representanteId);
 
-        // --- Clientes ativos/inativos (com detalhes para modal) ---
-        $clientes = $clienteModel->listarPorRepresentante($representanteId);
-        $totalClientes = count($clientes);
-        $ativos = 0;
-        $clientesDetalhes = [];
-        foreach ($clientes as $c) {
-            if ($c['ativo']) $ativos++;
-            $clientesDetalhes[] = [
-                'nome' => $c['nome'],
-                'ativo' => $c['ativo']
-            ];
-        }
-        $dados['clientes_ativos'] = $ativos;
-        $dados['clientes_inativos'] = $totalClientes - $ativos;
-        $dados['clientes_detalhes'] = $clientesDetalhes;
+        // Totais do representante
+        $clientesAtivos    = $clienteModel->contarAtivosPorRepresentante($repId);
+        $clientesInativos  = $clienteModel->contarInativosPorRepresentante($repId);
+        $licencasAtivas    = $licencaModel->contarAtivasPorRepresentante($repId);
+        $licencasExpiradas = $licencaModel->contarExpiradasPorRepresentante($repId);
+        $clientesAtraso    = $clienteModel->contarEmAtrasoPorRepresentante($repId);
 
-        // --- Licenças (ativas/expiradas) com detalhes ---
-        $licencas = $licencaModel->listarPorRepresentante($representanteId);
-        $licencasAtivas = 0;
-        $licencasDetalhes = [];
-        $hoje = new DateTime();
-        foreach ($licencas as $l) {
-            $exp = new DateTime($l['data_expiracao']);
-            $ativa = $l['ativa'] && $exp >= $hoje;
-            if ($ativa) $licencasAtivas++;
-            $licencasDetalhes[] = [
-                'cliente_nome' => $l['cliente_nome'],
-                'ativa' => $ativa
-            ];
-        }
-        $dados['licencas_ativas'] = $licencasAtivas;
-        $dados['licencas_expiradas'] = count($licencas) - $licencasAtivas;
-        $dados['licencas_detalhes'] = $licencasDetalhes;
+        // Receitas e comissões do representante
+        $receitaMensal   = $pagamentoModel->receitaMensalPorRepresentante($repId);
+        $comissaoMensal  = $pagamentoModel->comissaoMensalPorRepresentante($repId);
+        $licencasGeradas = $pagamentoModel->contagemMensalPorRepresentante($repId);  // <- alterado
 
-        // --- Clientes em atraso (licenças expiradas) detalhes ---
-        $atrasoDetalhes = [];
-        foreach ($licencas as $l) {
-            $exp = new DateTime($l['data_expiracao']);
-            if (!$l['ativa'] || $exp < $hoje) {
-                $atrasoDetalhes[] = ['cliente_nome' => $l['cliente_nome']];
-            }
-        }
-        $dados['clientes_em_atraso'] = count($atrasoDetalhes);
-        $dados['atraso_detalhes'] = $atrasoDetalhes;
+        // Meses e anos
+        $meses           = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+        $ano1            = $_GET['ano1'] ?? date('Y') - 1;
+        $ano2            = $_GET['ano2'] ?? date('Y');
+        $anosDisponiveis = range(date('Y') - 3, date('Y'));
 
-        // --- Meses em português (últimos 12) e dados para gráficos ---
-        $mesesAbrev = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-                       'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-        $meses = [];
-        $receitaMensal = [];
-        $comissaoMensal = [];
-        $licencasGeradas = [];
-        $maxReceita = 0;
-        $maxComissao = 0;
-        for ($i = 11; $i >= 0; $i--) {
-            $data = new DateTime("first day of -$i months");
-            $mesLabel = $data->format('Y-m');
-            $mesNum = (int)$data->format('m') - 1; // 0-based
-            $meses[] = $mesesAbrev[$mesNum] . '/' . $data->format('y'); // "Jan/25"
-            
-            $soma = $pagamentoModel->somaPorMes($representanteId, $mesLabel);
-            $receitaMensal[] = $soma;
-            if ($soma > $maxReceita) $maxReceita = $soma;
+        // Comparativo anual
+        $receitaAnual1 = $pagamentoModel->receitaAnualPorRepresentante((int)$ano1, $repId);
+        $receitaAnual2 = $pagamentoModel->receitaAnualPorRepresentante((int)$ano2, $repId);
 
-            $comissao = round($soma * ($representante['comissao_percentual'] / 100), 2);
-            $comissaoMensal[] = $comissao;
-            if ($comissao > $maxComissao) $maxComissao = $comissao;
+        // Máximos para gráficos
+        $maxReceita     = max(max($receitaMensal ?: [0]), 1000);
+        $maxComissao    = max(max($comissaoMensal ?: [0]), 1000);
+        $maxLicencas    = max(max($licencasGeradas ?: [0]), 5);
+        $maxComparativo = max(max($receitaAnual1 ?: [0]), max($receitaAnual2 ?: [0]), 1000);
 
-            // Licenças geradas no mês
-            $stmt = Database::getInstance()->prepare(
-                "SELECT COUNT(*) FROM licencas l
-                 JOIN clientes c ON l.cliente_id = c.id
-                 WHERE c.representante_id = :rid AND DATE_FORMAT(l.criada_em, '%Y-%m') = :ym"
-            );
-            $stmt->execute([':rid' => $representanteId, ':ym' => $mesLabel]);
-            $licencasGeradas[] = (int)$stmt->fetchColumn();
-        }
-
-        $dados['meses'] = $meses;
-        $dados['receitaMensal'] = $receitaMensal;
-        $dados['comissaoMensal'] = $comissaoMensal;
-        $dados['licencasGeradas'] = $licencasGeradas;
-
-        // Escalas dinâmicas (com margem de 20%)
-        $dados['maxReceita'] = $maxReceita > 0 ? ceil($maxReceita * 1.2) : 1000;
-        $dados['maxComissao'] = $maxComissao > 0 ? ceil($maxComissao * 1.2) : 1000;
-        $dados['maxLicencas'] = !empty($licencasGeradas) ? ceil(max($licencasGeradas) * 1.2) : 5;
-
-        // --- Receita total do mês atual ---
-        $mesAtual = date('Y-m');
-        $dados['receita_total'] = $pagamentoModel->somaPorMes($representanteId, $mesAtual);
-        $dados['comissao_total'] = round($dados['receita_total'] * ($representante['comissao_percentual'] / 100), 2);
-
-        // --- Comparativo anual (parâmetros via GET) ---
-        $ano1 = (int)($_GET['ano1'] ?? date('Y') - 1);
-        $ano2 = (int)($_GET['ano2'] ?? date('Y'));
-        $dados['ano1'] = $ano1;
-        $dados['ano2'] = $ano2;
-
-        $receitaAnual1 = [];
-        $receitaAnual2 = [];
-        $maxComparativo = 0;
-        for ($m = 1; $m <= 12; $m++) {
-            $mes = str_pad($m, 2, '0', STR_PAD_LEFT);
-            $val1 = $pagamentoModel->somaPorMes($representanteId, "$ano1-$mes");
-            $val2 = $pagamentoModel->somaPorMes($representanteId, "$ano2-$mes");
-            $receitaAnual1[] = $val1;
-            $receitaAnual2[] = $val2;
-            if ($val1 > $maxComparativo) $maxComparativo = $val1;
-            if ($val2 > $maxComparativo) $maxComparativo = $val2;
-        }
-        $dados['receitaAnual1'] = $receitaAnual1;
-        $dados['receitaAnual2'] = $receitaAnual2;
-        $dados['maxComparativo'] = $maxComparativo > 0 ? ceil($maxComparativo * 1.2) : 1000;
-        $dados['comparativoAnos'] = [$ano1, $ano2];
-
-        // Anos disponíveis para seleção (últimos 5 anos)
-        $anoAtual = (int)date('Y');
-        $dados['anosDisponiveis'] = range($anoAtual - 4, $anoAtual);
+        // Array para a view
+        $dados = [
+            'clientes_ativos'      => $clientesAtivos,
+            'clientes_inativos'    => $clientesInativos,
+            'licencas_ativas'      => $licencasAtivas,
+            'licencas_expiradas'   => $licencasExpiradas,
+            'clientes_em_atraso'   => $clientesAtraso,
+            'receitaMensal'        => $receitaMensal,
+            'comissaoMensal'       => $comissaoMensal,
+            'licencasGeradas'      => $licencasGeradas,
+            'meses'                => $meses,
+            'ano1'                 => $ano1,
+            'ano2'                 => $ano2,
+            'anosDisponiveis'      => $anosDisponiveis,
+            'receitaAnual1'        => $receitaAnual1,
+            'receitaAnual2'        => $receitaAnual2,
+            'maxReceita'           => $maxReceita,
+            'maxComissao'          => $maxComissao,
+            'maxLicencas'          => $maxLicencas,
+            'maxComparativo'       => $maxComparativo,
+            'clientes_detalhes'    => $clienteModel->listarPorRepresentante($repId),
+            'licencas_detalhes'    => $licencaModel->listarPorRepresentanteDetalhes($repId),
+            'atraso_detalhes'      => $clienteModel->listarEmAtrasoPorRepresentante($repId),
+        ];
 
         require __DIR__ . '/../Views/dashboard/representante.php';
     }

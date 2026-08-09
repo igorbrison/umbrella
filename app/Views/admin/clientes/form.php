@@ -12,16 +12,8 @@
  *   - Aba 2: Endereço
  *   - Aba 3: Contato, Observações e Ativo
  *   - Aba 4: Módulos Contratados e Quantidade de Máquinas
- * 
- * Acesso restrito ao perfil 'admin'. O dashboard_header já verifica
- * a autenticação e redireciona se necessário.
- * 
- * Uso dos parciais:
- *   - dashboard_header.php : barra superior, menu lateral e abertura do main-content.
- *   - dashboard_footer.php : fechamento das tags abertas pelo header.
  */
 
-// Inicializações seguras para evitar avisos de análise
 if (!isset($cliente) || !is_array($cliente)) {
     $cliente = [];
 }
@@ -32,30 +24,23 @@ if (!isset($idsModulosCliente)) {
     $idsModulosCliente = [];
 }
 
-// Define o modo de edição e o título da página
 $modoEdicao = !empty($cliente);
 $titulo = $modoEdicao ? 'Editar Cliente (Admin)' : 'Novo Cliente';
-
-// Mensagem de erro opcional (definida pelo controller em caso de falha)
 $erro = $erro ?? null;
 
-// Inclui o cabeçalho do painel (barra superior, menu lateral, abertura do main-content)
 require __DIR__ . '/../../partials/dashboard_header.php';
 ?>
 
 <h1><?= $titulo ?></h1>
 
-<!-- Exibe mensagem de erro, se houver -->
 <?php if ($erro): ?>
     <div class="erro-msg"><?= htmlspecialchars($erro) ?></div>
 <?php endif; ?>
 
-<!-- FORMULÁRIO DE EDIÇÃO DE CLIENTE (ADMIN) -->
 <form method="POST" action="/admin/clientes/salvar" id="form-cliente">
     <input type="hidden" name="id" value="<?= $modoEdicao ? $cliente['id'] : '' ?>">
 
     <div class="tabs-container">
-        <!-- Navegação das abas -->
         <div class="tabs-nav">
             <button type="button" class="tab-btn active" data-tab="tab-principal">
                 <i class="fas fa-user"></i> Dados Principais
@@ -71,9 +56,8 @@ require __DIR__ . '/../../partials/dashboard_header.php';
             </button>
         </div>
 
-        <!-- Conteúdo das abas -->
         <div class="tab-content">
-            <!-- ===================== ABA 1: DADOS PRINCIPAIS ===================== -->
+            <!-- ABA 1: DADOS PRINCIPAIS -->
             <div id="tab-principal" class="tab-pane active">
                 <fieldset>
                     <legend>Dados do Cliente</legend>
@@ -93,7 +77,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                                        value="<?= $modoEdicao ? htmlspecialchars($cliente['cpf_cnpj']) : '' ?>"
                                        maxlength="18">
                             </label>
-                            <button type="button" id="btn-buscar-cnpj" style="display:none;">Buscar dados pelo CNPJ</button>
+                            <button type="button" id="btn-buscar-cnpj" style="display:none;" class="btn-buscar">Buscar dados pelo CNPJ</button>
                             <span id="loading-cnpj" style="display:none;">Buscando...</span>
                         </div>
                     </div>
@@ -101,8 +85,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                     <div class="form-row">
                         <div class="form-col">
                             <label id="label-ie-rg"><span id="texto-ie-rg">Inscrição Estadual</span> <span class="obrigatorio">*</span>:
-                                <input type="text" name="ie_rg" id="ie_rg" required
-                                       maxlength="14"
+                                <input type="text" name="ie_rg" id="ie_rg" required maxlength="14"
                                        value="<?= $modoEdicao ? htmlspecialchars($cliente['ie_rg'] ?? '') : '' ?>">
                             </label>
                         </div>
@@ -131,7 +114,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                 </fieldset>
             </div>
 
-            <!-- ===================== ABA 2: ENDEREÇO ===================== -->
+            <!-- ABA 2: ENDEREÇO -->
             <div id="tab-endereco" class="tab-pane">
                 <fieldset>
                     <legend>Endereço</legend>
@@ -141,7 +124,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                                 <input type="text" name="cep" id="cep" maxlength="9" required
                                        value="<?= $modoEdicao ? htmlspecialchars($cliente['cep'] ?? '') : '' ?>">
                             </label>
-                            <button type="button" id="btn-buscar-cep">Buscar endereço pelo CEP</button>
+                            <button type="button" id="btn-buscar-cep" class="btn-buscar">Buscar endereço pelo CEP</button>
                             <span id="loading-cep" style="display:none;">Buscando...</span>
                         </div>
                         <div class="form-col">
@@ -193,7 +176,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                 </fieldset>
             </div>
 
-            <!-- ===================== ABA 3: CONTATO E OBSERVAÇÕES ===================== -->
+            <!-- ABA 3: CONTATO E OBSERVAÇÕES -->
             <div id="tab-contato" class="tab-pane">
                 <fieldset>
                     <legend>Contato</legend>
@@ -231,21 +214,21 @@ require __DIR__ . '/../../partials/dashboard_header.php';
 
                     <div class="form-row">
                         <div class="form-col">
-                            <label>Ativo:
+                            <label class="checkbox-inline">
                                 <input type="checkbox" name="ativo" <?= (!$modoEdicao || ($cliente['ativo'] ?? 1)) ? 'checked' : '' ?>>
+                                Ativo
                             </label>
                         </div>
                     </div>
                 </fieldset>
             </div>
 
-            <!-- ===================== ABA 4: MÓDULOS CONTRATADOS E MÁQUINAS ===================== -->
+            <!-- ABA 4: MÓDULOS CONTRATADOS E MÁQUINAS -->
             <div id="tab-modulos" class="tab-pane">
-                <!-- Admin sempre pode alterar os módulos -->
                 <fieldset>
                     <legend>Módulos Contratados (Admin pode alterar)</legend>
                     <?php foreach ($modulos as $m): ?>
-                        <label>
+                        <label class="checkbox-inline">
                             <input type="checkbox" name="modulos[]" value="<?= $m['id'] ?>"
                             <?= in_array($m['identificador'], $idsModulosCliente) ? 'checked' : '' ?>>
                             <?= htmlspecialchars($m['nome']) ?> (<?= htmlspecialchars($m['identificador']) ?>)
@@ -254,7 +237,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                     <?php endforeach; ?>
                 </fieldset>
 
-                <!-- Quantidade de Máquinas Permitidas (admin pode alterar) -->
                 <fieldset>
                     <legend>Limite de Máquinas</legend>
                     <div class="form-row">
@@ -270,21 +252,18 @@ require __DIR__ . '/../../partials/dashboard_header.php';
         </div>
     </div>
 
-    <!-- Botões de ação -->
     <div class="form-actions">
         <a href="/admin/licencas" class="btn">Cancelar</a>
         <button type="submit" class="btn-primary">Salvar</button>
     </div>
 </form>
 
-<!-- ===================== JAVASCRIPT ===================== -->
 <script>
     const tipoSelect = document.getElementById('tipo_pessoa');
     const cpfCnpjInput = document.getElementById('cpf_cnpj');
     const btnBuscarCnpj = document.getElementById('btn-buscar-cnpj');
     const loadingCnpj = document.getElementById('loading-cnpj');
     const ieRgInput = document.getElementById('ie_rg');
-    const labelIeRg = document.getElementById('label-ie-rg');
     const textoIeRg = document.getElementById('texto-ie-rg');
     const labelNomeFantasia = document.getElementById('label-nome-fantasia');
     const nomeFantasiaInput = document.getElementById('nome_fantasia');
@@ -403,20 +382,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                 loadingCep.style.display = 'none';
                 alert('Erro ao buscar CEP. Tente novamente.');
             });
-    });
-
-    // Alternar entre abas
-    document.addEventListener('DOMContentLoaded', function() {
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        const tabPanes = document.querySelectorAll('.tab-pane');
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                tabBtns.forEach(b => b.classList.remove('active'));
-                tabPanes.forEach(p => p.classList.remove('active'));
-                this.classList.add('active');
-                document.getElementById(this.getAttribute('data-tab')).classList.add('active');
-            });
-        });
     });
 </script>
 
