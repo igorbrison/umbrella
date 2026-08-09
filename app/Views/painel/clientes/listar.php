@@ -12,6 +12,7 @@
  *   - Links para ações: Novo Cliente, Editar.
  *   - Exibe o valor total atual e a data de expiração da licença.
  *   - Status do cliente e alertas de vencimento.
+ *   - Coluna ID removida (não é relevante para o representante).
  */
 
 if (!isset($clientes) || !is_array($clientes)) {
@@ -22,18 +23,14 @@ if (!isset($clientes) || !is_array($clientes)) {
 $paginaAtual   = $paginacao['pagina_atual'] ?? 1;
 $totalPaginas  = $paginacao['total_paginas'] ?? 1;
 
-// Parâmetros atuais da URL (para manter ordenação, termo, etc.)
-$colAtual = $ordenacaoAtual['coluna'] ?? 'id';
+// Parâmetros atuais da URL
+$colAtual = $ordenacaoAtual['coluna'] ?? 'nome';
 $dirAtual = $ordenacaoAtual['direcao'] ?? 'asc';
 $termoAtual = $_GET['termo'] ?? '';
 
-// Monta array base para query string (usado nos links)
 $queryBase = $_GET;
-unset($queryBase['pagina']); // a página será definida individualmente
+unset($queryBase['pagina']);
 
-/**
- * Gera URL de ordenação, mantendo termo de busca e resetando a página para 1.
- */
 function urlOrdenacaoPainel(string $coluna, string $colAtual, string $dirAtual, array $queryBase): string {
     $novaDirecao = ($coluna === $colAtual && $dirAtual === 'asc') ? 'desc' : 'asc';
     $params = array_merge($queryBase, ['ordem' => $coluna, 'direcao' => $novaDirecao, 'pagina' => 1]);
@@ -57,7 +54,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
 <!-- Barra de pesquisa -->
 <form method="GET" action="/painel/clientes" class="barra-pesquisa">
     <input type="text" name="termo" placeholder="Buscar por nome, CPF/CNPJ ou email" value="<?= htmlspecialchars($termoAtual) ?>" class="campo-pesquisa">
-    <!-- mantém ordenação atual ao buscar -->
     <input type="hidden" name="ordem" value="<?= htmlspecialchars($colAtual) ?>">
     <input type="hidden" name="direcao" value="<?= htmlspecialchars($dirAtual) ?>">
     <button type="submit" class="btn-primary">Buscar</button>
@@ -66,7 +62,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
 
 <table>
     <tr>
-        <th><a href="<?= urlOrdenacaoPainel('id', $colAtual, $dirAtual, $queryBase) ?>">ID<?= setaPainel('id', $colAtual, $dirAtual) ?></a></th>
+        <!-- Coluna ID removida -->
         <th><a href="<?= urlOrdenacaoPainel('nome', $colAtual, $dirAtual, $queryBase) ?>">Nome<?= setaPainel('nome', $colAtual, $dirAtual) ?></a></th>
         <th><a href="<?= urlOrdenacaoPainel('cpf_cnpj', $colAtual, $dirAtual, $queryBase) ?>">CPF/CNPJ<?= setaPainel('cpf_cnpj', $colAtual, $dirAtual) ?></a></th>
         <th><a href="<?= urlOrdenacaoPainel('email', $colAtual, $dirAtual, $queryBase) ?>">Email<?= setaPainel('email', $colAtual, $dirAtual) ?></a></th>
@@ -81,7 +77,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
         $alerta = !$expirada && $dataExp && (int)(new DateTime())->format('d') >= 28;
     ?>
     <tr>
-        <td><?= $c['id'] ?></td>
+        <!-- Coluna ID removida -->
         <td><?= htmlspecialchars($c['nome']) ?></td>
         <td><?= htmlspecialchars($c['cpf_cnpj']) ?></td>
         <td><?= htmlspecialchars($c['email']) ?></td>

@@ -2,6 +2,7 @@
 /**
  * Arquivo: Views/dashboard/representante.php
  * Função: Dashboard do representante com gráficos e indicadores.
+ * Layout reorganizado para melhor visualização e evitar cortes.
  */
 
 if (!isset($dados) || !is_array($dados)) {
@@ -15,10 +16,10 @@ require __DIR__ . '/../partials/dashboard_header.php';
 <h1 style="margin-bottom: 8px;">Dashboard</h1>
 
 <div class="dashboard-grid">
-    <!-- ==================== LINHA 1: 3 GRÁFICOS DE RECEITA ==================== -->
+    <!-- ==================== LINHA SUPERIOR (50% da altura) ==================== -->
     <div class="row-top">
         <!-- Comparativo Anual -->
-        <div class="card">
+        <div class="card card-large">
             <h3>Comparativo Anual de Receita</h3>
             <form method="GET" action="/dashboard" class="comparativo-controles">
                 <label>Comparar anos:</label>
@@ -38,48 +39,48 @@ require __DIR__ . '/../partials/dashboard_header.php';
         </div>
 
         <!-- Receita Mensal -->
-        <div class="card">
+        <div class="card card-large">
             <h3>Receita Mensal (R$)</h3>
             <canvas id="chartReceitaMensal"></canvas>
         </div>
+    </div>
 
-        <!-- Comissão Mensal -->
-        <div class="card">
+    <!-- ==================== LINHA INFERIOR (50% da altura) ==================== -->
+    <div class="row-bottom">
+        <!-- Comissão Mensal (esquerda) -->
+        <div class="card card-large">
             <h3>Comissão Mensal (R$)</h3>
             <canvas id="chartComissao"></canvas>
         </div>
-    </div>
 
-    <!-- ==================== LINHA 2: CLIENTES E LICENÇAS (ROSÇA) ==================== -->
-    <div class="row-middle">
-        <!-- Clientes -->
-        <div class="card" id="cardClientes" style="cursor:pointer;">
-            <h3>Clientes</h3>
-            <canvas id="chartClientes"></canvas>
-            <p>Ativos: <?= $dados['clientes_ativos'] ?? 0 ?> | Inativos: <?= $dados['clientes_inativos'] ?? 0 ?></p>
-        </div>
+        <!-- Grade 2x2 com gráficos menores (direita) -->
+        <div class="small-cards-grid">
+            <!-- Clientes (Rosca) -->
+            <div class="card card-small" id="cardClientes" style="cursor:pointer;">
+                <h3>Clientes</h3>
+                <canvas id="chartClientes" class="chart-doughnut"></canvas>
+                <p>Ativos: <?= $dados['clientes_ativos'] ?? 0 ?> | Inativos: <?= $dados['clientes_inativos'] ?? 0 ?></p>
+            </div>
 
-        <!-- Licenças -->
-        <div class="card" id="cardLicencas" style="cursor:pointer;">
-            <h3>Licenças</h3>
-            <canvas id="chartLicencas"></canvas>
-            <p>Ativas: <?= $dados['licencas_ativas'] ?? 0 ?> | Expiradas: <?= $dados['licencas_expiradas'] ?? 0 ?></p>
-        </div>
-    </div>
+            <!-- Licenças (Rosca) -->
+            <div class="card card-small" id="cardLicencas" style="cursor:pointer;">
+                <h3>Licenças</h3>
+                <canvas id="chartLicencas" class="chart-doughnut"></canvas>
+                <p>Ativas: <?= $dados['licencas_ativas'] ?? 0 ?> | Expiradas: <?= $dados['licencas_expiradas'] ?? 0 ?></p>
+            </div>
 
-    <!-- ==================== LINHA 3: CLIENTES EM ATRASO E LICENÇAS GERADAS ==================== -->
-    <div class="row-bottom">
-        <!-- Clientes em Atraso (DESTAQUE) -->
-        <div class="card-destaque" id="cardAtraso" style="cursor:pointer;">
-            <h3>Clientes em Atraso</h3>
-            <div class="big-number"><?= $dados['clientes_em_atraso'] ?? 0 ?></div>
-            <p>Clique para ver detalhes</p>
-        </div>
+            <!-- Clientes em Atraso (Destaque) -->
+            <div class="card-destaque card-small" id="cardAtraso" style="cursor:pointer;">
+                <h3>Clientes em Atraso</h3>
+                <div class="big-number"><?= $dados['clientes_em_atraso'] ?? 0 ?></div>
+                <p>Clique para ver detalhes</p>
+            </div>
 
-        <!-- Licenças Geradas -->
-        <div class="card">
-            <h3>Licenças Geradas</h3>
-            <canvas id="chartLicencasGeradas"></canvas>
+            <!-- Licenças Geradas -->
+            <div class="card card-small">
+                <h3>Licenças Geradas</h3>
+                <canvas id="chartLicencasGeradas"></canvas>
+            </div>
         </div>
     </div>
 </div>
@@ -153,8 +154,9 @@ new Chart(document.getElementById('chartClientes'), {
     },
     options: { 
         responsive: true, 
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } } 
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        layout: { padding: 10 }
     }
 });
 
@@ -170,8 +172,9 @@ new Chart(document.getElementById('chartLicencas'), {
     },
     options: { 
         responsive: true, 
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } } 
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        layout: { padding: 10 }
     }
 });
 
@@ -189,6 +192,7 @@ new Chart(document.getElementById('chartReceitaMensal'), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { bottom: 20 } },
         scales: {
             y: {
                 beginAtZero: true,
@@ -217,6 +221,7 @@ new Chart(document.getElementById('chartComissao'), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { bottom: 20 } },
         scales: {
             y: {
                 beginAtZero: true,
@@ -242,6 +247,7 @@ new Chart(document.getElementById('chartLicencasGeradas'), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { bottom: 20 } },
         scales: {
             y: {
                 beginAtZero: true,
@@ -278,6 +284,7 @@ new Chart(document.getElementById('chartComparativoAnual'), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { bottom: 20 } },
         plugins: {
             tooltip: { mode: 'index', intersect: false },
             legend: { position: 'top', labels: { boxWidth: 12, padding: 8 } }
