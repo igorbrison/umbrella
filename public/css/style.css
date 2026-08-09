@@ -582,10 +582,204 @@ body.dashboard {
 }
 
 /* ======================================================================
+   CARDS GENÉRICOS (USADOS NO DASHBOARD)
+   ====================================================================== */
+.card {
+    background: #fff;
+    border: 1px solid #e0e5ec;
+    border-radius: 10px;
+    padding: 20px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.card h3 {
+    margin: 0 0 12px 0;
+    font-size: 17px;
+    font-weight: 600;
+    color: #1a2a3a;
+    flex-shrink: 0;
+}
+
+.card canvas {
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+}
+
+.card canvas.chart-doughnut {
+    width: 100% !important;
+    height: auto !important;
+    max-width: 200px;
+    max-height: 200px;
+    margin: 0 auto;
+}
+
+.card p {
+    margin: 8px 0 0 0;
+    font-size: 15px;
+    color: #6c7a8a;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.card-destaque {
+    background: #fff;
+    border: 2px solid #fca5a5;
+    border-radius: 10px;
+    padding: 20px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+}
+
+.card-destaque:hover {
+    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.15);
+    transform: scale(1.01);
+}
+
+.card-destaque h3 {
+    font-size: 17px;
+    margin: 0 0 6px 0;
+}
+
+.card-destaque .big-number {
+    font-size: 64px;
+    font-weight: 700;
+    color: #dc2626;
+    line-height: 1;
+    margin: 4px 0;
+}
+
+.card-destaque p {
+    font-size: 15px;
+    color: #6c7a8a;
+    margin: 4px 0 0 0;
+}
+
+.comparativo-controles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+    font-size: 14px;
+}
+
+.comparativo-controles label {
+    font-weight: 500;
+    color: #1a2a3a;
+}
+
+.comparativo-controles select {
+    padding: 4px 8px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    background: #fafbfc;
+    font-size: 14px;
+}
+
+.comparativo-controles .btn-primary {
+    padding: 4px 14px;
+    font-size: 14px;
+    border-radius: 6px;
+}
+
+/* ======================================================================
+   DASHBOARD – LAYOUT ESPECÍFICO (REPRESENTANTE)
+   ====================================================================== */
+.dashboard-grid {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+}
+
+.row-top,
+.row-bottom {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+}
+
+.card-large {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 16px 20px;
+}
+
+.card-large canvas {
+    flex: 1;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+}
+
+.small-cards-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 8px;
+}
+
+.card-small {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 10px;
+    min-height: 180px;
+}
+
+.card-small h3 {
+    font-size: 13px;
+    margin-bottom: 2px;
+}
+
+.card-small canvas {
+    flex: 1;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 130px !important;
+    margin: 0 auto;
+}
+
+.card-small .big-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: #dc2626;
+    text-align: center;
+    line-height: 1.2;
+    margin: auto 0;
+}
+
+.card-small p {
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+/* ======================================================================
    RESPONSIVO (MOBILE) – AJUSTES COMPLETOS
+   (vem depois para sobrescrever regras base)
    ====================================================================== */
 @media (max-width: 768px) {
 
+    /* ---------- TOPBAR ---------- */
     .topbar {
         padding: 0 12px;
         height: 56px;
@@ -604,6 +798,7 @@ body.dashboard {
         padding: 4px 10px;
     }
 
+    /* ---------- SIDEBAR (ícones apenas) ---------- */
     .sidebar {
         width: 60px;
         padding: 12px 0;
@@ -621,54 +816,71 @@ body.dashboard {
         display: none;
     }
 
+    /* ---------- CONTEÚDO PRINCIPAL (scroll liberado) ---------- */
     .main-content {
         padding: 12px;
-        overflow-y: auto;
+        overflow-y: auto !important;
     }
 
+    /* ---------- DASHBOARD: DESATIVAR ALTURAS FORÇADAS ---------- */
     .dashboard-grid {
-        gap: 12px;
+        flex: 0 0 auto !important;
     }
     .row-top,
     .row-bottom {
         flex-direction: column;
         gap: 12px;
+        flex: 0 0 auto !important;
+        min-height: 0;
     }
 
-    .card-large,
-    .card-small,
-    .card {
-        height: auto !important;
+    /* Cards grandes (gráficos principais) - padding reduzido para evitar espaço extra */
+    .card-large {
+        flex: 0 0 auto !important;
         min-height: 0 !important;
+        padding: 10px 14px !important;    /* mais enxuto */
     }
-
-    .card-large canvas {
+    .card.card-large canvas {
         height: 180px !important;
-    }
-
-    .card canvas {
-        height: 150px !important;
-    }
-
-    .card-small canvas {
-        height: 110px !important;
-    }
-
-    .card canvas.chart-doughnut {
-        width: 120px !important;
-        height: 120px !important;
+        max-height: 180px !important;
         margin: 0 auto;
     }
 
+    /* Cards genéricos (gráficos menores) */
+    .card canvas {
+        height: 150px !important;
+        max-height: 150px !important;
+    }
+
+    /* Cards pequenos (grade 2x2) */
+    .card-small {
+        min-height: 180px !important;
+    }
+    .card-small canvas {
+        height: 110px !important;
+        max-height: 110px !important;
+    }
+
+    /* Doughnuts (rosquinhas) */
+    .card canvas.chart-doughnut {
+        width: 120px !important;
+        height: 120px !important;
+        max-height: none !important;
+        margin: 0 auto;
+    }
+
+    /* Grade 2x2 vira 1 coluna */
     .small-cards-grid {
         grid-template-columns: 1fr;
         grid-template-rows: auto;
     }
 
+    /* Card de destaque (clientes em atraso) */
     .card-destaque .big-number {
         font-size: 40px;
     }
 
+    /* ---------- TABELAS: TRANSFORMAR EM CARDS ---------- */
     .main-content table,
     .tabela-responsiva table {
         display: block;
@@ -722,6 +934,7 @@ body.dashboard {
         flex-shrink: 0;
     }
 
+    /* ---------- BARRA DE PESQUISA / FILTROS ---------- */
     .barra-pesquisa,
     .barra-pesquisa-filtros {
         flex-wrap: wrap;
@@ -739,6 +952,13 @@ body.dashboard {
         flex: 1 1 auto;
     }
 
+    /* ---------- ABAS (TABS) ---------- */
+    .tabs-container {
+        flex: 0 0 auto !important;
+    }
+    .tab-pane.active {
+        flex: 0 0 auto;
+    }
     .tabs-nav {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -748,11 +968,13 @@ body.dashboard {
         font-size: 14px;
     }
 
+    /* ---------- MODAL ---------- */
     .modal-content {
         max-width: 90vw;
         margin: 20px;
     }
 
+    /* ---------- FORMULÁRIOS ---------- */
     .form-row {
         flex-direction: column;
         gap: 12px;
@@ -769,6 +991,7 @@ body.dashboard {
         width: 100%;
     }
 
+    /* ---------- PAGINAÇÃO ---------- */
     .paginacao {
         flex-wrap: wrap;
         gap: 4px;
@@ -777,6 +1000,11 @@ body.dashboard {
     .paginacao .pagina-atual {
         padding: 4px 8px;
         font-size: 13px;
+    }
+
+    /* ---------- TABELA RESPONSIVA: liberar scroll externo ---------- */
+    .tabela-responsiva {
+        overflow: visible !important;
     }
 }
 
@@ -1092,198 +1320,6 @@ body.dashboard {
     color: #fff;
     border-color: #2563eb;
     font-weight: 600;
-}
-
-/* ======================================================================
-   CARDS GENÉRICOS (USADOS NO DASHBOARD)
-   ====================================================================== */
-.card {
-    background: #fff;
-    border: 1px solid #e0e5ec;
-    border-radius: 10px;
-    padding: 20px 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-.card h3 {
-    margin: 0 0 12px 0;
-    font-size: 17px;
-    font-weight: 600;
-    color: #1a2a3a;
-    flex-shrink: 0;
-}
-
-.card canvas {
-    width: 100% !important;
-    height: auto !important;
-    max-height: none !important;
-}
-
-.card canvas.chart-doughnut {
-    width: 100% !important;
-    height: auto !important;
-    max-width: 200px;
-    max-height: 200px;
-    margin: 0 auto;
-}
-
-.card p {
-    margin: 8px 0 0 0;
-    font-size: 15px;
-    color: #6c7a8a;
-    flex-shrink: 0;
-    text-align: center;
-}
-
-.card-destaque {
-    background: #fff;
-    border: 2px solid #fca5a5;
-    border-radius: 10px;
-    padding: 20px 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    cursor: pointer;
-}
-
-.card-destaque:hover {
-    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.15);
-    transform: scale(1.01);
-}
-
-.card-destaque h3 {
-    font-size: 17px;
-    margin: 0 0 6px 0;
-}
-
-.card-destaque .big-number {
-    font-size: 64px;
-    font-weight: 700;
-    color: #dc2626;
-    line-height: 1;
-    margin: 4px 0;
-}
-
-.card-destaque p {
-    font-size: 15px;
-    color: #6c7a8a;
-    margin: 4px 0 0 0;
-}
-
-.comparativo-controles {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 8px;
-    flex-shrink: 0;
-    font-size: 14px;
-}
-
-.comparativo-controles label {
-    font-weight: 500;
-    color: #1a2a3a;
-}
-
-.comparativo-controles select {
-    padding: 4px 8px;
-    border: 1px solid #d0d7de;
-    border-radius: 6px;
-    background: #fafbfc;
-    font-size: 14px;
-}
-
-.comparativo-controles .btn-primary {
-    padding: 4px 14px;
-    font-size: 14px;
-    border-radius: 6px;
-}
-
-/* ======================================================================
-   DASHBOARD – LAYOUT ESPECÍFICO (REPRESENTANTE)
-   ====================================================================== */
-.dashboard-grid {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    min-height: 0;
-}
-
-.row-top,
-.row-bottom {
-    display: flex;
-    gap: 12px;
-    flex: 1;
-    min-height: 0;
-}
-
-.card-large {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding: 16px 20px;
-}
-
-.card-large canvas {
-    flex: 1;
-    width: 100% !important;
-    height: auto !important;
-    max-height: none !important;
-}
-
-.small-cards-grid {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 8px;
-}
-
-.card-small {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding: 20px;
-    min-height: 180px;
-}
-
-.card-small h3 {
-    font-size: 13px;
-    margin-bottom: 2px;
-}
-
-.card-small canvas {
-    flex: 1;
-    width: 100% !important;
-    height: auto !important;
-    max-height: 120px !important;
-    margin: 0 auto;
-}
-
-.card-small .big-number {
-    font-size: 28px;
-    font-weight: 700;
-    color: #dc2626;
-    text-align: center;
-    line-height: 1.2;
-    margin: auto 0;
-}
-
-.card-small p {
-    font-size: 11px;
-    margin-top: 2px;
 }
 
 /* ======================================================================
