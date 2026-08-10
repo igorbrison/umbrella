@@ -183,13 +183,13 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                     <div class="form-row">
                         <div class="form-col">
                             <label>Telefone <span class="obrigatorio">*</span>:
-                                <input type="text" name="telefone" required
+                                <input type="text" name="telefone" id="telefone" required
                                        value="<?= $modoEdicao ? htmlspecialchars($cliente['telefone'] ?? '') : '' ?>">
                             </label>
                         </div>
                         <div class="form-col">
                             <label>Celular <span class="obrigatorio">*</span>:
-                                <input type="text" name="celular" required
+                                <input type="text" name="celular" id="celular" required
                                        value="<?= $modoEdicao ? htmlspecialchars($cliente['celular'] ?? '') : '' ?>">
                             </label>
                         </div>
@@ -259,8 +259,70 @@ require __DIR__ . '/../../partials/dashboard_header.php';
 </form>
 
 <script>
+    // ---------- MÁSCARAS ----------
+    function mascaraCPF(valor) {
+        return valor.replace(/\D/g, '')
+            .replace(/^(\d{3})(\d)/, '$1.$2')
+            .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+            .replace(/\.(\d{3})(\d)/, '.$1-$2')
+            .slice(0, 14);
+    }
+    function mascaraCNPJ(valor) {
+        return valor.replace(/\D/g, '')
+            .replace(/^(\d{2})(\d)/, '$1.$2')
+            .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+            .replace(/\.(\d{3})(\d)/, '.$1/$2')
+            .replace(/(\d{4})(\d)/, '$1-$2')
+            .slice(0, 18);
+    }
+    function mascaraTelefone(valor) {
+        valor = valor.replace(/\D/g, '').slice(0, 11);
+        if (valor.length > 10) return valor.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+        if (valor.length > 6) return valor.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
+        if (valor.length > 2) return valor.replace(/^(\d{2})(\d{0,5})$/, '($1) $2');
+        return valor;
+    }
+    function mascaraCEP(valor) {
+        return valor.replace(/\D/g, '').slice(0, 8).replace(/^(\d{5})(\d)/, '$1-$2');
+    }
+
     const tipoSelect = document.getElementById('tipo_pessoa');
-    const cpfCnpjInput = document.getElementById('cpf_cnpj');
+    const cpfCnpjEl = document.getElementById('cpf_cnpj');
+    const cepEl = document.getElementById('cep');
+    const telefoneEl = document.getElementById('telefone');
+    const celularEl = document.getElementById('celular');
+
+    function aplicarMascaraCPFCNPJ() {
+        const tipo = tipoSelect.value;
+        if (tipo === 'F') {
+            cpfCnpjEl.removeEventListener('input', aplicaCNPJ);
+            cpfCnpjEl.addEventListener('input', aplicaCPF);
+            cpfCnpjEl.maxLength = 14;
+            cpfCnpjEl.placeholder = '000.000.000-00';
+        } else {
+            cpfCnpjEl.removeEventListener('input', aplicaCPF);
+            cpfCnpjEl.addEventListener('input', aplicaCNPJ);
+            cpfCnpjEl.maxLength = 18;
+            cpfCnpjEl.placeholder = '00.000.000/0000-00';
+        }
+        // Atualiza máscara no valor atual
+        if (tipo === 'F') {
+            cpfCnpjEl.value = mascaraCPF(cpfCnpjEl.value);
+        } else if (tipo === 'J') {
+            cpfCnpjEl.value = mascaraCNPJ(cpfCnpjEl.value);
+        }
+    }
+    function aplicaCPF() { this.value = mascaraCPF(this.value); }
+    function aplicaCNPJ() { this.value = mascaraCNPJ(this.value); }
+
+    tipoSelect.addEventListener('change', aplicarMascaraCPFCNPJ);
+    aplicarMascaraCPFCNPJ();
+
+    if (telefoneEl) telefoneEl.addEventListener('input', function() { this.value = mascaraTelefone(this.value); });
+    if (celularEl) celularEl.addEventListener('input', function() { this.value = mascaraTelefone(this.value); });
+    if (cepEl) cepEl.addEventListener('input', function() { this.value = mascaraCEP(this.value); });
+
+    // ---------- EXISTENTE (mantido) ----------
     const btnBuscarCnpj = document.getElementById('btn-buscar-cnpj');
     const loadingCnpj = document.getElementById('loading-cnpj');
     const ieRgInput = document.getElementById('ie_rg');
@@ -269,15 +331,12 @@ require __DIR__ . '/../../partials/dashboard_header.php';
     const nomeFantasiaInput = document.getElementById('nome_fantasia');
     const labelDataFundacao = document.getElementById('label-data-fundacao');
     const dataFundacaoInput = document.getElementById('data_fundacao');
-    const cepInput = document.getElementById('cep');
     const btnBuscarCep = document.getElementById('btn-buscar-cep');
     const loadingCep = document.getElementById('loading-cep');
 
     function ajustarCamposPessoa() {
         const tipo = tipoSelect.value;
         if (tipo === 'F') {
-            cpfCnpjInput.maxLength = 14;
-            cpfCnpjInput.placeholder = '000.000.000-00';
             btnBuscarCnpj.style.display = 'none';
             textoIeRg.textContent = 'RG';
             ieRgInput.placeholder = 'RG (até 12 dígitos)';
@@ -287,8 +346,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
             labelDataFundacao.style.display = 'none';
             dataFundacaoInput.removeAttribute('required');
         } else if (tipo === 'J') {
-            cpfCnpjInput.maxLength = 18;
-            cpfCnpjInput.placeholder = '00.000.000/0000-00';
             btnBuscarCnpj.style.display = 'inline-block';
             textoIeRg.textContent = 'Inscrição Estadual';
             ieRgInput.placeholder = 'Inscrição Estadual (até 14 dígitos)';
@@ -298,8 +355,6 @@ require __DIR__ . '/../../partials/dashboard_header.php';
             labelDataFundacao.style.display = 'block';
             dataFundacaoInput.setAttribute('required', 'required');
         } else {
-            cpfCnpjInput.maxLength = 18;
-            cpfCnpjInput.placeholder = '';
             btnBuscarCnpj.style.display = 'none';
             textoIeRg.textContent = 'Inscrição Estadual / RG';
             ieRgInput.placeholder = '';
@@ -322,7 +377,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
     }
 
     btnBuscarCnpj.addEventListener('click', function() {
-        let cnpj = cpfCnpjInput.value.replace(/\D/g, '');
+        let cnpj = cpfCnpjEl.value.replace(/\D/g, '');
         if (cnpj.length !== 14) {
             alert('Digite um CNPJ completo (14 números).');
             return;
@@ -358,7 +413,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
     });
 
     btnBuscarCep.addEventListener('click', function() {
-        let cep = cepInput.value.replace(/\D/g, '');
+        let cep = cepEl.value.replace(/\D/g, '');
         if (cep.length !== 8) {
             alert('Digite um CEP válido (8 números).');
             return;

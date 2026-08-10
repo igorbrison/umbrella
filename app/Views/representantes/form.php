@@ -215,13 +215,13 @@ require __DIR__ . '/../partials/dashboard_header.php';
                     <div class="form-row">
                         <div class="form-col">
                             <label>Telefone:
-                                <input type="text" name="telefone"
+                                <input type="text" name="telefone" id="telefone"
                                        value="<?= $modoEdicao ? htmlspecialchars($representante['telefone']) : '' ?>">
                             </label>
                         </div>
                         <div class="form-col">
                             <label>Celular:
-                                <input type="text" name="celular"
+                                <input type="text" name="celular" id="celular"
                                        value="<?= $modoEdicao ? htmlspecialchars($representante['celular']) : '' ?>">
                             </label>
                         </div>
@@ -259,17 +259,53 @@ require __DIR__ . '/../partials/dashboard_header.php';
 
 <!-- ===================== JAVASCRIPT ===================== -->
 <script>
-    const cpfCnpjInput = document.getElementById('cpf_cnpj');
+    // ---------- MÁSCARAS ----------
+    function mascaraCNPJ(valor) {
+        return valor.replace(/\D/g, '')
+            .replace(/^(\d{2})(\d)/, '$1.$2')
+            .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+            .replace(/\.(\d{3})(\d)/, '.$1/$2')
+            .replace(/(\d{4})(\d)/, '$1-$2')
+            .slice(0, 18);
+    }
+    function mascaraTelefone(valor) {
+        valor = valor.replace(/\D/g, '').slice(0, 11);
+        if (valor.length > 10) return valor.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+        if (valor.length > 6) return valor.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
+        if (valor.length > 2) return valor.replace(/^(\d{2})(\d{0,5})$/, '($1) $2');
+        return valor;
+    }
+    function mascaraCEP(valor) {
+        return valor.replace(/\D/g, '').slice(0, 8).replace(/^(\d{5})(\d)/, '$1-$2');
+    }
+
+    const cnpjEl = document.getElementById('cpf_cnpj');
+    const telefoneEl = document.getElementById('telefone');
+    const celularEl = document.getElementById('celular');
+    const cepEl = document.getElementById('cep');
+
+    if (cnpjEl) {
+        cnpjEl.addEventListener('input', function() { this.value = mascaraCNPJ(this.value); });
+    }
+    if (telefoneEl) {
+        telefoneEl.addEventListener('input', function() { this.value = mascaraTelefone(this.value); });
+    }
+    if (celularEl) {
+        celularEl.addEventListener('input', function() { this.value = mascaraTelefone(this.value); });
+    }
+    if (cepEl) {
+        cepEl.addEventListener('input', function() { this.value = mascaraCEP(this.value); });
+    }
+
+    // ---------- EXISTENTE ----------
     const btnBuscarCnpj = document.getElementById('btn-buscar-cnpj');
     const loadingCnpj = document.getElementById('loading-cnpj');
-    const cepInput = document.getElementById('cep');
     const btnBuscarCep = document.getElementById('btn-buscar-cep');
     const loadingCep = document.getElementById('loading-cep');
     const erroSenha = document.getElementById('erro-senha');
     const senhaInput = document.getElementById('senha');
     const confirmarSenhaInput = document.getElementById('confirmar-senha');
 
-    // Botão de buscar CNPJ sempre visível (representante é sempre pessoa jurídica)
     btnBuscarCnpj.style.display = 'inline-block';
 
     function converterData(dataStr) {
@@ -280,7 +316,7 @@ require __DIR__ . '/../partials/dashboard_header.php';
     }
 
     btnBuscarCnpj.addEventListener('click', function() {
-        let cnpj = cpfCnpjInput.value.replace(/\D/g, '');
+        let cnpj = cnpjEl.value.replace(/\D/g, '');
         if (cnpj.length !== 14) {
             alert('Digite um CNPJ completo (14 números).');
             return;
@@ -319,7 +355,7 @@ require __DIR__ . '/../partials/dashboard_header.php';
     });
 
     btnBuscarCep.addEventListener('click', function() {
-        let cep = cepInput.value.replace(/\D/g, '');
+        let cep = cepEl.value.replace(/\D/g, '');
         if (cep.length !== 8) {
             alert('Digite um CEP válido (8 números).');
             return;

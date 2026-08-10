@@ -57,7 +57,8 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                 <td data-label="Ativo"><?= $m['ativo'] ? 'Sim' : 'Não' ?></td>
                 <td data-label="Ações" class="acoes-cell">
                     <a href="/admin/modulos/editar/<?= $m['id'] ?>" class="btn">Editar</a>
-                    <a href="/admin/modulos/excluir/<?= $m['id'] ?>" class="btn" onclick="return confirm('Tem certeza que deseja excluir este módulo?')">Excluir</a>
+                    <a href="/admin/modulos/excluir/<?= $m['id'] ?>" class="btn"
+                       onclick="event.preventDefault(); confirmarAcao('Tem certeza que deseja excluir este módulo?', this.href)">Excluir</a>
                 </td>
             </tr>
             <?php endforeach; ?>

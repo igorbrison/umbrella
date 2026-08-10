@@ -63,7 +63,8 @@ function seta(string $coluna, string $colAtual, string $dirAtual): string {
                 <td data-label="Ações" class="acoes-cell">
                     <a href="/admin/representantes/editar/<?= $r['id'] ?>" class="btn">Editar</a>
                     <a href="/admin/representantes/status/<?= $r['id'] ?>" class="btn"><?= $r['ativo'] ? 'Desativar' : 'Ativar' ?></a>
-                    <a href="/admin/representantes/excluir/<?= $r['id'] ?>" class="btn" onclick="return confirm('Tem certeza?')">Excluir</a>
+                    <a href="/admin/representantes/excluir/<?= $r['id'] ?>" class="btn"
+                       onclick="event.preventDefault(); confirmarAcao('Tem certeza que deseja excluir este representante?', this.href)">Excluir</a>
                 </td>
             </tr>
             <?php endforeach; ?>

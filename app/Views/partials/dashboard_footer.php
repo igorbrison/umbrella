@@ -6,14 +6,27 @@
  * Fecha as tags abertas pelo dashboard_header.php e inclui os
  * scripts JavaScript para funcionamento do dropdown do usuário,
  * do modal de alteração de senha, do sistema de abas (tabs),
- * do modal de edição de solicitação e do modal de pagamento.
- * 
- * Os scripts são colocados aqui para garantir que todos os elementos
- * do DOM já tenham sido carregados antes da execução.
+ * do modal de edição de solicitação, do modal de pagamento e
+ * do modal de confirmação personalizado.
  */
 ?>
         </main><!-- Fim do conteúdo principal -->
     </div><!-- Fim do dashboard-wrapper -->
+
+    <!-- ============================================================
+    MODAL DE CONFIRMAÇÃO PERSONALIZADO (substitui o confirm nativo)
+    ============================================================ -->
+    <div id="modalConfirm" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <span class="modal-close" id="modalConfirmClose">&times;</span>
+            <h2>Confirmação</h2>
+            <p id="modalConfirmMsg"></p>
+            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+                <button type="button" class="btn btn-limpar" id="modalConfirmCancel">Cancelar</button>
+                <button type="button" class="btn-primary" id="modalConfirmOk">Confirmar</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ============================================================
     SCRIPTS DO PAINEL
@@ -128,6 +141,40 @@
                     }
                 });
             }
+
+            // ============================================================
+            // 6. MODAL DE CONFIRMAÇÃO PERSONALIZADO
+            // ============================================================
+            const modalConfirm = document.getElementById('modalConfirm');
+            const modalConfirmMsg = document.getElementById('modalConfirmMsg');
+            const modalConfirmOk = document.getElementById('modalConfirmOk');
+            const modalConfirmCancel = document.getElementById('modalConfirmCancel');
+            const modalConfirmClose = document.getElementById('modalConfirmClose');
+            let confirmUrl = null;
+
+            function fecharConfirm() {
+                modalConfirm.style.display = 'none';
+                confirmUrl = null;
+            }
+
+            if (modalConfirm && modalConfirmOk && modalConfirmCancel && modalConfirmClose) {
+                modalConfirmOk.addEventListener('click', function() {
+                    if (confirmUrl) window.location.href = confirmUrl;
+                    fecharConfirm();
+                });
+                modalConfirmCancel.addEventListener('click', fecharConfirm);
+                modalConfirmClose.addEventListener('click', fecharConfirm);
+                window.addEventListener('click', function(e) {
+                    if (e.target === modalConfirm) fecharConfirm();
+                });
+            }
+
+            // Torna a função global
+            window.confirmarAcao = function(mensagem, url) {
+                modalConfirmMsg.textContent = mensagem;
+                confirmUrl = url;
+                modalConfirm.style.display = 'flex';
+            };
         });
     </script>
 </body>

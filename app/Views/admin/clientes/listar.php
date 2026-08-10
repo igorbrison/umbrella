@@ -108,8 +108,10 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                     <?= $l['ativa'] && !$expirada ? 'Ativa' : 'Expirada/Inativa' ?>
                 </td>
                 <td data-label="Ações" class="acoes-cell">
-                    <a href="/admin/clientes/renovar/<?= $l['cliente_id'] ?>" class="btn" onclick="return confirm('Renovar licença?')">Renovar</a>
-                    <a href="/admin/clientes/gerar-token/<?= $l['cliente_id'] ?>" class="btn" onclick="return confirm('Gerar token offline?')">Gerar Token</a>
+                    <a href="/admin/clientes/renovar/<?= $l['cliente_id'] ?>" class="btn"
+                       onclick="event.preventDefault(); confirmarAcao('Deseja realmente renovar esta licença?', this.href)">Renovar</a>
+                    <a href="/admin/clientes/gerar-token/<?= $l['cliente_id'] ?>" class="btn"
+                       onclick="event.preventDefault(); confirmarAcao('Deseja realmente gerar um token offline?', this.href)">Gerar Token</a>
                     <a href="/admin/clientes/editar/<?= $l['cliente_id'] ?>" class="btn">Editar</a>
                     <button type="button" class="btn btn-pagar"
                             data-cliente-id="<?= $l['cliente_id'] ?>"

@@ -49,7 +49,7 @@ class AdminClienteController {
 
     public function salvar(): void {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /admin/licencas');
+            header('Location: /admin/clientes');
             exit;
         }
 
@@ -114,7 +114,7 @@ class AdminClienteController {
         $chave = $licencaModel->gerarChave();
         $licencaModel->criarOuAtualizar($id, $chave, $qtdMaquinas);
 
-        header('Location: /admin/licencas');
+        header('Location: /admin/clientes');
         exit;
     }
 
