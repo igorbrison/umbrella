@@ -1,0 +1,9 @@
+CREATE TABLE logs_cobranca (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT NOT NULL,
+    data_envio DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    mes_referencia VARCHAR(7) NOT NULL COMMENT 'Formato YYYY-MM',
+    sucesso TINYINT(1) NOT NULL DEFAULT 1,
+    mensagem TEXT NULL,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

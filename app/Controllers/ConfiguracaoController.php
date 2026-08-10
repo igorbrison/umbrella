@@ -4,7 +4,7 @@
  * Função: Controlador de configurações globais do sistema (painel admin).
  * 
  * Responsável por:
- *   - Exibir o formulário de configuração completo (salário mínimo, identidade da empresa, SMTP).
+ *   - Exibir o formulário de configuração completo (salário mínimo, identidade da empresa, SMTP, cobrança).
  *   - Processar a atualização de todas as configurações.
  * 
  * O salário mínimo é utilizado como base para o cálculo dos preços
@@ -41,13 +41,14 @@ class ConfiguracaoController {
     public function index(): void {
         // Carrega todas as configurações disponíveis
         $configs = [
-            'salario_minimo' => $this->model->get('salario_minimo') ?? 1621.00,
-            'nome_empresa'   => $this->model->get('nome_empresa') ?? 'Umbrella Corporation',
-            'email_contato'  => $this->model->get('email_contato') ?? '',
-            'smtp_host'      => $this->model->get('smtp_host') ?? '',
-            'smtp_port'      => $this->model->get('smtp_port') ?? 587,
-            'smtp_user'      => $this->model->get('smtp_user') ?? '',
-            'smtp_pass'      => $this->model->get('smtp_pass') ?? '',
+            'salario_minimo'              => $this->model->get('salario_minimo') ?? 1621.00,
+            'nome_empresa'                => $this->model->get('nome_empresa') ?? 'Umbrella Corporation',
+            'email_contato'               => $this->model->get('email_contato') ?? '',
+            'smtp_host'                   => $this->model->get('smtp_host') ?? '',
+            'smtp_port'                   => $this->model->get('smtp_port') ?? 587,
+            'smtp_user'                   => $this->model->get('smtp_user') ?? '',
+            'smtp_pass'                   => $this->model->get('smtp_pass') ?? '',
+            'dias_antecedencia_cobranca'  => $this->model->get('dias_antecedencia_cobranca') ?? 3,
         ];
 
         require __DIR__ . '/../Views/admin/configuracao/form.php';
@@ -71,6 +72,7 @@ class ConfiguracaoController {
             'smtp_port',
             'smtp_user',
             'smtp_pass',
+            'dias_antecedencia_cobranca',
         ];
 
         foreach ($campos as $chave) {

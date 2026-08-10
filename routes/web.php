@@ -120,13 +120,11 @@ $router->mount('/admin/clientes', function() use ($router) {
         AuthAdminMiddleware::verificar();
     });
 
-    // Listagem de clientes (com informações de licença)
     $router->get('/', function() {
         require_once __DIR__ . '/../app/Controllers/AdminLicencaController.php';
         (new AdminLicencaController())->index();
     });
 
-    // Editar cadastro do cliente
     $router->get('/editar/(\d+)', function($id) {
         require_once __DIR__ . '/../app/Controllers/AdminClienteController.php';
         (new AdminClienteController())->editar((int)$id);
@@ -137,19 +135,16 @@ $router->mount('/admin/clientes', function() use ($router) {
         (new AdminClienteController())->salvar();
     });
 
-    // Renovar licença
     $router->get('/renovar/(\d+)', function($id) {
         require_once __DIR__ . '/../app/Controllers/AdminLicencaController.php';
         (new AdminLicencaController())->renovar((int)$id);
     });
 
-    // Gerar token offline
     $router->get('/gerar-token/(\d+)', function($id) {
         require_once __DIR__ . '/../app/Controllers/AdminLicencaController.php';
         (new AdminLicencaController())->gerarTokenOffline((int)$id);
     });
 
-    // Registrar pagamento
     $router->post('/pagar', function() {
         require_once __DIR__ . '/../app/Controllers/AdminLicencaController.php';
         (new AdminLicencaController())->pagar();
@@ -172,7 +167,6 @@ $router->post('/admin/configuracao/salvar', function() {
 });
 
 // ===== ROTAS DE PERFIL E SENHA (ADMIN) =====
-// Perfil do Admin
 $router->get('/admin/perfil', function() {
     require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
     AuthAdminMiddleware::verificar();
@@ -187,7 +181,6 @@ $router->post('/admin/perfil/salvar', function() {
     (new AdminPerfilController())->salvar();
 });
 
-// Alteração de senha do Admin
 $router->post('/admin/alterar-senha', function() {
     require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
     AuthAdminMiddleware::verificar();
@@ -203,7 +196,6 @@ $router->get('/admin/solicitacoes', function() {
     (new AdminSolicitacaoController())->index();
 });
 
-// Rota corrigida para chamar o método responder (status + resposta)
 $router->post('/admin/solicitacoes/atualizar', function() {
     require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
     AuthAdminMiddleware::verificar();
@@ -211,7 +203,21 @@ $router->post('/admin/solicitacoes/atualizar', function() {
     (new AdminSolicitacaoController())->responder();
 });
 
-// Redireciona /admin para a lista de representantes (após login)
+// ===== COBRANÇA AUTOMÁTICA (ADMIN) =====
+$router->post('/admin/cobranca/enviar', function() {
+    require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
+    AuthAdminMiddleware::verificar();
+
+    ob_start();
+    require __DIR__ . '/../cron/cobranca.php';
+    $output = ob_get_clean();
+
+    $_SESSION['cobranca_output'] = $output;
+    header('Location: /admin/clientes');
+    exit;
+});
+
+// Redireciona /admin para a lista de representantes
 $router->get('/admin', function() {
     header('Location: /admin/representantes');
     exit;
@@ -251,7 +257,6 @@ $router->mount('/painel', function() use ($router) {
         exit;
     });
 
-    // --- Clientes ---
     $router->get('/clientes', function() {
         require_once __DIR__ . '/../app/Controllers/ClienteController.php';
         (new ClienteController())->index();
@@ -272,8 +277,6 @@ $router->mount('/painel', function() use ($router) {
         (new ClienteController())->editar((int)$id);
     });
 
-    // ===== ROTAS DE PERFIL E SENHA (REPRESENTANTE) =====
-    // Perfil do Representante
     $router->get('/perfil', function() {
         require_once __DIR__ . '/../app/Controllers/RepresentantePerfilController.php';
         (new RepresentantePerfilController())->editar();
@@ -284,13 +287,11 @@ $router->mount('/painel', function() use ($router) {
         (new RepresentantePerfilController())->salvar();
     });
 
-    // Alteração de senha do Representante
     $router->post('/alterar-senha', function() {
         require_once __DIR__ . '/../app/Controllers/SenhaController.php';
         (new SenhaController())->alterar('representante');
     });
 
-    // ===== SOLICITAÇÕES (REPRESENTANTE) =====
     $router->get('/solicitacoes', function() {
         require_once __DIR__ . '/../app/Controllers/SolicitacaoController.php';
         (new SolicitacaoController())->index();
@@ -301,19 +302,16 @@ $router->mount('/painel', function() use ($router) {
         (new SolicitacaoController())->enviar();
     });
 
-    // Editar solicitação (retorna JSON com os dados)
     $router->get('/solicitacoes/editar/(\d+)', function($id) {
         require_once __DIR__ . '/../app/Controllers/SolicitacaoController.php';
         (new SolicitacaoController())->editar((int)$id);
     });
 
-    // Atualizar solicitação (processa o formulário de edição)
     $router->post('/solicitacoes/atualizar', function() {
         require_once __DIR__ . '/../app/Controllers/SolicitacaoController.php';
         (new SolicitacaoController())->atualizar();
     });
 
-    // Visualizar detalhes da solicitação (retorna JSON)
     $router->get('/solicitacoes/ver/(\d+)', function($id) {
         require_once __DIR__ . '/../app/Controllers/SolicitacaoController.php';
         (new SolicitacaoController())->ver((int)$id);

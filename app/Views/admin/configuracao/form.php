@@ -7,6 +7,7 @@
  *   - Nome da empresa e e-mail de contato.
  *   - Salário mínimo (base de cálculo dos módulos).
  *   - Dados do servidor SMTP para envio de e-mails.
+ *   - Dias de antecedência para cobrança automática.
  */
 
 // Valores default caso não venham do controller
@@ -18,6 +19,7 @@ $smtpHost      = $configs['smtp_host'] ?? '';
 $smtpPort      = $configs['smtp_port'] ?? 587;
 $smtpUser      = $configs['smtp_user'] ?? '';
 $smtpPass      = $configs['smtp_pass'] ?? '';
+$diasAntecedencia = $configs['dias_antecedencia_cobranca'] ?? 3;
 
 $titulo = 'Configurações do Sistema';
 require __DIR__ . '/../../partials/dashboard_header.php';
@@ -80,6 +82,19 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                 <label>Senha:
                     <input type="password" name="smtp_pass" value="<?= htmlspecialchars($smtpPass) ?>">
                 </label>
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- ==================== COBRANÇA AUTOMÁTICA ==================== -->
+    <fieldset>
+        <legend>Cobrança Automática</legend>
+        <div class="form-row">
+            <div class="form-col">
+                <label>Dias de antecedência para cobrança:
+                    <input type="number" name="dias_antecedencia_cobranca" value="<?= $diasAntecedencia ?>" min="1" max="10">
+                </label>
+                <span class="info">Quantos dias antes do vencimento (dia 5) o e-mail será enviado. Padrão: 3.</span>
             </div>
         </div>
     </fieldset>

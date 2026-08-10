@@ -48,6 +48,21 @@ require __DIR__ . '/../../partials/dashboard_header.php';
 
 <h1>Clientes</h1>
 
+<div class="barra-pesquisa">
+    <form method="POST" action="/admin/cobranca/enviar" style="margin:0;">
+        <button type="submit" class="btn btn-primary" onclick="return confirm('Deseja enviar cobranças agora?')">
+            <i class="fas fa-envelope"></i> Enviar Cobranças
+        </button>
+    </form>
+</div>
+
+<?php if (isset($_SESSION['cobranca_output'])): ?>
+    <div class="mensagem-sucesso" style="white-space: pre-wrap;">
+        <?= htmlspecialchars($_SESSION['cobranca_output']) ?>
+    </div>
+    <?php unset($_SESSION['cobranca_output']); ?>
+<?php endif; ?>
+
 <?php if ($tokenGerado): ?>
     <div class="mensagem-sucesso">
         <strong>Token Offline Gerado:</strong><br>
