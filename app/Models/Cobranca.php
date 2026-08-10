@@ -29,41 +29,46 @@ class Cobranca
      * @param int $diasAntecedencia Quantos dias antes do vencimento enviar.
      * @return array Lista de clientes com email, nome, representante, etc.
      */
-    public function clientesParaCobrarHoje(int $diasAntecedencia = 3): array
-    {
-        $hoje = new DateTime();
-        $diaHoje = (int)$hoje->format('d');
-        $diaCobranca = 5 - $diasAntecedencia;
+   public function clientesParaCobrarHoje(int $diasAntecedencia = 3, bool $forcar = false): array
+{
+    $hoje = new DateTime();
+    $diaHoje = (int)$hoje->format('d');
+    $diaCobranca = 5 - $diasAntecedencia;
 
-        // Só envia se hoje for exatamente o dia calculado
-        if ($diaHoje !== $diaCobranca) {
-            return [];
-        }
-
-        $anoMes = $hoje->format('Y-m');
-
-        // Clientes ativos com licença que expira no dia 5 do mês atual
-        // e que NÃO receberam cobrança neste mês (mes_referencia = ano-mes)
-        $sql = "SELECT c.id, c.nome, c.email, r.nome_razao AS representante_nome, r.email AS representante_email,
-                       l.data_expiracao, c.valor_total
-                FROM clientes c
-                JOIN licencas l ON l.cliente_id = c.id AND l.ativa = 1
-                JOIN representantes r ON r.id = c.representante_id
-                WHERE c.ativo = 1
-                  AND l.data_expiracao = :data_expiracao
-                  AND c.id NOT IN (
-                      SELECT cliente_id FROM logs_cobranca
-                      WHERE mes_referencia = :mes_ref AND sucesso = 1
-                  )
-                ORDER BY c.nome";
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            ':data_expiracao' => $hoje->format('Y-m-05'),
-            ':mes_ref' => $anoMes,
-        ]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // Se não for forçado, só envia no dia exato
+    if (!$forcar && $diaHoje !== $diaCobranca) {
+        return [];
     }
+
+    $anoMes = $hoje->format('Y-m');
+
+    // Se for forçado, pega todos os clientes com licença vencida/inativa
+    $condicaoExpirada = $forcar 
+        ? "(l.ativa = 0 OR l.data_expiracao < CURDATE())"
+        : "l.data_expiracao = :data_expiracao AND l.ativa = 1";
+
+    $sql = "SELECT c.id, c.nome, c.email, r.nome_razao AS representante_nome, r.email AS representante_email,
+                   l.data_expiracao, c.valor_total
+            FROM clientes c
+            JOIN licencas l ON l.cliente_id = c.id
+            JOIN representantes r ON r.id = c.representante_id
+            WHERE c.ativo = 1
+              AND $condicaoExpirada
+              AND c.id NOT IN (
+                  SELECT cliente_id FROM logs_cobranca
+                  WHERE mes_referencia = :mes_ref AND sucesso = 1
+              )
+            ORDER BY c.nome";
+
+    $params = [':mes_ref' => $anoMes];
+    if (!$forcar) {
+        $params[':data_expiracao'] = $hoje->format('Y-m-05');
+    }
+
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
     /**
      * Registra que uma cobrança foi enviada para um cliente.

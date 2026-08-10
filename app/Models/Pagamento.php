@@ -11,6 +11,7 @@
  *   - Listar todos os pagamentos para o administrador.
  *   - Fornecer indicadores financeiros para o Dashboard (receita mensal e anual).
  *   - Contar pagamentos mensais (equivale a licenças geradas/renovadas).
+ *   - Listagem para relatórios com filtros e totalizador.
  * 
  * Conexão: Utiliza o Singleton Database para obter uma instância PDO única.
  */
@@ -299,5 +300,73 @@ class Pagamento {
             $valores[(int)$mes - 1] = (int)$total;
         }
         return $valores;
+    }
+
+    // ==================== RELATÓRIOS ====================
+
+    /**
+     * Lista pagamentos para relatório com filtros, totalizador e paginação.
+     * 
+     * @param string|null $dataInicio      Data inicial (Y-m-d) ou null.
+     * @param string|null $dataFim         Data final (Y-m-d) ou null.
+     * @param int|null    $representanteId ID do representante (null = todos).
+     * @param string      $termo           Busca por nome do cliente.
+     * @param int         $pagina          Número da página.
+     * @param int         $limite          Registros por página.
+     * @return array Com 'dados', 'total', 'soma_periodo'.
+     */
+    public function listarParaRelatorio(?string $dataInicio, ?string $dataFim, ?int $representanteId, string $termo, int $pagina, int $limite): array
+    {
+        $offset = ($pagina - 1) * $limite;
+        $where = [];
+        $params = [];
+
+        if ($dataInicio) {
+            $where[] = "p.data_pagamento >= :data_inicio";
+            $params[':data_inicio'] = $dataInicio;
+        }
+        if ($dataFim) {
+            $where[] = "p.data_pagamento <= :data_fim";
+            $params[':data_fim'] = $dataFim;
+        }
+        if ($representanteId) {
+            $where[] = "c.representante_id = :rid";
+            $params[':rid'] = $representanteId;
+        }
+        if ($termo) {
+            $where[] = "c.nome LIKE :termo";
+            $params[':termo'] = "%$termo%";
+        }
+
+        $whereClause = $where ? ' AND ' . implode(' AND ', $where) : '';
+
+        // Total de registros e soma do período
+        $sqlCount = "SELECT COUNT(*) as total, COALESCE(SUM(p.valor), 0) as soma
+                     FROM pagamentos p
+                     JOIN clientes c ON p.cliente_id = c.id
+                     WHERE 1=1 $whereClause";
+        $stmt = $this->pdo->prepare($sqlCount);
+        $stmt->execute($params);
+        $resumo = $stmt->fetch(PDO::FETCH_ASSOC);
+        $total = (int)$resumo['total'];
+        $somaPeriodo = (float)$resumo['soma'];
+
+        // Dados da página
+        $sql = "SELECT p.*, c.nome as cliente_nome, r.nome_razao as representante_nome
+                FROM pagamentos p
+                JOIN clientes c ON p.cliente_id = c.id
+                JOIN representantes r ON c.representante_id = r.id
+                WHERE 1=1 $whereClause
+                ORDER BY p.data_pagamento DESC
+                LIMIT $limite OFFSET $offset";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'dados'        => $dados,
+            'total'        => $total,
+            'soma_periodo' => $somaPeriodo,
+        ];
     }
 }

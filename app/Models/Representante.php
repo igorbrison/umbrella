@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Arquivo: Models/Representante.php
  * Função: MODEL da entidade "Representante".
@@ -9,143 +8,76 @@
  *   - Aplicar regras de negócio antes de persistir os dados (ex: hash de senha).
  *   - Garantir a segurança contra SQL Injection (uso de prepared statements).
  *   - Oferecer métodos específicos para ordenação, busca, inserção, atualização, exclusão e alteração de status.
- * 
- * Padrão: Active Record simplificado (cada instância representa uma conexão com a tabela).
- * Conexão: Utiliza o Singleton Database para obter uma instância PDO única.
+ *   - Paginação e cálculo de comissões.
  */
 
-// Inclui a classe Database para obter a conexão PDO.
 require_once __DIR__ . '/Database.php';
 
 class Representante {
     
-    /**
-     * @var \PDO $pdo 
-     * Instância do PDO (PHP Data Objects) para executar consultas SQL.
-     * Privada para garantir que apenas esta classe manipule a conexão diretamente.
-     */
     private \PDO $pdo;
 
-    /**
-     * Construtor da classe.
-     * Obtém a instância única do banco de dados via método estático Database::getInstance().
-     * Essa abordagem garante que haja apenas uma conexão ativa durante toda a requisição.
-     */
     public function __construct() {
         $this->pdo = Database::getInstance();
     }
 
     /**
-     * Método: listarComOrdenacao()
-     * 
-     * Retorna todos os registros da tabela 'representantes', ordenados conforme os parâmetros.
-     * 
-     * @param string $coluna  Nome da coluna pela qual ordenar (padrão: 'id').
-     * @param string $direcao Direção da ordenação: 'asc' ou 'desc' (padrão: 'asc').
-     * @return array Lista de representantes (cada elemento é um array associativo).
-     * 
-     * SEGURANÇA CONTRA SQL INJECTION:
-     *   - Utiliza uma LISTA BRANCA (whitelist) de colunas permitidas para ordenação.
-     *   - Qualquer coluna não listada é substituída por 'id' (valor seguro).
-     *   - A direção é normalizada para 'ASC' ou 'DESC' (maiúsculas), garantindo que apenas esses dois valores sejam usados.
-     *   - Isso é essencial porque os nomes das colunas e a direção não podem ser parametrizados com prepared statements.
+     * Retorna a instância PDO (para consultas específicas no controller).
      */
-    public function listarComOrdenacao(string $coluna = 'id', string $direcao = 'asc'): array {
-        // Definição das colunas que podem ser usadas na ordenação.
-        // Isso evita que um usuário mal-intencionado passe, por exemplo, 'id; DROP TABLE ...' via GET.
-        $colunasPermitidas = [
-            'id', 'nome_razao', 'nome_fantasia', 'cnpj', 'email',
-            'comissao_percentual', 'ativo'
-        ];
-        
-        // Se a coluna solicitada não estiver na lista, usa 'id' como fallback.
-        if (!in_array($coluna, $colunasPermitidas)) {
-            $coluna = 'id';
-        }
-        
-        // Normaliza a direção: só permite 'ASC' ou 'DESC'. Qualquer outra coisa vira 'ASC'.
-        $direcao = strtolower($direcao) === 'desc' ? 'DESC' : 'ASC';
-
-        // Monta a consulta SQL com a coluna e direção já validadas.
-        // Como a interpolação é segura (valores controlados), podemos fazer isso diretamente.
-        $sql = "SELECT * FROM representantes ORDER BY $coluna $direcao";
-        
-        // Executa a consulta diretamente (sem prepared statement, pois não há parâmetros externos).
-        $stmt = $this->pdo->query($sql);
-        
-        // Retorna todos os registros como um array associativo.
-        return $stmt->fetchAll();
+    public function getPdo(): \PDO {
+        return $this->pdo;
     }
 
     /**
-     * Método: listarTodos()
-     * 
-     * Mantido para compatibilidade com código antigo.
-     * Simplesmente chama o novo método listarComOrdenacao com os valores padrão.
-     * 
-     * @return array Lista de representantes ordenados por ID ascendente.
+     * Lista representantes com paginação e ordenação.
      */
+    public function listarPaginado(string $ordem = 'id', string $direcao = 'asc', int $pagina = 1, int $limite = 10): array
+    {
+        $colunasPermitidas = ['id', 'nome_razao', 'nome_fantasia', 'cnpj', 'email', 'comissao_percentual', 'ativo'];
+        if (!in_array($ordem, $colunasPermitidas)) {
+            $ordem = 'id';
+        }
+        $direcao = strtolower($direcao) === 'desc' ? 'DESC' : 'ASC';
+        $offset = ($pagina - 1) * $limite;
+
+        $total = (int)$this->pdo->query("SELECT COUNT(*) FROM representantes")->fetchColumn();
+        $totalPaginas = $total > 0 ? (int)ceil($total / $limite) : 1;
+
+        $sql = "SELECT * FROM representantes ORDER BY $ordem $direcao LIMIT $limite OFFSET $offset";
+        $dados = $this->pdo->query($sql)->fetchAll();
+
+        return [
+            'dados'          => $dados,
+            'total'          => $total,
+            'pagina_atual'   => $pagina,
+            'total_paginas'  => $totalPaginas,
+        ];
+    }
+
+    public function listarComOrdenacao(string $coluna = 'id', string $direcao = 'asc'): array {
+        return $this->listarPaginado($coluna, $direcao, 1, 10000)['dados'];
+    }
+
     public function listarTodos(): array {
         return $this->listarComOrdenacao('id', 'asc');
     }
 
-    /**
-     * Método: buscarPorId()
-     * 
-     * Busca um representante específico pelo seu ID.
-     * 
-     * @param int $id ID do representante.
-     * @return array|null Retorna os dados do representante ou null se não encontrado.
-     * 
-     * SEGURANÇA: Utiliza prepared statement para evitar SQL Injection.
-     */
     public function buscarPorId(int $id): ?array {
-        // Prepara a consulta com um placeholder :id.
         $stmt = $this->pdo->prepare("SELECT * FROM representantes WHERE id = :id");
-        // Executa vinculando o valor do ID (inteiro) ao placeholder.
         $stmt->execute([':id' => $id]);
-        // Recupera o primeiro registro encontrado. Se não houver, retorna null.
         return $stmt->fetch() ?: null;
     }
 
-    /**
-     * Método: buscarPorEmail()
-     * 
-     * Busca um representante pelo endereço de e-mail.
-     * Útil para validações de unicidade ou recuperação de senha.
-     * 
-     * @param string $email E-mail a ser pesquisado.
-     * @return array|null Retorna os dados do representante ou null se não encontrado.
-     * 
-     * SEGURANÇA: Prepared statement com binding de string.
-     */
     public function buscarPorEmail(string $email): ?array {
         $stmt = $this->pdo->prepare("SELECT * FROM representantes WHERE email = :email");
         $stmt->execute([':email' => $email]);
         return $stmt->fetch() ?: null;
     }
 
-    /**
-     * Método: inserir()
-     * 
-     * Insere um novo representante no banco de dados.
-     * 
-     * @param array $dados Array associativo com as chaves correspondentes às colunas da tabela,
-     *                     incluindo ':senha' (já validada no controller).
-     * @return bool True se a inserção for bem-sucedida, false caso contrário.
-     * 
-     * DETALHES:
-     *   - A senha é aplicada com password_hash() usando o algoritmo PASSWORD_DEFAULT (atualmente bcrypt).
-     *   - Isso garante que a senha nunca seja armazenada em texto puro.
-     *   - Utiliza prepared statement com binding de todos os parâmetros.
-     */
     public function inserir(array $dados): bool {
-        // Se a senha foi fornecida e não está vazia, aplica o hash.
         if (!empty($dados[':senha'])) {
             $dados[':senha'] = password_hash($dados[':senha'], PASSWORD_DEFAULT);
         }
-
-        // Monta a instrução INSERT com todos os campos.
         $sql = "INSERT INTO representantes 
         (cnpj, inscricao_estadual, nome_razao, nome_fantasia, nome_exibicao, cnae, crt,
          data_fundacao, comissao_percentual, logradouro, numero, complemento,
@@ -154,31 +86,13 @@ class Representante {
         (:cnpj, :inscricao_estadual, :nome_razao, :nome_fantasia, :nome_exibicao, :cnae, :crt,
          :data_fundacao, :comissao_percentual, :logradouro, :numero, :complemento,
          :bairro, :cep, :estado, :municipio, :telefone, :celular, :email, :observacoes, :ativo, :senha)";
-        
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute($dados);
     }
 
-    /**
-     * Método: atualizar()
-     * 
-     * Atualiza os dados de um representante existente.
-     * 
-     * @param int   $id    ID do representante a ser atualizado.
-     * @param array $dados Array associativo com as chaves correspondentes às colunas.
-     * @return bool True se a atualização for bem-sucedida, false caso contrário.
-     * 
-     * LÓGICA DE SEGURANÇA PARA SENHA:
-     *   - Se a chave ':senha' existir e não estiver vazia, aplica o hash e inclui a coluna 'senha' no UPDATE.
-     *   - Caso contrário, remove a chave ':senha' do array e NÃO atualiza a coluna 'senha' no banco.
-     *   - Isso permite que o usuário deixe a senha em branco na edição para mantê-la inalterada.
-     */
     public function atualizar(int $id, array $dados): bool {
-        // Verifica se a senha foi fornecida e não é vazia.
         if (!empty($dados[':senha'])) {
-            // Aplica o hash na senha.
             $dados[':senha'] = password_hash($dados[':senha'], PASSWORD_DEFAULT);
-            // SQL com a coluna 'senha' incluída.
             $sql = "UPDATE representantes SET 
                     cnpj=:cnpj, inscricao_estadual=:inscricao_estadual, nome_razao=:nome_razao, nome_fantasia=:nome_fantasia,
                     nome_exibicao=:nome_exibicao,
@@ -189,9 +103,7 @@ class Representante {
                     observacoes=:observacoes, ativo=:ativo, senha=:senha
                     WHERE id=:id";
         } else {
-            // Senha não foi fornecida: remove a chave do array para não atrapalhar o binding.
             unset($dados[':senha']);
-            // SQL sem a coluna 'senha'.
             $sql = "UPDATE representantes SET 
                     cnpj=:cnpj, inscricao_estadual=:inscricao_estadual, nome_razao=:nome_razao, nome_fantasia=:nome_fantasia,
                     nome_exibicao=:nome_exibicao,
@@ -202,56 +114,140 @@ class Representante {
                     observacoes=:observacoes, ativo=:ativo
                     WHERE id=:id";
         }
-        // Adiciona o ID ao array de parâmetros para o binding.
         $dados[':id'] = $id;
-        
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute($dados);
     }
 
-    /**
-     * Método: alterarStatus()
-     * 
-     * Altera apenas o campo 'ativo' de um representante (toggle).
-     * 
-     * @param int $id    ID do representante.
-     * @param int $ativo Valor booleano (0 ou 1) para o novo status.
-     * @return bool True se a atualização for bem-sucedida, false caso contrário.
-     * 
-     * USO: Geralmente chamado pelo método 'status' do controller.
-     */
     public function alterarStatus(int $id, int $ativo): bool {
         $stmt = $this->pdo->prepare("UPDATE representantes SET ativo = :ativo WHERE id = :id");
         return $stmt->execute([':ativo' => $ativo, ':id' => $id]);
     }
 
-    /**
-     * Método: excluir()
-     * 
-     * Remove permanentemente um representante do banco de dados.
-     * 
-     * @param int $id ID do representante a ser excluído.
-     * @return bool True se a exclusão for bem-sucedida, false caso contrário.
-     * 
-     * ATENÇÃO: Esta operação é irreversível. Em sistemas críticos, considere
-     * usar 'soft delete' (apenas marcar como inativo) em vez de exclusão física.
-     */
     public function excluir(int $id): bool {
         $stmt = $this->pdo->prepare("DELETE FROM representantes WHERE id = :id");
         return $stmt->execute([':id' => $id]);
     }
 
-    /**
-     * Método: buscarPorCnpj()
-     * 
-     * Busca um representante pelo CNPJ (usado no login).
-     * 
-     * @param string $cnpj CNPJ apenas com números.
-     * @return array|null Dados do representante ou null.
-     */
     public function buscarPorCnpj(string $cnpj): ?array {
         $stmt = $this->pdo->prepare("SELECT * FROM representantes WHERE cnpj = :cnpj");
         $stmt->execute([':cnpj' => $cnpj]);
         return $stmt->fetch() ?: null;
+    }
+
+    /**
+     * Calcula o total de comissão devida a um representante no período
+     * do dia 10 do mês anterior até o dia 10 do mês de referência.
+     */
+    public function getValorComissao(int $representanteId, string $mesReferencia): float
+    {
+        $dataRef = DateTime::createFromFormat('Y-m', $mesReferencia);
+        $dataFim = $dataRef->format('Y-m-10');
+        $dataInicio = (clone $dataRef)->modify('-1 month')->format('Y-m-10');
+
+        $stmt = $this->pdo->prepare("
+            SELECT COALESCE(SUM(p.valor), 0)
+            FROM pagamentos p
+            JOIN clientes c ON p.cliente_id = c.id
+            WHERE c.representante_id = :rid
+              AND p.data_pagamento BETWEEN :inicio AND :fim
+        ");
+        $stmt->execute([
+            ':rid'    => $representanteId,
+            ':inicio' => $dataInicio,
+            ':fim'    => $dataFim
+        ]);
+        $totalPago = (float)$stmt->fetchColumn();
+
+        $rep = $this->buscarPorId($representanteId);
+        $percentual = $rep ? (float)$rep['comissao_percentual'] : 0;
+
+        return round($totalPago * $percentual / 100, 2);
+    }
+
+    /**
+     * Retorna os clientes de um representante com os valores de comissão
+     * para o período do dia 10 do mês anterior ao dia 10 do mês atual.
+     */
+    public function buscarClientesComissao(int $representanteId, string $mesReferencia): array
+    {
+        $rep = $this->buscarPorId($representanteId);
+        $percentual = $rep ? (float)$rep['comissao_percentual'] : 0;
+
+        $dataRef = DateTime::createFromFormat('Y-m', $mesReferencia);
+        $dataFim = $dataRef->format('Y-m-10');
+        $dataInicio = (clone $dataRef)->modify('-1 month')->format('Y-m-10');
+
+        $stmt = $this->pdo->prepare("
+            SELECT c.nome AS cliente_nome, c.cpf_cnpj,
+                   COALESCE(p.valor, 0) AS total_pago,
+                   ROUND(COALESCE(p.valor, 0) * :percentual / 100, 2) AS comissao
+            FROM clientes c
+            LEFT JOIN (
+                SELECT cliente_id, SUM(valor) AS valor
+                FROM pagamentos
+                WHERE data_pagamento BETWEEN :inicio AND :fim
+                GROUP BY cliente_id
+            ) p ON p.cliente_id = c.id
+            WHERE c.representante_id = :rid
+            ORDER BY c.nome
+        ");
+        $stmt->execute([
+            ':percentual' => $percentual,
+            ':inicio'     => $dataInicio,
+            ':fim'        => $dataFim,
+            ':rid'        => $representanteId,
+        ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Retorna uma lista de todos os representantes com o valor da comissão devida em um mês específico.
+     */
+    public function comissaoPorRepresentante(?string $mesReferencia = null): array
+    {
+        if ($mesReferencia === null) {
+            $data = new DateTime('first day of last month');
+            $mesReferencia = $data->format('Y-m');
+        }
+
+        $representantes = $this->listarTodos();
+        foreach ($representantes as &$r) {
+            $r['comissao_devida'] = $this->getValorComissao($r['id'], $mesReferencia);
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(valor), 0) FROM comissao_pagamentos
+                WHERE representante_id = :rid AND mes_referencia = :mes
+            ");
+            $stmt->execute([':rid' => $r['id'], ':mes' => $mesReferencia]);
+            $r['comissao_paga'] = (float)$stmt->fetchColumn();
+        }
+        return $representantes;
+    }
+
+    /**
+     * Registra o pagamento de comissão a um representante.
+     */
+    public function registrarPagamentoComissao(int $representanteId, float $valor, string $mesReferencia, string $observacao = ''): int
+    {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO comissao_pagamentos (representante_id, valor, data_pagamento, mes_referencia, observacao)
+            VALUES (:rid, :valor, CURDATE(), :mes, :obs)
+        ");
+        $stmt->execute([
+            ':rid' => $representanteId,
+            ':valor' => $valor,
+            ':mes' => $mesReferencia,
+            ':obs' => $observacao
+        ]);
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    /**
+     * Atualiza a observação de um registro de comissao_pagamentos.
+     */
+    public function atualizarObservacaoComissao(int $id, string $observacao): void
+    {
+        $stmt = $this->pdo->prepare("UPDATE comissao_pagamentos SET observacao = :obs WHERE id = :id");
+        $stmt->execute([':obs' => $observacao, ':id' => $id]);
     }
 }

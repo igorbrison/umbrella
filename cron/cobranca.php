@@ -2,15 +2,10 @@
 /**
  * Script de cobrança automática.
  * 
- * Deve ser executado diariamente via cron (ex.: 0 8 * * * php /caminho/para/cron/cobranca.php).
- * 
- * Também pode ser chamado manualmente via painel admin.
+ * Aceita ?forcar=1 para ignorar a data e enviar a todos os pendentes.
  */
 
-// Carrega o autoload do Composer (PHPMailer)
 require_once __DIR__ . '/../vendor/autoload.php';
-
-// Carrega configurações e models
 require_once __DIR__ . '/../app/Models/Database.php';
 require_once __DIR__ . '/../app/Models/Cobranca.php';
 require_once __DIR__ . '/../app/Models/Configuracao.php';
@@ -19,29 +14,33 @@ require_once __DIR__ . '/../app/Helpers/Email.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Obtém os dias de antecedência das configurações (padrão 3)
+$forcar = isset($_GET['forcar']) && $_GET['forcar'] === '1';
+
 $configModel = new Configuracao();
 $diasAntecedencia = (int)($configModel->get('dias_antecedencia_cobranca') ?? 3);
 
 $cobrancaModel = new Cobranca();
-$clientes = $cobrancaModel->clientesParaCobrarHoje($diasAntecedencia);
+$clientes = $cobrancaModel->clientesParaCobrarHoje($diasAntecedencia, $forcar);
 
 if (empty($clientes)) {
     echo "Nenhum cliente para cobrar hoje.\n";
     exit;
 }
 
-// Configurações SMTP
 $smtpHost = $configModel->get('smtp_host');
 $smtpPort = $configModel->get('smtp_port') ?: 587;
 $smtpUser = $configModel->get('smtp_user');
 $smtpPass = $configModel->get('smtp_pass');
-$emailContato = $configModel->get('email_contato') ?: $smtpUser;
+$emailContato = $configModel->get('email_contato') ?: $smtpUser;   // fallback
+
+if (empty($emailContato)) {
+    echo "Erro: e-mail do remetente não configurado.\n";
+    exit;
+}
 
 $mail = new PHPMailer(true);
 
 try {
-    // Configuração do servidor
     $mail->isSMTP();
     $mail->Host       = $smtpHost;
     $mail->SMTPAuth   = true;
@@ -50,8 +49,6 @@ try {
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port       = $smtpPort;
     $mail->CharSet    = 'UTF-8';
-
-    // Remetente
     $mail->setFrom($emailContato, $configModel->get('nome_empresa') ?: 'Umbrella Corporation');
 
     $hoje = new DateTime();
@@ -61,26 +58,22 @@ try {
         try {
             $mail->clearAddresses();
             $mail->addAddress($cliente['email'], $cliente['nome']);
-            
-            // Opcional: cópia para o representante
+
             if (!empty($cliente['representante_email'])) {
                 $mail->addCC($cliente['representante_email'], $cliente['representante_nome']);
             }
 
             $mail->Subject = 'Aviso de vencimento da sua licença';
             $mail->Body    = "Olá {$cliente['nome']},\n\n"
-                           . "Sua licença vencerá no dia {$cliente['data_expiracao']}.\n"
+                           . "Sua licença venceu ou vencerá em breve ({$cliente['data_expiracao']}).\n"
                            . "Valor total: R$ " . number_format($cliente['valor_total'], 2, ',', '.') . "\n\n"
                            . "Por favor, regularize o pagamento para evitar interrupção do serviço.\n\n"
                            . "Atenciosamente,\n" . ($configModel->get('nome_empresa') ?: 'Umbrella Corporation');
 
             $mail->send();
-            
-            // Registra sucesso
             $cobrancaModel->registrarLog($cliente['id'], $mesReferencia, true, 'E-mail enviado com sucesso.');
             echo "Cobrança enviada para {$cliente['email']} (Cliente: {$cliente['nome']})\n";
         } catch (Exception $e) {
-            // Registra falha
             $cobrancaModel->registrarLog($cliente['id'], $mesReferencia, false, $mail->ErrorInfo);
             echo "Erro ao enviar para {$cliente['email']}: {$mail->ErrorInfo}\n";
         }

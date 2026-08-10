@@ -2,7 +2,6 @@
 /**
  * Arquivo: Views/dashboard/representante.php
  * Função: Dashboard do representante com gráficos e indicadores.
- * Layout reorganizado para melhor visualização e evitar cortes.
  */
 
 if (!isset($dados) || !is_array($dados)) {
@@ -15,10 +14,17 @@ require __DIR__ . '/../partials/dashboard_header.php';
 
 <h1 style="margin-bottom: 8px;">Dashboard</h1>
 
+<?php if (($dados['clientes_em_atraso'] ?? 0) > 0): ?>
+<div class="alerta-banner" style="display:flex; align-items:center; gap:10px; margin-bottom:16px; cursor:pointer;" onclick="window.location.href='/painel/clientes'">
+    <i class="fas fa-exclamation-triangle" style="font-size:20px;"></i>
+    <span>
+        <strong>Atenção:</strong> <?= $dados['clientes_em_atraso'] ?> cliente(s) com licença vencida ou próxima do vencimento. Clique para ver.
+    </span>
+</div>
+<?php endif; ?>
+
 <div class="dashboard-grid">
-    <!-- ==================== LINHA SUPERIOR (50% da altura) ==================== -->
     <div class="row-top">
-        <!-- Comparativo Anual -->
         <div class="card card-large">
             <h3>Comparativo Anual de Receita</h3>
             <form method="GET" action="/dashboard" class="comparativo-controles">
@@ -37,46 +43,32 @@ require __DIR__ . '/../partials/dashboard_header.php';
             </form>
             <canvas id="chartComparativoAnual"></canvas>
         </div>
-
-        <!-- Receita Mensal -->
         <div class="card card-large">
             <h3>Receita Mensal (R$)</h3>
             <canvas id="chartReceitaMensal"></canvas>
         </div>
     </div>
-
-    <!-- ==================== LINHA INFERIOR (50% da altura) ==================== -->
     <div class="row-bottom">
-        <!-- Comissão Mensal (esquerda) -->
         <div class="card card-large">
             <h3>Comissão Mensal (R$)</h3>
             <canvas id="chartComissao"></canvas>
         </div>
-
-        <!-- Grade 2x2 com gráficos menores (direita) -->
         <div class="small-cards-grid">
-            <!-- Clientes (Rosca) -->
             <div class="card card-small" id="cardClientes" style="cursor:pointer;">
                 <h3>Clientes</h3>
                 <canvas id="chartClientes" class="chart-doughnut"></canvas>
                 <p>Ativos: <?= $dados['clientes_ativos'] ?? 0 ?> | Inativos: <?= $dados['clientes_inativos'] ?? 0 ?></p>
             </div>
-
-            <!-- Licenças (Rosca) -->
             <div class="card card-small" id="cardLicencas" style="cursor:pointer;">
                 <h3>Licenças</h3>
                 <canvas id="chartLicencas" class="chart-doughnut"></canvas>
                 <p>Ativas: <?= $dados['licencas_ativas'] ?? 0 ?> | Expiradas: <?= $dados['licencas_expiradas'] ?? 0 ?></p>
             </div>
-
-            <!-- Clientes em Atraso (Destaque) -->
             <div class="card-destaque card-small" id="cardAtraso" style="cursor:pointer;">
                 <h3>Clientes em Atraso</h3>
                 <div class="big-number"><?= $dados['clientes_em_atraso'] ?? 0 ?></div>
                 <p>Clique para ver detalhes</p>
             </div>
-
-            <!-- Licenças Geradas -->
             <div class="card card-small">
                 <h3>Licenças Geradas</h3>
                 <canvas id="chartLicencasGeradas"></canvas>
@@ -85,7 +77,6 @@ require __DIR__ . '/../partials/dashboard_header.php';
     </div>
 </div>
 
-<!-- Modal para detalhes -->
 <div id="modalDetalhes" class="modal-overlay" style="display:none;">
     <div class="modal-content">
         <span class="modal-close" id="modalDetalhesClose">&times;</span>
@@ -96,12 +87,10 @@ require __DIR__ . '/../partials/dashboard_header.php';
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-// Dados vindos do PHP
 const clientesDetalhes = <?= json_encode($dados['clientes_detalhes'] ?? []) ?>;
 const licencasDetalhes = <?= json_encode($dados['licencas_detalhes'] ?? []) ?>;
 const atrasoDetalhes = <?= json_encode($dados['atraso_detalhes'] ?? []) ?>;
 
-// Funções para abrir modal
 function abrirModal(titulo, lista) {
     document.getElementById('modalTitulo').textContent = titulo;
     const ul = document.getElementById('modalLista');
@@ -122,7 +111,6 @@ document.getElementById('modalDetalhesClose').addEventListener('click', function
     document.getElementById('modalDetalhes').style.display = 'none';
 });
 
-// Cliques nos cards (SEM SUFIXOS)
 document.getElementById('cardClientes').addEventListener('click', function() {
     const todos = clientesDetalhes.map(c => ({nome: c.nome}));
     abrirModal('Detalhes dos Clientes', todos);
@@ -134,13 +122,19 @@ document.getElementById('cardLicencas').addEventListener('click', function() {
 });
 
 document.getElementById('cardAtraso').addEventListener('click', function() {
-    const todos = atrasoDetalhes.map(a => ({nome: a.cliente_nome}));
+    const todos = atrasoDetalhes.map(a => ({nome: a.nome || a.cliente_nome || 'Sem nome'}));
     abrirModal('Clientes em Atraso', todos);
 });
 
-// ============================================================
-// GRÁFICOS
-// ============================================================
+function calcularStepSize(array) {
+    if (!array || array.length === 0) return 250;
+    const maxVal = Math.max(...array);
+    if (maxVal <= 500) return 100;
+    if (maxVal <= 1000) return 250;
+    if (maxVal <= 3000) return 500;
+    if (maxVal <= 10000) return 1000;
+    return 2000;
+}
 
 // Clientes (Rosca)
 new Chart(document.getElementById('chartClientes'), {
@@ -155,12 +149,10 @@ new Chart(document.getElementById('chartClientes'), {
     options: { 
         responsive: true, 
         maintainAspectRatio: true,
-        plugins: { legend: { display: false } },
-        layout: { padding: 10 }
+        plugins: { legend: { display: false } }
     }
 });
 
-// Licenças (Rosca)
 new Chart(document.getElementById('chartLicencas'), {
     type: 'doughnut',
     data: {
@@ -173,8 +165,7 @@ new Chart(document.getElementById('chartLicencas'), {
     options: { 
         responsive: true, 
         maintainAspectRatio: true,
-        plugins: { legend: { display: false } },
-        layout: { padding: 10 }
+        plugins: { legend: { display: false } }
     }
 });
 
@@ -192,12 +183,15 @@ new Chart(document.getElementById('chartReceitaMensal'), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { bottom: 20 } },
+        layout: { padding: { top: 10, bottom: 25 } },
         scales: {
             y: {
                 beginAtZero: true,
-                max: <?= $dados['maxReceita'] ?? 1000 ?>,
-                ticks: { callback: function(value) { return 'R$ ' + value.toFixed(2); } }
+                ticks: {
+                    callback: function(value) { return 'R$ ' + value.toFixed(2); },
+                    autoSkip: true,
+                    stepSize: calcularStepSize(<?= json_encode($dados['receitaMensal'] ?? []) ?>)
+                }
             }
         },
         plugins: { legend: { display: false } }
@@ -221,12 +215,15 @@ new Chart(document.getElementById('chartComissao'), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { bottom: 20 } },
+        layout: { padding: { top: 10, bottom: 25 } },
         scales: {
             y: {
                 beginAtZero: true,
-                max: <?= $dados['maxComissao'] ?? 1000 ?>,
-                ticks: { callback: function(value) { return 'R$ ' + value.toFixed(2); } }
+                ticks: {
+                    callback: function(value) { return 'R$ ' + value.toFixed(2); },
+                    autoSkip: true,
+                    stepSize: calcularStepSize(<?= json_encode($dados['comissaoMensal'] ?? []) ?>)
+                }
             }
         },
         plugins: { legend: { display: false } }
@@ -247,12 +244,16 @@ new Chart(document.getElementById('chartLicencasGeradas'), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { bottom: 20 } },
+        layout: { padding: { top: 10, bottom: 25 } },
         scales: {
             y: {
                 beginAtZero: true,
-                max: <?= $dados['maxLicencas'] ?? 5 ?>,
-                ticks: { stepSize: 1, precision: 0 }
+                ticks: {
+                    stepSize: 1,
+                    precision: 0,
+                    autoSkip: true,
+                    callback: function(value) { if (Math.floor(value) === value) return value; }
+                }
             }
         },
         plugins: { legend: { display: false } }
@@ -284,7 +285,7 @@ new Chart(document.getElementById('chartComparativoAnual'), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { bottom: 20 } },
+        layout: { padding: { top: 10, bottom: 50 } },
         plugins: {
             tooltip: { mode: 'index', intersect: false },
             legend: { position: 'top', labels: { boxWidth: 12, padding: 8 } }
@@ -292,8 +293,13 @@ new Chart(document.getElementById('chartComparativoAnual'), {
         scales: {
             y: {
                 beginAtZero: true,
-                max: <?= $dados['maxComparativo'] ?? 1000 ?>,
-                ticks: { callback: function(value) { return 'R$ ' + value.toFixed(2); } }
+                ticks: {
+                    callback: function(value) { return 'R$ ' + value.toFixed(2); },
+                    autoSkip: true,
+                    stepSize: calcularStepSize(
+                        (<?= json_encode($dados['receitaAnual1'] ?? []) ?>).concat(<?= json_encode($dados['receitaAnual2'] ?? []) ?>)
+                    )
+                }
             }
         }
     }

@@ -228,8 +228,7 @@ body.dashboard {
 .dashboard-wrapper {
     display: flex;
     margin-top: 64px;
-    height: calc(100vh - 64px);
-    overflow: hidden;
+    /* altura determinada pelo conteúdo – sem height fixa */
 }
 
 /* ---------- MENU LATERAL ---------- */
@@ -240,7 +239,7 @@ body.dashboard {
     padding: 20px 0;
     flex-shrink: 0;
     overflow-y: auto;
-    height: 100%;
+    height: calc(100vh - 64px); /* sidebar ocupa a altura visível */
 }
 
 .sidebar-menu {
@@ -292,15 +291,15 @@ body.dashboard {
     pointer-events: none;
 }
 
-/* ---------- ÁREA DE CONTEÚDO PRINCIPAL ---------- */
+/* ---------- ÁREA DE CONTEÚDO PRINCIPAL (scroll liberado) ---------- */
 .main-content {
     flex: 1;
     padding: 20px 32px;
     background: #f0f4f8;
-    overflow: hidden;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: calc(100vh - 64px); /* ocupa o espaço restante da tela */
 }
 
 /* ======================================================================
@@ -697,22 +696,20 @@ body.dashboard {
 }
 
 /* ======================================================================
-   DASHBOARD – LAYOUT ESPECÍFICO (REPRESENTANTE)
+   DASHBOARD – LAYOUT ESPECÍFICO (REPRESENTANTE / ADMIN)
    ====================================================================== */
 .dashboard-grid {
-    flex: 1;
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    min-height: 0;
 }
 
 .row-top,
 .row-bottom {
     display: flex;
     gap: 12px;
-    flex: 1;
-    min-height: 0;
+    flex: 0 0 auto;
 }
 
 .card-large {
@@ -720,18 +717,19 @@ body.dashboard {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    padding: 16px 20px;
+    padding: 16px 20px 18px 20px;
+    max-height: 650px;
 }
 
 .card-large canvas {
     flex: 1;
     width: 100% !important;
     height: auto !important;
-    max-height: none !important;
+    max-height: calc(100% - 45px);   /* ← aumentado para 45px */
+    margin-bottom: 4px;
 }
 
 .small-cards-grid {
-    flex: 1;
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
@@ -744,42 +742,23 @@ body.dashboard {
     overflow: hidden;
     padding: 10px;
     min-height: 180px;
-}
-
-.card-small h3 {
-    font-size: 13px;
-    margin-bottom: 2px;
+    justify-content: center;   /* centraliza verticalmente */
+    align-items: center;       /* centraliza horizontalmente */
 }
 
 .card-small canvas {
-    flex: 1;
+    flex: 0 0 auto;            /* não estica */
     width: 100% !important;
     height: auto !important;
-    max-height: 130px !important;
+    max-height: 150px !important;  /* um pouco maior */
     margin: 0 auto;
-}
-
-.card-small .big-number {
-    font-size: 28px;
-    font-weight: 700;
-    color: #dc2626;
-    text-align: center;
-    line-height: 1.2;
-    margin: auto 0;
-}
-
-.card-small p {
-    font-size: 11px;
-    margin-top: 2px;
 }
 
 /* ======================================================================
    RESPONSIVO (MOBILE) – AJUSTES COMPLETOS
-   (vem depois para sobrescrever regras base)
    ====================================================================== */
 @media (max-width: 768px) {
 
-    /* ---------- TOPBAR ---------- */
     .topbar {
         padding: 0 12px;
         height: 56px;
@@ -798,10 +777,10 @@ body.dashboard {
         padding: 4px 10px;
     }
 
-    /* ---------- SIDEBAR (ícones apenas) ---------- */
     .sidebar {
         width: 60px;
         padding: 12px 0;
+        height: calc(100vh - 56px);
     }
     .sidebar-menu li a {
         padding: 12px 16px;
@@ -816,13 +795,16 @@ body.dashboard {
         display: none;
     }
 
-    /* ---------- CONTEÚDO PRINCIPAL (scroll liberado) ---------- */
+    .dashboard-wrapper {
+        margin-top: 56px;
+    }
+
     .main-content {
         padding: 12px;
+        height: calc(100vh - 56px);
         overflow-y: auto !important;
     }
 
-    /* ---------- DASHBOARD: DESATIVAR ALTURAS FORÇADAS ---------- */
     .dashboard-grid {
         flex: 0 0 auto !important;
     }
@@ -831,13 +813,10 @@ body.dashboard {
         flex-direction: column;
         gap: 12px;
         flex: 0 0 auto !important;
-        min-height: 0;
     }
 
-    /* Cards grandes (gráficos principais) - padding reduzido */
     .card-large {
         flex: 0 0 auto !important;
-        min-height: 0 !important;
         padding: 10px 14px !important;
     }
     .card.card-large canvas {
@@ -846,13 +825,11 @@ body.dashboard {
         margin: 0 auto;
     }
 
-    /* Cards genéricos (gráficos menores) */
     .card canvas {
         height: 150px !important;
         max-height: 150px !important;
     }
 
-    /* Cards pequenos (grade 2x2) */
     .card-small {
         min-height: 180px !important;
     }
@@ -861,7 +838,6 @@ body.dashboard {
         max-height: 110px !important;
     }
 
-    /* Doughnuts (rosquinhas) */
     .card canvas.chart-doughnut {
         width: 120px !important;
         height: 120px !important;
@@ -869,18 +845,15 @@ body.dashboard {
         margin: 0 auto;
     }
 
-    /* Grade 2x2 vira 1 coluna */
     .small-cards-grid {
         grid-template-columns: 1fr;
         grid-template-rows: auto;
     }
 
-    /* Card de destaque (clientes em atraso) */
     .card-destaque .big-number {
         font-size: 40px;
     }
 
-    /* ---------- TABELAS: TRANSFORMAR EM CARDS ---------- */
     .main-content table,
     .tabela-responsiva table {
         display: block;
@@ -934,7 +907,6 @@ body.dashboard {
         flex-shrink: 0;
     }
 
-       /* Célula de ações: rótulo ocupa linha inteira, botões em grid 2x2 */
     .acoes-cell {
         flex-wrap: wrap !important;
         gap: 6px !important;
@@ -942,14 +914,12 @@ body.dashboard {
         align-items: center !important;
     }
 
-    /* Faz o rótulo (data-label) ocupar 100% da largura e empurrar os botões para baixo */
     .acoes-cell::before {
         flex: 1 1 100% !important;
         width: 100% !important;
         margin-bottom: 4px !important;
     }
 
-    /* Cada botão ocupa metade da largura disponível (menos o gap) */
     .acoes-cell .btn,
     .acoes-cell .btn-primary {
         flex: 0 0 calc(50% - 6px) !important;
@@ -958,7 +928,6 @@ body.dashboard {
         white-space: normal !important;
     }
 
-    /* ---------- BARRA DE PESQUISA / FILTROS ---------- */
     .barra-pesquisa,
     .barra-pesquisa-filtros {
         flex-wrap: wrap;
@@ -976,7 +945,6 @@ body.dashboard {
         flex: 1 1 auto;
     }
 
-    /* ---------- ABAS (TABS) ---------- */
     .tabs-container {
         flex: 0 0 auto !important;
     }
@@ -992,13 +960,11 @@ body.dashboard {
         font-size: 14px;
     }
 
-    /* ---------- MODAL ---------- */
     .modal-content {
         max-width: 90vw;
         margin: 20px;
     }
 
-    /* ---------- FORMULÁRIOS ---------- */
     .form-row {
         flex-direction: column;
         gap: 12px;
@@ -1015,7 +981,6 @@ body.dashboard {
         width: 100%;
     }
 
-    /* ---------- PAGINAÇÃO ---------- */
     .paginacao {
         flex-wrap: wrap;
         gap: 4px;
@@ -1026,7 +991,6 @@ body.dashboard {
         font-size: 13px;
     }
 
-    /* ---------- TABELA RESPONSIVA: liberar scroll externo ---------- */
     .tabela-responsiva {
         flex: 0 0 auto !important;
         overflow: visible !important;
@@ -1419,10 +1383,36 @@ body.dashboard {
 .feedback-erro { color: #dc2626; }
 
 /* ======================================================================
+   LINK ATIVO NA SIDEBAR (MESMA COR DO HOVER)
+   ====================================================================== */
+.sidebar-menu li a.active {
+    color: #2563eb;
+    border-left-color: #2563eb;
+    background: #f0f4f8;
+}
+
+/* ======================================================================
    TABELA RESPONSIVA (wrapper flexível, sem scroll no desktop)
    ====================================================================== */
 .tabela-responsiva {
-    flex: 1;
+    flex: 0 0 auto;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
+}
+
+.alerta-banner {
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 15px;
+}
+.alerta-banner:hover {
+    background: #fecaca;
 }

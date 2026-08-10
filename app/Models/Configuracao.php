@@ -44,18 +44,22 @@ class Configuracao {
 
     /**
      * Define (insere ou atualiza) o valor de uma configuração.
+     * Converte automaticamente para string, garantindo compatibilidade com a coluna VARCHAR.
      * 
      * @param string $chave Nome da chave de configuração.
-     * @param mixed  $valor Novo valor a ser armazenado.
+     * @param mixed  $valor Novo valor a ser armazenado (será convertido para string).
      */
     public function set(string $chave, $valor): void {
+        // Garante que o valor seja sempre uma string válida
+        $valor = is_null($valor) ? '' : (string) $valor;
+
         $stmt = $this->pdo->prepare(
             "INSERT INTO configuracoes (chave, valor) VALUES (:chave, :valor) 
              ON DUPLICATE KEY UPDATE valor = :valor2"
         );
         $stmt->execute([
-            ':chave' => $chave,
-            ':valor' => $valor,
+            ':chave'  => $chave,
+            ':valor'  => $valor,
             ':valor2' => $valor
         ]);
     }
@@ -76,6 +80,6 @@ class Configuracao {
      * @param float $valor Novo valor do salário mínimo.
      */
     public function setSalarioMinimo(float $valor): void {
-        $this->set('salario_minimo', $valor);
+        $this->set('salario_minimo', (string) $valor);
     }
 }

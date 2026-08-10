@@ -1,0 +1,10 @@
+CREATE TABLE comissao_pagamentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    representante_id INT NOT NULL,
+    valor DECIMAL(10,2) NOT NULL,
+    data_pagamento DATE NOT NULL,
+    mes_referencia VARCHAR(7) NOT NULL COMMENT 'Formato YYYY-MM',
+    observacao TEXT DEFAULT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (representante_id) REFERENCES representantes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

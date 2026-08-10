@@ -80,6 +80,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
             $dataExp = $c['data_expiracao'] ? new DateTime($c['data_expiracao']) : null;
             $expirada = $dataExp ? $dataExp < new DateTime() : false;
             $alerta = !$expirada && $dataExp && (int)(new DateTime())->format('d') >= 28;
+            $ativoReal = $c['ativo'] && !$expirada;   // ← CORRIGIDO: considera a data
         ?>
             <tr>
                 <td data-label="Nome"><?= htmlspecialchars($c['nome']) ?></td>
@@ -90,8 +91,8 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                     <?= $dataExp ? $dataExp->format('d/m/Y') : 'Sem licença' ?>
                     <?php if ($alerta): ?> ⚠️<?php endif; ?>
                 </td>
-                <td data-label="Status" class="<?= $c['ativo'] ? 'status-ativo' : 'status-inativo' ?>">
-                    <?= $c['ativo'] ? 'Ativo' : 'Inativo' ?>
+                <td data-label="Status" class="<?= $ativoReal ? 'status-ativo' : 'status-inativo' ?>">
+                    <?= $ativoReal ? 'Ativo' : 'Inativo' ?>
                 </td>
                 <td data-label="Ações">
                     <a href="/painel/clientes/editar/<?= $c['id'] ?>" class="btn">Editar</a>

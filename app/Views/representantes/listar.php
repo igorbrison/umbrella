@@ -1,13 +1,7 @@
 <?php
 /**
  * Arquivo: Views/representantes/listar.php
- * Função: VIEW da lista de representantes.
- * 
- * Características:
- *   - Exibe uma tabela com todos os representantes cadastrados.
- *   - Cabeçalhos clicáveis permitem ordenação por coluna.
- *   - Links para ações: Criar, Editar, Ativar/Desativar, Excluir.
- *   - Mobile: visualização em cards.
+ * Função: VIEW da lista de representantes com paginação.
  */
 
 $titulo = 'Representantes';
@@ -19,13 +13,17 @@ if (!isset($representantes) || !is_array($representantes)) {
 
 $colAtual = $ordenacaoAtual['coluna'] ?? 'id';
 $dirAtual = $ordenacaoAtual['direcao'] ?? 'asc';
+$paginaAtual = $paginacao['pagina_atual'] ?? 1;
+$totalPaginas = $paginacao['total_paginas'] ?? 1;
+$queryBase = $_GET;
+unset($queryBase['pagina']);
 
-function urlOrdenacao(string $coluna, string $colAtual, string $dirAtual): string {
+function urlOrdenacaoRepresentantes(string $coluna, string $colAtual, string $dirAtual): string {
     $novaDirecao = ($coluna === $colAtual && $dirAtual === 'asc') ? 'desc' : 'asc';
     return "?ordem=$coluna&direcao=$novaDirecao";
 }
 
-function seta(string $coluna, string $colAtual, string $dirAtual): string {
+function setaRepresentantes(string $coluna, string $colAtual, string $dirAtual): string {
     if ($coluna !== $colAtual) return '';
     return $dirAtual === 'asc' ? ' ▲' : ' ▼';
 }
@@ -40,13 +38,13 @@ function seta(string $coluna, string $colAtual, string $dirAtual): string {
     <table>
         <thead>
             <tr>
-                <th><a href="<?= urlOrdenacao('id', $colAtual, $dirAtual) ?>">ID<?= seta('id', $colAtual, $dirAtual) ?></a></th>
-                <th><a href="<?= urlOrdenacao('nome_razao', $colAtual, $dirAtual) ?>">Razão Social<?= seta('nome_razao', $colAtual, $dirAtual) ?></a></th>
-                <th><a href="<?= urlOrdenacao('nome_fantasia', $colAtual, $dirAtual) ?>">Nome Fantasia<?= seta('nome_fantasia', $colAtual, $dirAtual) ?></a></th>
-                <th><a href="<?= urlOrdenacao('cnpj', $colAtual, $dirAtual) ?>">CNPJ<?= seta('cnpj', $colAtual, $dirAtual) ?></a></th>
-                <th><a href="<?= urlOrdenacao('email', $colAtual, $dirAtual) ?>">Email<?= seta('email', $colAtual, $dirAtual) ?></a></th>
-                <th><a href="<?= urlOrdenacao('comissao_percentual', $colAtual, $dirAtual) ?>">Comissão (%)<?= seta('comissao_percentual', $colAtual, $dirAtual) ?></a></th>
-                <th><a href="<?= urlOrdenacao('ativo', $colAtual, $dirAtual) ?>">Status<?= seta('ativo', $colAtual, $dirAtual) ?></a></th>
+                <th><a href="<?= urlOrdenacaoRepresentantes('id', $colAtual, $dirAtual) ?>">ID<?= setaRepresentantes('id', $colAtual, $dirAtual) ?></a></th>
+                <th><a href="<?= urlOrdenacaoRepresentantes('nome_razao', $colAtual, $dirAtual) ?>">Razão Social<?= setaRepresentantes('nome_razao', $colAtual, $dirAtual) ?></a></th>
+                <th><a href="<?= urlOrdenacaoRepresentantes('nome_fantasia', $colAtual, $dirAtual) ?>">Nome Fantasia<?= setaRepresentantes('nome_fantasia', $colAtual, $dirAtual) ?></a></th>
+                <th><a href="<?= urlOrdenacaoRepresentantes('cnpj', $colAtual, $dirAtual) ?>">CNPJ<?= setaRepresentantes('cnpj', $colAtual, $dirAtual) ?></a></th>
+                <th><a href="<?= urlOrdenacaoRepresentantes('email', $colAtual, $dirAtual) ?>">Email<?= setaRepresentantes('email', $colAtual, $dirAtual) ?></a></th>
+                <th><a href="<?= urlOrdenacaoRepresentantes('comissao_percentual', $colAtual, $dirAtual) ?>">Comissão (%)<?= setaRepresentantes('comissao_percentual', $colAtual, $dirAtual) ?></a></th>
+                <th><a href="<?= urlOrdenacaoRepresentantes('ativo', $colAtual, $dirAtual) ?>">Status<?= setaRepresentantes('ativo', $colAtual, $dirAtual) ?></a></th>
                 <th>Ações</th>
             </tr>
         </thead>
@@ -71,5 +69,23 @@ function seta(string $coluna, string $colAtual, string $dirAtual): string {
         </tbody>
     </table>
 </div>
+
+<?php if ($totalPaginas > 1): ?>
+<div class="paginacao">
+    <?php if ($paginaAtual > 1): ?>
+        <a href="/admin/representantes?<?= http_build_query(array_merge($queryBase, ['pagina' => $paginaAtual - 1])) ?>">&laquo; Anterior</a>
+    <?php endif; ?>
+    <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+        <?php if ($i == $paginaAtual): ?>
+            <span class="pagina-atual"><?= $i ?></span>
+        <?php else: ?>
+            <a href="/admin/representantes?<?= http_build_query(array_merge($queryBase, ['pagina' => $i])) ?>"><?= $i ?></a>
+        <?php endif; ?>
+    <?php endfor; ?>
+    <?php if ($paginaAtual < $totalPaginas): ?>
+        <a href="/admin/representantes?<?= http_build_query(array_merge($queryBase, ['pagina' => $paginaAtual + 1])) ?>">Próximo &raquo;</a>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
 
 <?php require __DIR__ . '/../partials/dashboard_footer.php'; ?>

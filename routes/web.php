@@ -78,6 +78,30 @@ $router->mount('/admin/representantes', function() use ($router) {
         require_once __DIR__ . '/../app/Controllers/RepresentanteController.php';
         (new RepresentanteController())->excluir((int)$id);
     });
+
+    // Comissões
+    $router->get('/comissoes', function() {
+        require_once __DIR__ . '/../app/Controllers/RepresentanteController.php';
+        (new RepresentanteController())->comissoes();
+    });
+
+    // Relatório de comissão de um representante
+    $router->get('/comissoes/relatorio/(\d+)', function($id) {
+        require_once __DIR__ . '/../app/Controllers/RepresentanteController.php';
+        (new RepresentanteController())->relatorioComissao((int)$id);
+    });
+
+    // Editar observação de pagamento de comissão
+    $router->post('/comissoes/editar-observacao', function() {
+        require_once __DIR__ . '/../app/Controllers/RepresentanteController.php';
+        (new RepresentanteController())->editarObservacao();
+    });
+
+    // Registrar pagamento de comissão
+    $router->post('/pagar-comissao', function() {
+        require_once __DIR__ . '/../app/Controllers/RepresentanteController.php';
+        (new RepresentanteController())->pagarComissao();
+    });
 });
 
 // --- Módulos (admin) ---
@@ -208,6 +232,9 @@ $router->post('/admin/cobranca/enviar', function() {
     require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
     AuthAdminMiddleware::verificar();
 
+    // Força o envio para todos os clientes pendentes, ignorando a data
+    $_GET['forcar'] = '1';
+
     ob_start();
     require __DIR__ . '/../cron/cobranca.php';
     $output = ob_get_clean();
@@ -215,6 +242,14 @@ $router->post('/admin/cobranca/enviar', function() {
     $_SESSION['cobranca_output'] = $output;
     header('Location: /admin/clientes');
     exit;
+});
+
+// ===== RELATÓRIOS (ADMIN) =====
+$router->get('/admin/relatorios/pagamentos', function() {
+    require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
+    AuthAdminMiddleware::verificar();
+    require_once __DIR__ . '/../app/Controllers/RelatorioController.php';
+    (new RelatorioController())->admin();
 });
 
 // Redireciona /admin para a lista de representantes
@@ -315,6 +350,12 @@ $router->mount('/painel', function() use ($router) {
     $router->get('/solicitacoes/ver/(\d+)', function($id) {
         require_once __DIR__ . '/../app/Controllers/SolicitacaoController.php';
         (new SolicitacaoController())->ver((int)$id);
+    });
+
+    // ===== RELATÓRIOS (REPRESENTANTE) =====
+    $router->get('/relatorios/pagamentos', function() {
+        require_once __DIR__ . '/../app/Controllers/RelatorioController.php';
+        (new RelatorioController())->painel();
     });
 });
 

@@ -10,7 +10,7 @@
  *       • Barra superior (topbar) com logo, nome do usuário (clicável) e botão sair.
  *       • Dropdown com dados do perfil e opção de alterar senha.
  *       • Modal para alteração de senha (com campos e validação).
- *       • Menu lateral (sidebar) com links específicos para cada perfil.
+ *       • Menu lateral (sidebar) com links específicos para cada perfil e destaque na aba ativa.
  *       • Abertura da área de conteúdo principal (main-content).
  * 
  * Deve ser utilizado em conjunto com o arquivo dashboard_footer.php,
@@ -71,6 +71,9 @@ function formatarDataHora(string $data): string {
         return 'Nunca';
     }
 }
+
+// Rota atual para destacar o menu ativo
+$currentRoute = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -131,13 +134,12 @@ function formatarDataHora(string $data): string {
                         <i class="fas fa-key"></i> Alterar Senha
                     </a>
 
-                  <?php if ($perfil !== 'admin'): ?>
-                <div class="dropdown-divider"></div>
-
-                <div class="dropdown-item" style="font-size:12px; color:#999; cursor:default;">
-                    <i class="fas fa-clock"></i> Última alteração: <?= formatarDataHora($ultimaAlteracaoSenha) ?>
-                </div>
-                <?php endif; ?>
+                    <?php if ($perfil !== 'admin'): ?>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item" style="font-size:12px; color:#999; cursor:default;">
+                            <i class="fas fa-clock"></i> Última alteração: <?= formatarDataHora($ultimaAlteracaoSenha) ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -175,19 +177,22 @@ function formatarDataHora(string $data): string {
     <div class="dashboard-wrapper">
         <nav class="sidebar">
             <ul class="sidebar-menu">
-                <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/dashboard" class="<?= $currentRoute == '/dashboard' ? 'active' : '' ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
 
                 <?php if ($perfil === 'admin'): ?>
                     <li class="menu-divider">Administração</li>
-                    <li><a href="/admin/representantes"><i class="fas fa-users"></i> Representantes</a></li>
-                    <li><a href="/admin/modulos"><i class="fas fa-cubes"></i> Módulos</a></li>
-                    <li><a href="/admin/clientes"><i class="fas fa-building"></i> Clientes</a></li>
-                    <li><a href="/admin/solicitacoes"><i class="fas fa-ticket-alt"></i> Solicitações</a></li>
-                    <li><a href="/admin/configuracao"><i class="fas fa-cog"></i> Configurações</a></li>
+                    <li><a href="/admin/representantes" class="<?= strpos($currentRoute, '/admin/representantes') === 0 ? 'active' : '' ?>"><i class="fas fa-users"></i> Representantes</a></li>
+                    <li><a href="/admin/modulos" class="<?= strpos($currentRoute, '/admin/modulos') === 0 ? 'active' : '' ?>"><i class="fas fa-cubes"></i> Módulos</a></li>
+                    <li><a href="/admin/clientes" class="<?= strpos($currentRoute, '/admin/clientes') === 0 ? 'active' : '' ?>"><i class="fas fa-building"></i> Clientes</a></li>
+                    <li><a href="/admin/solicitacoes" class="<?= strpos($currentRoute, '/admin/solicitacoes') === 0 ? 'active' : '' ?>"><i class="fas fa-ticket-alt"></i> Solicitações</a></li>
+                    <li><a href="/admin/relatorios/pagamentos" class="<?= strpos($currentRoute, '/admin/relatorios') === 0 ? 'active' : '' ?>"><i class="fas fa-chart-bar"></i> Relatórios</a></li>
+                    <li><a href="/admin/configuracao" class="<?= strpos($currentRoute, '/admin/configuracao') === 0 ? 'active' : '' ?>"><i class="fas fa-cog"></i> Configurações</a></li>
+                    <li><a href="/admin/representantes/comissoes" class="<?= strpos($currentRoute, '/admin/representantes/comissoes') === 0 ? 'active' : '' ?>"><i class="fas fa-hand-holding-usd"></i> Comissões</a></li>
                 <?php else: ?>
                     <li class="menu-divider">Meu Painel</li>
-                    <li><a href="/painel/clientes"><i class="fas fa-user-tie"></i> Meus Clientes</a></li>
-                    <li><a href="/painel/solicitacoes"><i class="fas fa-ticket-alt"></i> Solicitações</a></li>
+                    <li><a href="/painel/clientes" class="<?= strpos($currentRoute, '/painel/clientes') === 0 ? 'active' : '' ?>"><i class="fas fa-user-tie"></i> Meus Clientes</a></li>
+                    <li><a href="/painel/solicitacoes" class="<?= strpos($currentRoute, '/painel/solicitacoes') === 0 ? 'active' : '' ?>"><i class="fas fa-ticket-alt"></i> Solicitações</a></li>
+                    <li><a href="/painel/relatorios/pagamentos" class="<?= strpos($currentRoute, '/painel/relatorios') === 0 ? 'active' : '' ?>"><i class="fas fa-chart-bar"></i> Relatórios</a></li>
                 <?php endif; ?>
             </ul>
         </nav>
