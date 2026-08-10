@@ -232,7 +232,6 @@ $router->post('/admin/cobranca/enviar', function() {
     require_once __DIR__ . '/../app/Middlewares/AuthAdminMiddleware.php';
     AuthAdminMiddleware::verificar();
 
-    // Força o envio para todos os clientes pendentes, ignorando a data
     $_GET['forcar'] = '1';
 
     ob_start();
@@ -391,7 +390,7 @@ $router->post('/reset-password', function() {
 });
 
 // ============================================================
-// 8. API DE LICENCIAMENTO
+// 8. API DE LICENCIAMENTO E INTEGRAÇÃO
 // ============================================================
 $router->post('/api/licenca/validar', function() {
     require_once __DIR__ . '/../app/Controllers/ApiController.php';
@@ -408,9 +407,12 @@ $router->post('/api/licenca/validar-renovacao', function() {
     (new ApiController())->validarRenovacaoOffline();
 });
 
-// ============================================================
-// 9. FUTURA INTEGRAÇÃO COM FLUTTER
-// ============================================================
 $router->get('/api/modulos', function() {
-    // A ser implementado
+    require_once __DIR__ . '/../app/Controllers/ApiController.php';
+    (new ApiController())->listarModulos();
+});
+
+$router->post('/api/login', function() {
+    require_once __DIR__ . '/../app/Controllers/ApiController.php';
+    (new ApiController())->login();
 });

@@ -1,155 +1,195 @@
 <?php
 /**
- * Arquivo: Controllers/ApiController.php
- * Função: Controlador da API REST de licenciamento.
+ * Controlador da API de licenciamento.
+ * Fornece endpoints para o aplicativo externo validar licenças,
+ * gerar tokens offline e listar módulos disponíveis.
  * 
- * Responsável por:
- *   - Fornecer endpoints para o aplicativo Flutter validar licenças.
- *   - Gerar tokens offline para ativação manual do sistema.
- *   - Validar renovações offline realizadas com token + chave de liberação.
- * 
- * Todos os endpoints recebem e retornam dados no formato JSON.
- * As rotas são públicas e não exigem autenticação por sessão,
- * mas validam as credenciais enviadas em cada requisição.
+ * Todas as respostas são em JSON com o formato:
+ *   { "status": "success", "data": {...} }
+ *   { "status": "error", "message": "..." }
  */
 
 require_once __DIR__ . '/../Models/Licenca.php';
-require_once __DIR__ . '/../Models/ClienteModulo.php';
+require_once __DIR__ . '/../Models/Modulo.php';
+require_once __DIR__ . '/../Models/Representante.php';
 require_once __DIR__ . '/../Models/TokenRenovacao.php';
 
-class ApiController {
-
-    // ============================================================
-    // 1. VALIDAR LICENÇA (ONLINE)
-    // ============================================================
+class ApiController
+{
     /**
-     * Valida a licença de um cliente.
-     * 
-     * Entrada (JSON):
-     *   { "cliente_id": 1, "chave": "abc123..." }
-     * 
-     * Retorno (Sucesso - 200):
-     *   {
-     *     "valido": true,
-     *     "chave": "nova_chave_gerada",
-     *     "expiracao": "2026-09-05",
-     *     "modulos": [...],
-     *     "qtd_maquinas": 3
-     *   }
+     * Valida uma chave de licença enviada via POST.
+     * Espera: { "chave": "..." }
+     * Retorna dados do cliente, módulos contratados e status da licença.
      */
-    public function validarLicenca(): void {
+    public function validarLicenca(): void
+    {
+        header('Content-Type: application/json');
+
         $input = json_decode(file_get_contents('php://input'), true);
-        $clienteId = (int)($input['cliente_id'] ?? 0);
         $chave = $input['chave'] ?? '';
 
-        if ($clienteId <= 0 || empty($chave)) {
-            http_response_code(400);
-            echo json_encode(['erro' => 'Cliente ID e chave são obrigatórios.']);
+        if (empty($chave)) {
+            echo json_encode(['status' => 'error', 'message' => 'Chave não informada.']);
             exit;
         }
 
         $licencaModel = new Licenca();
-        $licenca = $licencaModel->buscarPorCliente($clienteId);
+        $dados = $licencaModel->buscarPorChave($chave);
 
-        if (!$licenca || $licenca['chave'] !== $chave || !$licenca['ativa']) {
-            http_response_code(401);
-            echo json_encode(['erro' => 'Licença inválida ou inativa.']);
+        if (!$dados) {
+            echo json_encode(['status' => 'error', 'message' => 'Chave inválida.']);
             exit;
         }
 
-        if (strtotime($licenca['data_expiracao']) < time()) {
-            $licencaModel->desativar($clienteId);
-            http_response_code(401);
-            echo json_encode(['erro' => 'Licença expirada.']);
+        // Verifica expiração
+        $hoje = new DateTime();
+        $expiracao = new DateTime($dados['data_expiracao']);
+        if ($expiracao < $hoje) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Licença expirada.',
+                'expirada_em' => $dados['data_expiracao']
+            ]);
             exit;
         }
 
-        // Licença válida: renova automaticamente
-        $novaChave = $licencaModel->gerarChave();
-        $qtdMaquinas = (int)($licenca['qtd_maquinas'] ?? 1);
-        $licencaModel->criarOuAtualizar($clienteId, $novaChave, $qtdMaquinas);
-        $novaExpiracao = (new DateTime())->modify('+30 days')->format('Y-m-d');
-
-        $cmModel = new ClienteModulo();
-        $modulos = $cmModel->getModulosDoCliente($clienteId);
+        // Busca módulos contratados
+        $modulos = $licencaModel->getModulosCliente($dados['cliente_id']);
 
         echo json_encode([
-            'valido' => true,
-            'chave' => $novaChave,
-            'expiracao' => $novaExpiracao,
-            'modulos' => $modulos,
-            'qtd_maquinas' => $qtdMaquinas
+            'status' => 'success',
+            'data' => [
+                'cliente_id'      => $dados['cliente_id'],
+                'cliente_nome'    => $dados['cliente_nome'],
+                'chave'           => $chave,
+                'data_expiracao'  => $dados['data_expiracao'],
+                'qtd_maquinas'    => $dados['qtd_maquinas'],
+                'modulos'         => array_column($modulos, 'identificador'),
+                'ativa'           => (bool)$dados['ativa'],
+            ]
         ]);
     }
 
-    // ============================================================
-    // 2. GERAR TOKEN OFFLINE
-    // ============================================================
     /**
-     * Gera um token offline para um cliente.
+     * Gera um token offline para ativação manual.
+     * Espera: { "chave": "...", "cliente_id": ... }
+     * Retorna o token gerado.
      */
-    public function gerarTokenOffline(): void {
+    public function gerarTokenOffline(): void
+    {
+        header('Content-Type: application/json');
+
         $input = json_decode(file_get_contents('php://input'), true);
+        $chave = $input['chave'] ?? '';
         $clienteId = (int)($input['cliente_id'] ?? 0);
 
-        if ($clienteId <= 0) {
-            http_response_code(400);
-            echo json_encode(['erro' => 'Cliente ID é obrigatório.']);
+        if (empty($chave) || $clienteId <= 0) {
+            echo json_encode(['status' => 'error', 'message' => 'Parâmetros inválidos.']);
+            exit;
+        }
+
+        // Verifica se a chave pertence ao cliente
+        $licencaModel = new Licenca();
+        $dados = $licencaModel->buscarPorChave($chave);
+        if (!$dados || $dados['cliente_id'] !== $clienteId) {
+            echo json_encode(['status' => 'error', 'message' => 'Chave ou cliente inválido.']);
             exit;
         }
 
         $tokenModel = new TokenRenovacao();
         try {
             $token = $tokenModel->gerarTokenOffline($clienteId);
-            echo json_encode(['token' => $token]);
+            echo json_encode(['status' => 'success', 'data' => ['token' => $token]]);
         } catch (\Exception $e) {
-            http_response_code(400);
-            echo json_encode(['erro' => $e->getMessage()]);
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
         }
     }
 
-    // ============================================================
-    // 3. VALIDAR RENOVAÇÃO OFFLINE
-    // ============================================================
     /**
-     * Valida uma renovação offline feita com token + chave de liberação.
+     * Valida um token de renovação offline.
+     * Espera: { "token": "...", "cliente_id": ... }
+     * Retorna a nova chave se o token for válido.
      */
-    public function validarRenovacaoOffline(): void {
-        $input = json_decode(file_get_contents('php://input'), true);
-        $clienteId = (int)($input['cliente_id'] ?? 0);
-        $token = $input['token'] ?? '';
-        $chaveLiberacao = $input['chave_liberacao'] ?? '';
+    public function validarRenovacaoOffline(): void
+    {
+        header('Content-Type: application/json');
 
-        if ($clienteId <= 0 || empty($token) || empty($chaveLiberacao)) {
-            http_response_code(400);
-            echo json_encode(['erro' => 'Todos os campos são obrigatórios.']);
+        $input = json_decode(file_get_contents('php://input'), true);
+        $token = $input['token'] ?? '';
+        $clienteId = (int)($input['cliente_id'] ?? 0);
+
+        if (empty($token) || $clienteId <= 0) {
+            echo json_encode(['status' => 'error', 'message' => 'Parâmetros inválidos.']);
             exit;
         }
 
         $tokenModel = new TokenRenovacao();
-        if (!$tokenModel->validarLiberacao($clienteId, $token, $chaveLiberacao)) {
-            http_response_code(401);
-            echo json_encode(['erro' => 'Token ou chave de liberação inválidos.']);
+        $valido = $tokenModel->validarToken($clienteId, $token);
+
+        if (!$valido) {
+            echo json_encode(['status' => 'error', 'message' => 'Token inválido ou expirado.']);
             exit;
         }
 
-        // Liberação válida: renova licença
+        // Gera nova chave
         $licencaModel = new Licenca();
-        $novaChave = $licencaModel->gerarChave();
-        $licencaAtual = $licencaModel->buscarPorCliente($clienteId);
-        $qtdMaquinas = (int)($licencaAtual['qtd_maquinas'] ?? 1);
-        $licencaModel->criarOuAtualizar($clienteId, $novaChave, $qtdMaquinas);
-        $novaExpiracao = (new DateTime())->modify('+30 days')->format('Y-m-d');
+        $chave = $licencaModel->gerarChave();
+        $licencaModel->criarOuAtualizar($clienteId, $chave);
 
-        $cmModel = new ClienteModulo();
-        $modulos = $cmModel->getModulosDoCliente($clienteId);
+        // Remove o token usado
+        $tokenModel->removerToken($clienteId, $token);
 
         echo json_encode([
-            'valido' => true,
-            'chave' => $novaChave,
-            'expiracao' => $novaExpiracao,
-            'modulos' => $modulos,
-            'qtd_maquinas' => $qtdMaquinas
+            'status' => 'success',
+            'data' => ['nova_chave' => $chave]
+        ]);
+    }
+
+    /**
+     * Lista todos os módulos disponíveis (ativos).
+     */
+    public function listarModulos(): void
+    {
+        header('Content-Type: application/json');
+
+        $moduloModel = new Modulo();
+        $modulos = $moduloModel->listarTodosAtivos();
+
+        echo json_encode([
+            'status' => 'success',
+            'data' => $modulos
+        ]);
+    }
+
+    /**
+     * Autenticação do representante via API.
+     * Espera: { "email": "...", "senha": "..." }
+     * Retorna os dados do representante se as credenciais forem válidas.
+     */
+    public function login(): void
+    {
+        header('Content-Type: application/json');
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $email = $input['email'] ?? '';
+        $senha = $input['senha'] ?? '';
+
+        if (empty($email) || empty($senha)) {
+            echo json_encode(['status' => 'error', 'message' => 'E-mail e senha são obrigatórios.']);
+            exit;
+        }
+
+        $repModel = new Representante();
+        $representante = $repModel->autenticar($email, $senha);
+
+        if (!$representante) {
+            echo json_encode(['status' => 'error', 'message' => 'Credenciais inválidas.']);
+            exit;
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'data' => $representante
         ]);
     }
 }

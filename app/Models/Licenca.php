@@ -10,6 +10,7 @@
  *   - Gerar chaves de licença aleatórias.
  *   - Listagem paginada e com busca para a tela unificada de clientes (admin).
  *   - Indicadores para o Dashboard (contagens e detalhes).
+ *   - Métodos para a API de validação de licenças.
  */
 
 require_once __DIR__ . '/Database.php';
@@ -132,7 +133,7 @@ class Licenca {
             'cpf_cnpj'            => 'c.cpf_cnpj',
             'representante_nome'  => 'r.nome_razao',
             'data_expiracao'      => 'l.data_expiracao',
-            'valor_total_atual'   => 'c.valor_total',   // ← corrigido
+            'valor_total_atual'   => 'c.valor_total',
             'ativa'               => 'l.ativa',
         ];
         $coluna = $colunasPermitidas[$ordem] ?? 'c.nome';
@@ -221,5 +222,47 @@ class Licenca {
         ");
         $stmt->execute([':rid' => $repId]);
         return $stmt->fetchAll();
+    }
+
+    // ==================== API ====================
+
+    /**
+     * Busca licença pela chave, incluindo dados do cliente.
+     */
+    public function buscarPorChave(string $chave): ?array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT l.*, c.nome AS cliente_nome
+            FROM licencas l
+            JOIN clientes c ON l.cliente_id = c.id
+            WHERE l.chave = :chave
+        ");
+        $stmt->execute([':chave' => $chave]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    /**
+     * Atualiza a data da última verificação da licença.
+     * Requer coluna ultima_verificacao (opcional).
+     */
+    public function atualizarUltimaVerificacao(int $clienteId): void
+    {
+        $stmt = $this->pdo->prepare("UPDATE licencas SET ultima_verificacao = NOW() WHERE cliente_id = :cid");
+        $stmt->execute([':cid' => $clienteId]);
+    }
+
+    /**
+     * Retorna os identificadores dos módulos contratados por um cliente.
+     */
+    public function getModulosCliente(int $clienteId): array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT m.identificador
+            FROM cliente_modulos cm
+            JOIN modulos m ON m.id = cm.modulo_id
+            WHERE cm.cliente_id = :cid AND m.ativo = 1
+        ");
+        $stmt->execute([':cid' => $clienteId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

@@ -9,6 +9,7 @@
  *   - Garantir a segurança contra SQL Injection (uso de prepared statements).
  *   - Oferecer métodos específicos para ordenação, busca, inserção, atualização, exclusão e alteração de status.
  *   - Paginação e cálculo de comissões.
+ *   - Autenticação para API.
  */
 
 require_once __DIR__ . '/Database.php';
@@ -65,13 +66,13 @@ class Representante {
     public function buscarPorId(int $id): ?array {
         $stmt = $this->pdo->prepare("SELECT * FROM representantes WHERE id = :id");
         $stmt->execute([':id' => $id]);
-        return $stmt->fetch() ?: null;
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
     public function buscarPorEmail(string $email): ?array {
         $stmt = $this->pdo->prepare("SELECT * FROM representantes WHERE email = :email");
         $stmt->execute([':email' => $email]);
-        return $stmt->fetch() ?: null;
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
     public function inserir(array $dados): bool {
@@ -132,7 +133,7 @@ class Representante {
     public function buscarPorCnpj(string $cnpj): ?array {
         $stmt = $this->pdo->prepare("SELECT * FROM representantes WHERE cnpj = :cnpj");
         $stmt->execute([':cnpj' => $cnpj]);
-        return $stmt->fetch() ?: null;
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
     /**
@@ -249,5 +250,19 @@ class Representante {
     {
         $stmt = $this->pdo->prepare("UPDATE comissao_pagamentos SET observacao = :obs WHERE id = :id");
         $stmt->execute([':obs' => $observacao, ':id' => $id]);
+    }
+
+    /**
+     * Autentica um representante pelo e‑mail e senha.
+     * Retorna o array do representante (sem a senha) ou null.
+     */
+    public function autenticar(string $email, string $senha): ?array
+    {
+        $rep = $this->buscarPorEmail($email);
+        if ($rep && password_verify($senha, $rep['senha'])) {
+            unset($rep['senha']);
+            return $rep;
+        }
+        return null;
     }
 }

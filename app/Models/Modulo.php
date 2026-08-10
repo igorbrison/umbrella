@@ -7,6 +7,7 @@
  *   - Gerenciar todas as operações de banco de dados relacionadas aos módulos.
  *   - Calcular o valor em reais de cada módulo com base no percentual do salário mínimo vigente.
  *   - Oferecer métodos de listagem, busca, inserção, atualização, exclusão, soma de valores e listagem paginada.
+ *   - Listar módulos ativos para a API.
  * 
  * Conexão: Utiliza o Singleton Database para obter uma instância PDO única.
  */
@@ -201,5 +202,15 @@ class Modulo {
             $soma += $this->getValorCalculado($salarioMinimo, $row['percentual_salario_minimo']);
         }
         return round($soma, 2);
+    }
+
+    /**
+     * Lista todos os módulos ativos, com identificador e nome.
+     * Usado pela API.
+     */
+    public function listarTodosAtivos(): array
+    {
+        $stmt = $this->pdo->query("SELECT identificador, nome FROM modulos WHERE ativo = 1 ORDER BY nome ASC");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
