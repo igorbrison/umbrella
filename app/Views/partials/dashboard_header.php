@@ -131,11 +131,13 @@ function formatarDataHora(string $data): string {
                         <i class="fas fa-key"></i> Alterar Senha
                     </a>
 
-                    <div class="dropdown-divider"></div>
+                  <?php if ($perfil !== 'admin'): ?>
+                <div class="dropdown-divider"></div>
 
-                    <div class="dropdown-item" style="font-size:12px; color:#999; cursor:default;">
-                        <i class="fas fa-clock"></i> Última alteração: <?= formatarDataHora($ultimaAlteracaoSenha) ?>
-                    </div>
+                <div class="dropdown-item" style="font-size:12px; color:#999; cursor:default;">
+                    <i class="fas fa-clock"></i> Última alteração: <?= formatarDataHora($ultimaAlteracaoSenha) ?>
+                </div>
+                <?php endif; ?>
                 </div>
             </div>
 

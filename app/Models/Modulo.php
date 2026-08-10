@@ -6,7 +6,7 @@
  * Responsável por:
  *   - Gerenciar todas as operações de banco de dados relacionadas aos módulos.
  *   - Calcular o valor em reais de cada módulo com base no percentual do salário mínimo vigente.
- *   - Oferecer métodos de listagem, busca, inserção, atualização, exclusão e soma de valores.
+ *   - Oferecer métodos de listagem, busca, inserção, atualização, exclusão, soma de valores e listagem paginada.
  * 
  * Conexão: Utiliza o Singleton Database para obter uma instância PDO única.
  */
@@ -81,6 +81,42 @@ class Modulo {
             $m['valor'] = $this->getValorCalculado($salarioMinimo, $m['percentual_salario_minimo']);
         }
         return $modulos;
+    }
+
+    /**
+     * Lista módulos com paginação, ordenação e valor calculado.
+     * 
+     * @param int    $pagina  Número da página.
+     * @param int    $limite  Registros por página.
+     * @param string $ordem   Coluna de ordenação.
+     * @param string $direcao Direção da ordenação.
+     * @return array Lista de módulos da página atual.
+     */
+    public function listarPaginado(int $pagina, int $limite, string $ordem = 'id', string $direcao = 'asc'): array {
+        $offset = ($pagina - 1) * $limite;
+        $colunasPermitidas = ['id', 'identificador', 'nome', 'percentual_salario_minimo', 'ativo'];
+        if (!in_array($ordem, $colunasPermitidas)) {
+            $ordem = 'id';
+        }
+        $direcao = strtolower($direcao) === 'desc' ? 'DESC' : 'ASC';
+        $sql = "SELECT * FROM modulos ORDER BY $ordem $direcao LIMIT $limite OFFSET $offset";
+        $stmt = $this->pdo->query($sql);
+        $modulos = $stmt->fetchAll();
+
+        $salarioMinimo = (new Configuracao())->getSalarioMinimo();
+        foreach ($modulos as &$m) {
+            $m['valor'] = $this->getValorCalculado($salarioMinimo, $m['percentual_salario_minimo']);
+        }
+        return $modulos;
+    }
+
+    /**
+     * Conta o total de módulos cadastrados (para paginação).
+     * 
+     * @return int Número total de módulos.
+     */
+    public function contarTodos(): int {
+        return (int)$this->pdo->query("SELECT COUNT(*) FROM modulos")->fetchColumn();
     }
 
     /**

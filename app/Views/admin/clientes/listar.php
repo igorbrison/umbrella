@@ -107,7 +107,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
                 <td data-label="Status" class="<?= $l['ativa'] && !$expirada ? 'status-ativo' : 'status-inativo' ?>">
                     <?= $l['ativa'] && !$expirada ? 'Ativa' : 'Expirada/Inativa' ?>
                 </td>
-                <td data-label="Ações">
+                <td data-label="Ações" class="acoes-cell">
                     <a href="/admin/clientes/renovar/<?= $l['cliente_id'] ?>" class="btn" onclick="return confirm('Renovar licença?')">Renovar</a>
                     <a href="/admin/clientes/gerar-token/<?= $l['cliente_id'] ?>" class="btn" onclick="return confirm('Gerar token offline?')">Gerar Token</a>
                     <a href="/admin/clientes/editar/<?= $l['cliente_id'] ?>" class="btn">Editar</a>

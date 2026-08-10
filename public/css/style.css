@@ -834,11 +834,11 @@ body.dashboard {
         min-height: 0;
     }
 
-    /* Cards grandes (gráficos principais) - padding reduzido para evitar espaço extra */
+    /* Cards grandes (gráficos principais) - padding reduzido */
     .card-large {
         flex: 0 0 auto !important;
         min-height: 0 !important;
-        padding: 10px 14px !important;    /* mais enxuto */
+        padding: 10px 14px !important;
     }
     .card.card-large canvas {
         height: 180px !important;
@@ -934,6 +934,30 @@ body.dashboard {
         flex-shrink: 0;
     }
 
+       /* Célula de ações: rótulo ocupa linha inteira, botões em grid 2x2 */
+    .acoes-cell {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+    }
+
+    /* Faz o rótulo (data-label) ocupar 100% da largura e empurrar os botões para baixo */
+    .acoes-cell::before {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        margin-bottom: 4px !important;
+    }
+
+    /* Cada botão ocupa metade da largura disponível (menos o gap) */
+    .acoes-cell .btn,
+    .acoes-cell .btn-primary {
+        flex: 0 0 calc(50% - 6px) !important;
+        text-align: center;
+        margin: 0 !important;
+        white-space: normal !important;
+    }
+
     /* ---------- BARRA DE PESQUISA / FILTROS ---------- */
     .barra-pesquisa,
     .barra-pesquisa-filtros {
@@ -1004,6 +1028,7 @@ body.dashboard {
 
     /* ---------- TABELA RESPONSIVA: liberar scroll externo ---------- */
     .tabela-responsiva {
+        flex: 0 0 auto !important;
         overflow: visible !important;
     }
 }

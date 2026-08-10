@@ -4,7 +4,7 @@
  * Função: Controlador de gerenciamento de módulos (painel admin).
  * 
  * Responsável por:
- *   - Listar todos os módulos cadastrados com ordenação clicável.
+ *   - Listar todos os módulos cadastrados com ordenação clicável e paginação.
  *   - Exibir formulários de criação e edição de módulos.
  *   - Processar o cadastro de novos módulos (com percentual do salário mínimo).
  *   - Processar a edição de módulos existentes.
@@ -37,18 +37,25 @@ class ModuloController {
     }
 
     // ============================================================
-    // 1. LISTAR MÓDULOS
+    // 1. LISTAR MÓDULOS (com paginação)
     // ============================================================
     /**
-     * Lista todos os módulos cadastrados.
+     * Lista todos os módulos cadastrados com paginação.
      * Suporta ordenação por coluna clicável (id, identificador, nome, valor, ativo).
      * O valor exibido é calculado dinamicamente com base no percentual e salário mínimo.
      */
     public function index(): void {
+        $pagina = (int)($_GET['pagina'] ?? 1);
         $ordem = $_GET['ordem'] ?? 'id';
         $direcao = $_GET['direcao'] ?? 'asc';
-        $modulos = $this->model->listarComOrdenacao($ordem, $direcao);
+
+        $modulos = $this->model->listarPaginado($pagina, 10, $ordem, $direcao);
+        $total = $this->model->contarTodos();
+        $totalPaginas = ceil($total / 10);
+
         $ordenacaoAtual = ['coluna' => $ordem, 'direcao' => $direcao];
+        $paginacao = ['pagina_atual' => $pagina, 'total_paginas' => $totalPaginas];
+
         require __DIR__ . '/../Views/admin/modulos/listar.php';
     }
 
