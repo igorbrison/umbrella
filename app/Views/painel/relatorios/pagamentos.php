@@ -28,7 +28,7 @@ require __DIR__ . '/../../partials/dashboard_header.php';
 </form>
 
 <!-- Totalizador alinhado -->
-<div class="card" style="margin-bottom:16px; padding:12px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px;">
+<div class="card card-totalizador" style="margin-bottom:16px; padding:12px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px;">
     <span><strong>Total no período:</strong> R$ <?= number_format($somaPeriodo, 2, ',', '.') ?></span>
     <span><strong>Registros:</strong> <?= $dados['total'] ?? 0 ?></span>
 </div>

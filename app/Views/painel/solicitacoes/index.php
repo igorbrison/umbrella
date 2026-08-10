@@ -75,8 +75,11 @@ $statusAtual = $_GET['status'] ?? '';
                     <option value="teste" <?= $statusAtual == 'teste' ? 'selected' : '' ?>>Teste</option>
                     <option value="concluido" <?= $statusAtual == 'concluido' ? 'selected' : '' ?>>Concluído</option>
                 </select>
-                <button type="submit" class="btn-primary">Filtrar</button>
-                <a href="/painel/solicitacoes" class="btn btn-limpar">Limpar</a>
+                <!-- Wrapper para os botões ficarem lado a lado -->
+                <div style="display: flex; gap: 8px;">
+                    <button type="submit" class="btn-primary">Filtrar</button>
+                    <a href="/painel/solicitacoes" class="btn btn-limpar">Limpar</a>
+                </div>
             </form>
 
             <?php if (empty($solicitacoes)): ?>

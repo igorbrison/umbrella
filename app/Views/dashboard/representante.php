@@ -122,6 +122,7 @@ document.getElementById('cardLicencas').addEventListener('click', function() {
 });
 
 document.getElementById('cardAtraso').addEventListener('click', function() {
+    // CORRIGIDO: usa a.nome (retornado pelo model)
     const todos = atrasoDetalhes.map(a => ({nome: a.nome || a.cliente_nome || 'Sem nome'}));
     abrirModal('Clientes em Atraso', todos);
 });

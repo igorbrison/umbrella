@@ -228,7 +228,6 @@ body.dashboard {
 .dashboard-wrapper {
     display: flex;
     margin-top: 64px;
-    /* altura determinada pelo conteúdo – sem height fixa */
 }
 
 /* ---------- MENU LATERAL ---------- */
@@ -239,7 +238,7 @@ body.dashboard {
     padding: 20px 0;
     flex-shrink: 0;
     overflow-y: auto;
-    height: calc(100vh - 64px); /* sidebar ocupa a altura visível */
+    height: calc(100vh - 64px);
 }
 
 .sidebar-menu {
@@ -299,7 +298,7 @@ body.dashboard {
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 64px); /* ocupa o espaço restante da tela */
+    height: calc(100vh - 64px);
 }
 
 /* ======================================================================
@@ -725,7 +724,7 @@ body.dashboard {
     flex: 1;
     width: 100% !important;
     height: auto !important;
-    max-height: calc(100% - 45px);   /* ← aumentado para 45px */
+    max-height: calc(100% - 45px);
     margin-bottom: 4px;
 }
 
@@ -742,15 +741,15 @@ body.dashboard {
     overflow: hidden;
     padding: 10px;
     min-height: 180px;
-    justify-content: center;   /* centraliza verticalmente */
-    align-items: center;       /* centraliza horizontalmente */
+    justify-content: center;
+    align-items: center;
 }
 
 .card-small canvas {
-    flex: 0 0 auto;            /* não estica */
+    flex: 0 0 auto;
     width: 100% !important;
     height: auto !important;
-    max-height: 150px !important;  /* um pouco maior */
+    max-height: 150px !important;
     margin: 0 auto;
 }
 
@@ -928,23 +927,72 @@ body.dashboard {
         white-space: normal !important;
     }
 
+    /* ---------- BARRA DE PESQUISA / FILTROS (MOBILE) ---------- */
     .barra-pesquisa,
     .barra-pesquisa-filtros {
-        flex-wrap: wrap;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
         gap: 8px;
     }
+
     .barra-pesquisa .campo-pesquisa,
     .barra-pesquisa-filtros .campo-pesquisa {
-        flex: 1 1 100%;
+        flex: 1 1 100% !important;
         min-width: auto;
     }
+
+    /* TODOS os botões dentro das barras: tamanho natural, sem esticar */
     .barra-pesquisa .btn,
     .barra-pesquisa-filtros .btn,
     .barra-pesquisa .btn-primary,
-    .barra-pesquisa-filtros .btn-primary {
-        flex: 1 1 auto;
+    .barra-pesquisa-filtros .btn-primary,
+    .barra-pesquisa .btn-limpar,
+    .barra-pesquisa-filtros .btn-limpar {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: fit-content;
+        white-space: nowrap;
+        text-align: center !important;
+        margin: 0;
     }
 
+    /* Centralizar texto de todos os botões */
+    .btn, .btn-primary, .btn-limpar {
+        text-align: center !important;
+        justify-content: center;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* ---------- TOTALIZADOR NO RELATÓRIO (MOBILE) ---------- */
+    .card-totalizador {
+        display: block !important;
+        width: 100% !important;
+        padding: 18px 20px !important;
+        min-height: auto !important;
+        height: auto !important;
+        box-sizing: border-box;
+        overflow: visible !important;
+        flex-direction: column !important;
+    }
+    .card-totalizador span {
+        display: block !important;
+        width: 100% !important;
+        font-size: 16px !important;
+        line-height: 1.6 !important;
+        white-space: normal !important;
+        word-break: break-word;
+        margin-bottom: 6px;
+        color: #1a2a3a;
+    }
+    .card-totalizador span strong {
+        font-size: 15px;
+        color: #5a6c7e;
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    /* ---------- ABAS (TABS) ---------- */
     .tabs-container {
         flex: 0 0 auto !important;
     }
@@ -960,11 +1008,13 @@ body.dashboard {
         font-size: 14px;
     }
 
+    /* ---------- MODAL ---------- */
     .modal-content {
         max-width: 90vw;
         margin: 20px;
     }
 
+    /* ---------- FORMULÁRIOS ---------- */
     .form-row {
         flex-direction: column;
         gap: 12px;
@@ -981,6 +1031,7 @@ body.dashboard {
         width: 100%;
     }
 
+    /* ---------- PAGINAÇÃO ---------- */
     .paginacao {
         flex-wrap: wrap;
         gap: 4px;
@@ -991,6 +1042,7 @@ body.dashboard {
         font-size: 13px;
     }
 
+    /* ---------- TABELA RESPONSIVA ---------- */
     .tabela-responsiva {
         flex: 0 0 auto !important;
         overflow: visible !important;

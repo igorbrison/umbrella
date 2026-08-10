@@ -11,7 +11,7 @@
  *   - Paginação de 10 em 10 registros.
  *   - Links para ações: Novo Cliente, Editar.
  *   - Exibe o valor total atual e a data de expiração da licença.
- *   - Status do cliente e alertas de vencimento.
+ *   - Status do cliente (considera a data de expiração).
  *   - Coluna ID removida (não é relevante para o representante).
  *   - Mobile: visualização em cards.
  */
@@ -80,7 +80,8 @@ require __DIR__ . '/../../partials/dashboard_header.php';
             $dataExp = $c['data_expiracao'] ? new DateTime($c['data_expiracao']) : null;
             $expirada = $dataExp ? $dataExp < new DateTime() : false;
             $alerta = !$expirada && $dataExp && (int)(new DateTime())->format('d') >= 28;
-            $ativoReal = $c['ativo'] && !$expirada;   // ← CORRIGIDO: considera a data
+            // Status real: ativo E não expirada
+            $ativoReal = $c['ativo'] && !$expirada;
         ?>
             <tr>
                 <td data-label="Nome"><?= htmlspecialchars($c['nome']) ?></td>
